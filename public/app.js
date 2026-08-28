@@ -140,17 +140,36 @@ btnSortear.addEventListener("click", async () => {
       const data = await res.json();
       throw new Error(data.error || "Erro ao sortear.");
     }
-    const { timeA, timeB, somaA, somaB } = await res.json();
-    renderizarTimes(timeA, timeB, somaA, somaB);
+    // A partir daqui, quem mostra o resultado na tela (pra este cliente
+    // e pra todos os outros) são os eventos do socket.io, não esse fetch.
   } catch (err) {
     msgEl.textContent = err.message;
-  } finally {
     btnSortear.disabled = selecionados.size < 2;
     btnSortear.textContent = "Sortear times";
   }
 });
 
 carregarJogadores();
+
+// ---------- Sorteio ao vivo (todo mundo vê, mesmo quem não clicou) ----------
+
+const liveEl = document.getElementById("sorteio-live");
+const socket = io();
+
+socket.on("sorteio:iniciado", () => {
+  msgEl.textContent = "";
+  teamsResultEl.classList.add("hidden");
+  liveEl.classList.remove("hidden");
+  btnSortear.disabled = true;
+  btnSortear.textContent = "Sorteando…";
+});
+
+socket.on("sorteio:resultado", ({ timeA, timeB, somaA, somaB }) => {
+  liveEl.classList.add("hidden");
+  renderizarTimes(timeA, timeB, somaA, somaB);
+  btnSortear.textContent = "Sortear times";
+  btnSortear.disabled = selecionados.size < 2;
+});
 
 function renderizarTimes(timeA, timeB, somaA, somaB) {
   document.getElementById("team-a-total").textContent = `${somaA} pts`;

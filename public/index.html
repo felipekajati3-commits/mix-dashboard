@@ -50,6 +50,11 @@
       <button id="btn-sortear" class="btn btn-primary" disabled>Sortear times</button>
     </div>
 
+    <div id="sorteio-live" class="sorteio-live hidden">
+      <div class="live-dot"></div>
+      <span>Sorteio em andamento — sorteando os times…</span>
+    </div>
+
     <div id="teams-result" class="teams-result hidden">
       <div class="team-panel team-ct">
         <div class="team-header">
@@ -73,6 +78,7 @@
 
 </main>
 
+<script src="/socket.io/socket.io.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
