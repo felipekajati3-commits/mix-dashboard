@@ -128,6 +128,47 @@ app.post("/api/draft", async (req, res) => {
   }
 });
 
+// Sorteia um mapa aleatório dentre a lista marcada.
+function sortearMapa(mapas) {
+  const indice = Math.floor(Math.random() * mapas.length);
+  return mapas[indice];
+}
+
+// Impede que dois sorteios de mapa rodem ao mesmo tempo.
+let mapaSorteioEmAndamento = false;
+
+app.post("/api/draft-mapa", async (req, res) => {
+  try {
+    if (mapaSorteioEmAndamento) {
+      return res.status(409).json({ error: "Já tem um sorteio de mapa em andamento. Aguarde terminar." });
+    }
+
+    const mapas = req.body.mapas;
+
+    if (!Array.isArray(mapas) || mapas.length < 1) {
+      return res.status(400).json({ error: "Selecione pelo menos 1 mapa para sortear." });
+    }
+
+    mapaSorteioEmAndamento = true;
+
+    // Calculado uma única vez no servidor, pra todo mundo ver o mesmo mapa.
+    const mapaId = sortearMapa(mapas);
+
+    io.emit("mapa:iniciado", { mapas });
+
+    setTimeout(() => {
+      io.emit("mapa:resultado", { mapaId });
+      mapaSorteioEmAndamento = false;
+    }, 3000);
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    mapaSorteioEmAndamento = false;
+    res.status(500).json({ error: "Erro ao sortear o mapa." });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Mix Dashboard rodando em http://localhost:${PORT}`);

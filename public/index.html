@@ -18,6 +18,7 @@
   <nav class="tabs">
     <button class="tab-btn active" data-tab="ranking">01 — Ranking</button>
     <button class="tab-btn" data-tab="sorteio">02 — Sorteio</button>
+    <button class="tab-btn" data-tab="mapa">03 — Mapa</button>
   </nav>
 </header>
 
@@ -74,6 +75,32 @@
     </div>
 
     <div id="sorteio-msg" class="msg"></div>
+  </section>
+
+  <section id="tab-mapa" class="tab-panel">
+    <div class="section-head">
+      <h2>Sorteio de mapa</h2>
+      <p class="muted">Marque os mapas que entram no sorteio e clique em sortear. Todo mundo vendo o site acompanha o resultado ao vivo.</p>
+    </div>
+
+    <div id="map-picker" class="map-picker"></div>
+
+    <div class="sorteio-controls">
+      <span id="map-selected-count" class="selected-count">0 selecionados</span>
+      <button id="btn-sortear-mapa" class="btn btn-primary">Sortear mapa</button>
+    </div>
+
+    <div id="mapa-live" class="sorteio-live hidden">
+      <div class="live-dot"></div>
+      <span>Sorteio em andamento — sorteando o mapa…</span>
+    </div>
+
+    <div id="map-result" class="map-result hidden">
+      <span class="map-result-label">Mapa sorteado</span>
+      <span id="map-result-name" class="map-result-name">—</span>
+    </div>
+
+    <div id="mapa-msg" class="msg"></div>
   </section>
 
 </main>

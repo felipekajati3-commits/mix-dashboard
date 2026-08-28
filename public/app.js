@@ -96,17 +96,20 @@ function renderizarPicker() {
     .join("");
 
   pickerEl.querySelectorAll(".player-row").forEach((row) => {
-    row.addEventListener("click", (e) => {
-      e.preventDefault();
+    const checkbox = row.querySelector("input");
+    // Escuta "change" do checkbox (dispara uma única vez por interação real,
+    // seja clicando no checkbox ou em qualquer ponto da linha) em vez de
+    // "click" na linha inteira — isso evita o bug de clique duplicado que
+    // deixava a borda azul e o checkbox dessincronizados.
+    checkbox.addEventListener("change", () => {
       const id = row.dataset.id;
       const jogador = todosJogadores.find((j) => j.steam_id === id);
-      if (selecionados.has(id)) {
-        selecionados.delete(id);
-      } else {
+      if (checkbox.checked) {
         selecionados.set(id, jogador);
+      } else {
+        selecionados.delete(id);
       }
-      row.classList.toggle("selected");
-      row.querySelector("input").checked = selecionados.has(id);
+      row.classList.toggle("selected", checkbox.checked);
       atualizarContagem();
     });
   });
@@ -169,6 +172,108 @@ socket.on("sorteio:resultado", ({ timeA, timeB, somaA, somaB }) => {
   renderizarTimes(timeA, timeB, somaA, somaB);
   btnSortear.textContent = "Sortear times";
   btnSortear.disabled = selecionados.size < 2;
+});
+
+// ---------- Sorteio de mapa ----------
+
+const MAPAS = [
+  { id: "mirage", name: "Mirage" },
+  { id: "inferno", name: "Inferno" },
+  { id: "dust2", name: "Dust 2" },
+  { id: "nuke", name: "Nuke" },
+  { id: "overpass", name: "Overpass" },
+  { id: "vertigo", name: "Vertigo" },
+  { id: "ancient", name: "Ancient" },
+  { id: "anubis", name: "Anubis" },
+  { id: "train", name: "Train" },
+  { id: "cache", name: "Cache" },
+  { id: "cobblestone", name: "Cobblestone" },
+];
+
+const mapPickerEl = document.getElementById("map-picker");
+const mapSelectedCountEl = document.getElementById("map-selected-count");
+const btnSortearMapa = document.getElementById("btn-sortear-mapa");
+const mapaMsgEl = document.getElementById("mapa-msg");
+const mapaLiveEl = document.getElementById("mapa-live");
+const mapResultEl = document.getElementById("map-result");
+const mapResultNameEl = document.getElementById("map-result-name");
+
+const mapaSelecionados = new Set(MAPAS.map((m) => m.id));
+
+function renderizarMapPicker() {
+  mapPickerEl.innerHTML = MAPAS.map((m) => {
+    const marcado = mapaSelecionados.has(m.id);
+    return `
+      <label class="player-row map-row ${marcado ? "selected" : ""}" data-id="${m.id}">
+        <input type="checkbox" ${marcado ? "checked" : ""} />
+        <span class="player-name">${escapeHtml(m.name)}</span>
+      </label>
+    `;
+  }).join("");
+
+  mapPickerEl.querySelectorAll(".map-row").forEach((row) => {
+    const checkbox = row.querySelector("input");
+    checkbox.addEventListener("change", () => {
+      const id = row.dataset.id;
+      if (checkbox.checked) {
+        mapaSelecionados.add(id);
+      } else {
+        mapaSelecionados.delete(id);
+      }
+      row.classList.toggle("selected", checkbox.checked);
+      atualizarContagemMapa();
+    });
+  });
+}
+
+function atualizarContagemMapa() {
+  const n = mapaSelecionados.size;
+  mapSelectedCountEl.textContent = `${n} selecionado${n === 1 ? "" : "s"}`;
+  btnSortearMapa.disabled = n < 1;
+}
+
+renderizarMapPicker();
+atualizarContagemMapa();
+
+btnSortearMapa.addEventListener("click", async () => {
+  mapaMsgEl.textContent = "";
+  btnSortearMapa.disabled = true;
+  btnSortearMapa.textContent = "Sorteando…";
+
+  try {
+    const mapas = Array.from(mapaSelecionados);
+    const res = await fetch("/api/draft-mapa", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mapas }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || "Erro ao sortear o mapa.");
+    }
+    // O resultado chega pelo socket, igual no sorteio de times.
+  } catch (err) {
+    mapaMsgEl.textContent = err.message;
+    btnSortearMapa.disabled = mapaSelecionados.size < 1;
+    btnSortearMapa.textContent = "Sortear mapa";
+  }
+});
+
+socket.on("mapa:iniciado", () => {
+  mapaMsgEl.textContent = "";
+  mapResultEl.classList.add("hidden");
+  mapaLiveEl.classList.remove("hidden");
+  btnSortearMapa.disabled = true;
+  btnSortearMapa.textContent = "Sorteando…";
+});
+
+socket.on("mapa:resultado", ({ mapaId }) => {
+  const mapa = MAPAS.find((m) => m.id === mapaId);
+  mapaLiveEl.classList.add("hidden");
+  mapResultNameEl.textContent = mapa ? mapa.name : mapaId;
+  mapResultEl.classList.remove("hidden");
+  btnSortearMapa.textContent = "Sortear mapa";
+  btnSortearMapa.disabled = mapaSelecionados.size < 1;
 });
 
 function renderizarTimes(timeA, timeB, somaA, somaB) {
