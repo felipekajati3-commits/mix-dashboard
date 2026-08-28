@@ -1,0 +1,13 @@
+{
+  "name": "mix-dashboard",
+  "version": "1.0.0",
+  "description": "Ranking e sorteio de times balanceados usando o K4-System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "mysql2": "^3.11.0"
+  }
+}
