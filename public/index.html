@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mix Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">//</span>
+    <h1>MIX<span>DASHBOARD</span></h1>
+  </div>
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="ranking">01 — Ranking</button>
+    <button class="tab-btn" data-tab="sorteio">02 — Sorteio</button>
+  </nav>
+</header>
+
+<main>
+
+  <section id="tab-ranking" class="tab-panel active">
+    <div class="section-head">
+      <h2>Classificação geral</h2>
+      <p class="muted">Pontuação acumulada de todos os jogadores registrados no K4-System.</p>
+    </div>
+    <div id="leaderboard" class="leaderboard">
+      <div class="loading">Carregando ranking…</div>
+    </div>
+  </section>
+
+  <section id="tab-sorteio" class="tab-panel">
+    <div class="section-head">
+      <h2>Sorteio de times</h2>
+      <p class="muted">Selecione quem vai jogar hoje. O sorteio monta dois times com a soma de pontos mais equilibrada possível.</p>
+    </div>
+
+    <input id="player-search" class="search-input" type="text" placeholder="Buscar jogador pelo nome…" />
+
+    <div id="player-picker" class="player-picker">
+      <div class="loading">Carregando jogadores…</div>
+    </div>
+
+    <div class="sorteio-controls">
+      <span id="selected-count" class="selected-count">0 selecionados</span>
+      <button id="btn-sortear" class="btn btn-primary" disabled>Sortear times</button>
+    </div>
+
+    <div id="teams-result" class="teams-result hidden">
+      <div class="team-panel team-ct">
+        <div class="team-header">
+          <span class="team-label">TIME A</span>
+          <span class="team-total" id="team-a-total">0 pts</span>
+        </div>
+        <ul id="team-a-list" class="team-list"></ul>
+      </div>
+      <div class="vs-divider">VS</div>
+      <div class="team-panel team-t">
+        <div class="team-header">
+          <span class="team-label">TIME B</span>
+          <span class="team-total" id="team-b-total">0 pts</span>
+        </div>
+        <ul id="team-b-list" class="team-list"></ul>
+      </div>
+    </div>
+
+    <div id="sorteio-msg" class="msg"></div>
+  </section>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
