@@ -1,8 +1,8 @@
 :root {
-  --bg: #0c0f12;
-  --panel: #14181d;
-  --panel-2: #1b2027;
-  --line: #262c33;
+  --bg: #000000;
+  --panel: #0d0d0f;
+  --panel-2: #17171a;
+  --line: #262626;
   --text: #e7e9ea;
   --muted: #8b94a0;
   --ct: #5b8def;
@@ -51,10 +51,12 @@ body {
   gap: 10px;
 }
 
-.brand-mark {
-  color: var(--ct);
-  font-family: var(--font-mono);
-  font-weight: 700;
+.brand-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
 .brand h1 {
@@ -106,7 +108,7 @@ body {
 
 .tab-btn.active {
   background: var(--ct);
-  color: #0c0f12;
+  color: var(--bg);
   border-color: var(--ct);
 }
 
@@ -116,7 +118,21 @@ main {
   max-width: 920px;
   margin: 0 auto;
   padding: 40px 24px 80px;
+  position: relative;
 }
+
+.hud-corner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.hud-corner.tl { top: 12px; left: 6px; border-top: 2px solid var(--ct); border-left: 2px solid var(--ct); }
+.hud-corner.tr { top: 12px; right: 6px; border-top: 2px solid var(--ct); border-right: 2px solid var(--ct); }
+.hud-corner.bl { bottom: 12px; left: 6px; border-bottom: 2px solid var(--ct); border-left: 2px solid var(--ct); }
+.hud-corner.br { bottom: 12px; right: 6px; border-bottom: 2px solid var(--ct); border-right: 2px solid var(--ct); }
 
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
