@@ -764,6 +764,7 @@ main {
   max-width: 92vw;
   max-height: 85vh;
   overflow-y: auto;
+  overflow-x: hidden;
   background: var(--panel);
   border: 1px solid var(--line);
   border-top: 3px solid var(--t);
@@ -771,6 +772,7 @@ main {
   padding: 16px 16px 18px;
   pointer-events: auto;
   animation: reveal 0.12s ease;
+  box-sizing: border-box;
 }
 
 .player-tooltip.hidden { display: none; }
@@ -788,12 +790,18 @@ main {
   margin-bottom: 14px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
+  min-width: 0;
 }
 
 .modal-profile-head .avatar-img,
 .modal-profile-head .avatar-fallback {
   width: 48px;
   height: 48px;
+  flex-shrink: 0;
+}
+
+.modal-profile-head > div {
+  min-width: 0;
 }
 
 .modal-profile-name {
@@ -801,6 +809,8 @@ main {
   font-weight: 700;
   font-size: 18px;
   color: var(--t);
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .modal-profile-rank {
@@ -813,7 +823,7 @@ main {
 
 .modal-stats-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -824,6 +834,7 @@ main {
   background: var(--panel-2);
   border: 1px solid var(--line);
   padding: 7px 8px;
+  min-width: 0;
 }
 
 .modal-stat-label {
@@ -841,6 +852,10 @@ main {
   font-size: 14px;
   font-weight: 700;
   color: #fff;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  line-height: 1.25;
 }
 
 /* ---------- Histórico de sorteios ---------- */
