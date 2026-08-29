@@ -239,6 +239,7 @@ main {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-shadow: 0 0 10px rgba(245, 147, 79, 0.45);
 }
 
 .rank-stats-line {
@@ -313,6 +314,7 @@ main {
 .team-player-name {
   flex: 1;
   color: var(--t);
+  text-shadow: 0 0 10px rgba(232, 130, 60, 0.45);
 }
 
 /* ---------- Sorteio ---------- */
@@ -373,6 +375,7 @@ main {
   font-size: 14px;
   font-weight: 500;
   color: var(--t);
+  text-shadow: 0 0 10px rgba(232, 130, 60, 0.45);
 }
 
 .player-row .player-pts {
