@@ -14,7 +14,7 @@
 
 <header class="topbar">
   <div class="brand">
-    <img src="assets/icon.png" class="brand-icon" alt="" />
+    <img class="brand-logo" src="assets/logo.png" alt="Mix Família GC" />
     <h1>MIX<span>FAMÍLIA GC</span></h1>
   </div>
   <nav class="tabs">
@@ -22,19 +22,18 @@
     <button class="tab-btn" data-tab="sorteio">02 — Sorteio</button>
     <button class="tab-btn" data-tab="mapa">03 — Mapa</button>
   </nav>
+  <a id="btn-connect" class="btn-connect" href="steam://connect/177.54.146.23:27114/192650">
+    <span class="connect-dot"></span>
+    Conectar ao Servidor
+  </a>
 </header>
 
-<main class="hud-frame">
-  <span class="hud-corner tl" aria-hidden="true"></span>
-  <span class="hud-corner tr" aria-hidden="true"></span>
-  <span class="hud-corner bl" aria-hidden="true"></span>
-  <span class="hud-corner br" aria-hidden="true"></span>
-
+<main>
 
   <section id="tab-ranking" class="tab-panel active">
     <div class="section-head">
       <h2>Classificação geral</h2>
-      <p class="muted">Pontuação acumulada de todos os jogadores registrados no K4-System.</p>
+      <p class="muted">Pontuação acumulada de todos os jogadores registrados do Servidor.</p>
     </div>
     <div id="leaderboard" class="leaderboard">
       <div class="loading">Carregando ranking…</div>
@@ -58,9 +57,9 @@
       <button id="btn-sortear" class="btn btn-primary" disabled>Sortear times</button>
     </div>
 
-    <div id="sorteio-live" class="sorteio-live hidden">
-      <div class="live-dot"></div>
-      <span>Sorteio em andamento — sorteando os times…</span>
+    <div id="sorteio-live" class="sorteio-roleta hidden">
+      <span class="roleta-label">Sorteando os times…</span>
+      <div id="roleta-nome" class="roleta-nome">—</div>
     </div>
 
     <div id="teams-result" class="teams-result hidden">
