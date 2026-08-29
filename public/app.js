@@ -181,6 +181,21 @@ btnSortear.addEventListener("click", async () => {
 
 carregarJogadores();
 
+// ---------- Botão "Novo sorteio" ----------
+// Some com o resultado atual e desmarca todo mundo, sem precisar recarregar
+// a página, pra já deixar pronto pra selecionar os jogadores do próximo sorteio.
+
+const btnNovoSorteio = document.getElementById("btn-novo-sorteio");
+
+btnNovoSorteio.addEventListener("click", () => {
+  teamsResultEl.classList.add("hidden");
+  selecionados.clear();
+  renderizarPicker();
+  atualizarContagem();
+  msgEl.textContent = "";
+  document.getElementById("player-picker").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
 // ---------- Sorteio ao vivo (todo mundo vê, mesmo quem não clicou) ----------
 
 const liveEl = document.getElementById("sorteio-live");

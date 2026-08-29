@@ -461,6 +461,14 @@ main {
 
 .teams-result.hidden { display: none; }
 
+.teams-result-reset {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin-bottom: 18px;
+  font-size: 13px;
+  padding: 9px 18px;
+}
+
 .team-panel {
   background: var(--panel);
   border: 1px solid var(--line);
