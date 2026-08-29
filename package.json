@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Ranking e sorteio de times balanceados usando o K4-System",
   "main": "server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "start": "node server.js"
   },

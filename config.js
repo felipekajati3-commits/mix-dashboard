@@ -15,5 +15,7 @@ module.exports = {
     database: process.env.DB_NAME || "s15_server",
   },
 
+  steamApiKey: process.env.STEAM_API_KEY || "04B6564650DCBC25DA0677E4E8DACC1A",
+
   leaderboardLimit: 50,
 };

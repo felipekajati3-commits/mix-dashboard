@@ -1,4 +1,3 @@
-
 // ---------- Tabs ----------
 
 document.querySelectorAll(".tab-btn").forEach((btn) => {
@@ -11,6 +10,18 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
 });
 
 // ---------- Ranking ----------
+
+// Ícone e cor por patente do K4-System (agrupadas por faixa).
+function iconePatente(rank) {
+  const r = (rank || "").toUpperCase();
+  if (r.includes("GLOBAL ELITE")) return { icon: "ti-diamond", cls: "patente-elite" };
+  if (r.includes("SUPREME")) return { icon: "ti-crown", cls: "patente-elite" };
+  if (r.includes("LEGENDARY EAGLE")) return { icon: "ti-feather", cls: "patente-eagle" };
+  if (r.includes("DISTINGUISHED") || r.includes("MASTER GUARDIAN")) return { icon: "ti-shield-star", cls: "patente-guardian" };
+  if (r.includes("GOLD NOVA")) return { icon: "ti-star", cls: "patente-gold" };
+  if (r.includes("SILVER")) return { icon: "ti-shield", cls: "patente-silver" };
+  return { icon: "ti-shield", cls: "patente-silver" };
+}
 
 async function carregarRanking() {
   const container = document.getElementById("leaderboard");
@@ -29,9 +40,14 @@ async function carregarRanking() {
       .map((j, i) => {
         const pos = i + 1;
         const pct = Math.max(4, (j.points / maxPts) * 100);
+        const pat = iconePatente(j.rank);
         return `
           <div class="rank-row pos-${pos}">
             <div class="rank-pos">${String(pos).padStart(2, "0")}</div>
+            <div class="rank-avatar-wrap">
+              ${avatarHtml(j)}
+              <i class="ti ${pat.icon} rank-icon-badge ${pat.cls}"></i>
+            </div>
             <div class="rank-name-wrap">
               <div class="rank-name">${escapeHtml(j.name || "Jogador")}</div>
               <div class="rank-bar-track"><div class="rank-bar-fill" style="width:${pct}%"></div></div>
@@ -51,6 +67,16 @@ function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str;
   return div.innerHTML;
+}
+
+// Monta o <img> do avatar da Steam, ou um círculo com a inicial do nome
+// quando não tiver foto (ex: Steam API fora do ar, perfil privado).
+function avatarHtml(jogador) {
+  if (jogador.avatar_url) {
+    return `<img class="avatar-img" src="${jogador.avatar_url}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'avatar-fallback',textContent:'${(jogador.name || "?").charAt(0).toUpperCase()}'}))" />`;
+  }
+  const inicial = (jogador.name || "?").charAt(0).toUpperCase();
+  return `<div class="avatar-fallback">${escapeHtml(inicial)}</div>`;
 }
 
 // ---------- Sorteio (seleção manual de jogadores) ----------
@@ -89,6 +115,7 @@ function renderizarPicker() {
       return `
         <label class="player-row ${marcado ? "selected" : ""}" data-id="${j.steam_id}">
           <input type="checkbox" ${marcado ? "checked" : ""} />
+          ${avatarHtml(j)}
           <span class="player-name">${escapeHtml(j.name)}</span>
           <span class="player-pts">${j.points} pts</span>
         </label>
@@ -158,17 +185,33 @@ carregarJogadores();
 // ---------- Sorteio ao vivo (todo mundo vê, mesmo quem não clicou) ----------
 
 const liveEl = document.getElementById("sorteio-live");
+const roletaNomeEl = document.getElementById("roleta-nome");
 const socket = io();
 
-socket.on("sorteio:iniciado", () => {
+let roletaInterval = null;
+
+socket.on("sorteio:iniciado", ({ jogadores }) => {
   msgEl.textContent = "";
   teamsResultEl.classList.add("hidden");
   liveEl.classList.remove("hidden");
   btnSortear.disabled = true;
   btnSortear.textContent = "Sorteando…";
+
+  // Fica trocando o nome exibido rapidamente, tipo caça-níquel, enquanto
+  // o servidor calcula o resultado — só efeito visual, não influencia o sorteio.
+  const nomes = (jogadores || []).map((j) => j.name).filter(Boolean);
+  if (nomes.length && roletaNomeEl) {
+    let i = 0;
+    clearInterval(roletaInterval);
+    roletaInterval = setInterval(() => {
+      roletaNomeEl.textContent = nomes[i % nomes.length];
+      i++;
+    }, 90);
+  }
 });
 
 socket.on("sorteio:resultado", ({ timeA, timeB, somaA, somaB }) => {
+  clearInterval(roletaInterval);
   liveEl.classList.add("hidden");
   renderizarTimes(timeA, timeB, somaA, somaB);
   btnSortear.textContent = "Sortear times";
@@ -178,17 +221,17 @@ socket.on("sorteio:resultado", ({ timeA, timeB, somaA, somaB }) => {
 // ---------- Sorteio de mapa ----------
 
 const MAPAS = [
-  { id: "mirage", name: "Mirage" },
-  { id: "inferno", name: "Inferno" },
-  { id: "dust2", name: "Dust 2" },
-  { id: "nuke", name: "Nuke" },
-  { id: "overpass", name: "Overpass" },
-  { id: "vertigo", name: "Vertigo" },
-  { id: "ancient", name: "Ancient" },
-  { id: "anubis", name: "Anubis" },
-  { id: "train", name: "Train" },
-  { id: "cache", name: "Cache" },
-  { id: "cobblestone", name: "Cobblestone" },
+  { id: "mirage", name: "Mirage", img: "https://raw.githubusercontent.com/MurkyYT/cs2-map-icons/main/images/de_mirage.png" },
+  { id: "inferno", name: "Inferno", img: "https://raw.githubusercontent.com/MurkyYT/cs2-map-icons/main/images/de_inferno.png" },
+  { id: "dust2", name: "Dust 2", img: "https://raw.githubusercontent.com/MurkyYT/cs2-map-icons/main/images/de_dust2.png" },
+  { id: "nuke", name: "Nuke", img: "https://raw.githubusercontent.com/MurkyYT/cs2-map-icons/main/images/de_nuke.png" },
+  { id: "overpass", name: "Overpass", img: "https://raw.githubusercontent.com/MurkyYT/cs2-map-icons/main/images/de_overpass.png" },
+  { id: "vertigo", name: "Vertigo", img: "https://raw.githubusercontent.com/MurkyYT/cs2-map-icons/main/images/de_vertigo.png" },
+  { id: "ancient", name: "Ancient", img: "https://raw.githubusercontent.com/MurkyYT/cs2-map-icons/main/images/de_ancient.png" },
+  { id: "anubis", name: "Anubis", img: "https://raw.githubusercontent.com/MurkyYT/cs2-map-icons/main/images/de_anubis.png" },
+  { id: "train", name: "Train", img: "https://raw.githubusercontent.com/MurkyYT/cs2-map-icons/main/images/de_train.png" },
+  { id: "cache", name: "Cache", img: "https://raw.githubusercontent.com/MurkyYT/cs2-map-icons/main/images/de_cache.png" },
+  { id: "cobblestone", name: "Cobblestone", img: "https://raw.githubusercontent.com/MurkyYT/cs2-map-icons/main/images/de_cbble.png" },
 ];
 
 const mapPickerEl = document.getElementById("map-picker");
@@ -205,24 +248,32 @@ function renderizarMapPicker() {
   mapPickerEl.innerHTML = MAPAS.map((m) => {
     const marcado = mapaSelecionados.has(m.id);
     return `
-      <label class="player-row map-row ${marcado ? "selected" : ""}" data-id="${m.id}">
-        <input type="checkbox" ${marcado ? "checked" : ""} />
-        <span class="player-name">${escapeHtml(m.name)}</span>
-      </label>
+      <div class="map-tile ${marcado ? "selected" : ""}" data-id="${m.id}" style="background-image:url('${m.img}')" role="button" tabindex="0" aria-pressed="${marcado}">
+        <div class="map-tile-check"><i class="ti ti-check"></i></div>
+        <span class="map-tile-name">${escapeHtml(m.name)}</span>
+      </div>
     `;
   }).join("");
 
-  mapPickerEl.querySelectorAll(".map-row").forEach((row) => {
-    const checkbox = row.querySelector("input");
-    checkbox.addEventListener("change", () => {
-      const id = row.dataset.id;
-      if (checkbox.checked) {
-        mapaSelecionados.add(id);
-      } else {
+  mapPickerEl.querySelectorAll(".map-tile").forEach((tile) => {
+    const alternar = () => {
+      const id = tile.dataset.id;
+      const marcado = mapaSelecionados.has(id);
+      if (marcado) {
         mapaSelecionados.delete(id);
+      } else {
+        mapaSelecionados.add(id);
       }
-      row.classList.toggle("selected", checkbox.checked);
+      tile.classList.toggle("selected", !marcado);
+      tile.setAttribute("aria-pressed", String(!marcado));
       atualizarContagemMapa();
+    };
+    tile.addEventListener("click", alternar);
+    tile.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        alternar();
+      }
     });
   });
 }
@@ -282,11 +333,11 @@ function renderizarTimes(timeA, timeB, somaA, somaB) {
   document.getElementById("team-b-total").textContent = `${somaB} pts`;
 
   document.getElementById("team-a-list").innerHTML = timeA
-    .map((j) => `<li>${escapeHtml(j.name)} <span class="pts">${j.points}</span></li>`)
+    .map((j) => `<li>${avatarHtml(j)}<span class="team-player-name">${escapeHtml(j.name)}</span> <span class="pts">${j.points}</span></li>`)
     .join("");
 
   document.getElementById("team-b-list").innerHTML = timeB
-    .map((j) => `<li>${escapeHtml(j.name)} <span class="pts">${j.points}</span></li>`)
+    .map((j) => `<li>${avatarHtml(j)}<span class="team-player-name">${escapeHtml(j.name)}</span> <span class="pts">${j.points}</span></li>`)
     .join("");
 
   teamsResultEl.classList.remove("hidden");

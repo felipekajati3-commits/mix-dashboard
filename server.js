@@ -121,7 +121,57 @@ function sortearTimes(jogadores) {
   return { timeA, timeB, somaA, somaB };
 }
 
-// ---------------- ROTAS ----------------
+// ---------------- AVATARES (STEAM API) ----------------
+
+// Cache simples em memória: evita bater na API da Steam toda hora
+// (ela tem limite de chamadas). Cada avatar fica guardado por 30 min.
+const avatarCache = new Map(); // steam_id -> { url, expira }
+const AVATAR_CACHE_MS = 30 * 60 * 1000;
+
+// Busca avatares de uma lista de steam_ids, usando cache quando possivel
+// e so chamando a API da Steam pelos que faltam (em lotes de 100, que e
+// o maximo aceito por chamada).
+async function buscarAvatares(steamIds) {
+  const agora = Date.now();
+  const resultado = {};
+  const faltando = [];
+
+  for (const id of steamIds) {
+    const cache = avatarCache.get(id);
+    if (cache && cache.expira > agora) {
+      resultado[id] = cache.url;
+    } else {
+      faltando.push(id);
+    }
+  }
+
+  if (!faltando.length || !config.steamApiKey) return resultado;
+
+  // A API da Steam aceita no maximo 100 steamids por chamada.
+  for (let i = 0; i < faltando.length; i += 100) {
+    const lote = faltando.slice(i, i + 100);
+    try {
+      const url = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${config.steamApiKey}&steamids=${lote.join(",")}`;
+      const resp = await fetch(url);
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      const players = data?.response?.players || [];
+      for (const p of players) {
+        const avatarUrl = p.avatarfull || p.avatarmedium || p.avatar || null;
+        if (avatarUrl) {
+          resultado[p.steamid] = avatarUrl;
+          avatarCache.set(p.steamid, { url: avatarUrl, expira: agora + AVATAR_CACHE_MS });
+        }
+      }
+    } catch (err) {
+      console.error("Erro ao buscar avatares na Steam API:", err.message);
+    }
+  }
+
+  return resultado;
+}
+
+
 
 app.get("/api/leaderboard", async (req, res) => {
   try {
@@ -129,7 +179,9 @@ app.get("/api/leaderboard", async (req, res) => {
       "SELECT steam_id, name, points, `rank` FROM rank_mix_k4ranks ORDER BY points DESC LIMIT ?",
       [config.leaderboardLimit]
     );
-    res.json(rows);
+    const avatares = await buscarAvatares(rows.map((r) => r.steam_id));
+    const comAvatar = rows.map((r) => ({ ...r, avatar_url: avatares[r.steam_id] || null }));
+    res.json(comAvatar);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erro ao buscar o ranking." });
@@ -144,7 +196,9 @@ app.get("/api/players", async (req, res) => {
       "SELECT steam_id, name, points FROM rank_mix_k4ranks WHERE name LIKE ? ORDER BY points DESC LIMIT 200",
       [busca]
     );
-    res.json(rows);
+    const avatares = await buscarAvatares(rows.map((r) => r.steam_id));
+    const comAvatar = rows.map((r) => ({ ...r, avatar_url: avatares[r.steam_id] || null }));
+    res.json(comAvatar);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erro ao buscar jogadores." });

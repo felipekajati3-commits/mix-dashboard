@@ -184,9 +184,9 @@ main {
 
 .rank-row {
   display: grid;
-  grid-template-columns: 40px 1fr auto 90px;
+  grid-template-columns: 32px 28px 1fr auto 90px;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-left: 3px solid var(--ct-dim);
@@ -247,6 +247,65 @@ main {
 }
 
 .loading { color: var(--muted); padding: 20px 0; }
+
+/* ---------- Avatares ---------- */
+
+.avatar-img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  display: block;
+}
+
+.avatar-fallback {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.rank-avatar-wrap {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.rank-icon-badge {
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+}
+
+.team-player-name {
+  flex: 1;
+}
+
+/* Ícones de patente, agrupados por faixa de rank */
+.patente-silver { color: #9aa2ad; }
+.patente-gold { color: #c9a04a; }
+.patente-guardian { color: var(--ct); }
+.patente-eagle { color: var(--t); }
+.patente-elite { color: var(--gold); }
 
 /* ---------- Sorteio ---------- */
 
@@ -439,7 +498,8 @@ main {
 
 .team-list li {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
   font-size: 14px;
   padding: 6px 0;
 }
@@ -485,6 +545,39 @@ main {
 
 .sorteio-live.hidden { display: none; }
 
+/* ---------- Roleta de nomes (sorteio de times) ---------- */
+
+.sorteio-roleta {
+  background: var(--panel);
+  border: 1px solid var(--t);
+  padding: 16px 18px;
+  margin-top: 4px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.sorteio-roleta.hidden { display: none; }
+
+.roleta-label {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: var(--t);
+  margin-bottom: 8px;
+}
+
+.roleta-nome {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--text);
+  letter-spacing: 0.5px;
+  overflow: hidden;
+}
+
 .live-dot {
   width: 9px;
   height: 9px;
@@ -503,15 +596,67 @@ main {
 
 .map-picker {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 6px;
-  border: 1px solid var(--line);
-  padding: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
   margin-bottom: 18px;
 }
 
-.map-row {
-  justify-content: flex-start;
+.map-tile {
+  position: relative;
+  height: 90px;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--panel-2);
+  border: 2px solid var(--line);
+  cursor: pointer;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  transition: border-color 0.15s ease, filter 0.15s ease;
+  filter: grayscale(70%) brightness(0.65);
+}
+
+.map-tile:hover {
+  filter: grayscale(30%) brightness(0.85);
+}
+
+.map-tile.selected {
+  border-color: var(--t);
+  filter: none;
+}
+
+.map-tile-name {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+  padding: 18px 10px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.map-tile-check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  background: var(--t);
+  color: #14181d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: all 0.15s ease;
+  z-index: 1;
+}
+
+.map-tile.selected .map-tile-check {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .map-result {
