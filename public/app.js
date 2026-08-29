@@ -29,7 +29,7 @@ async function carregarRanking() {
         const pos = i + 1;
         const pct = Math.max(4, (j.points / maxPts) * 100);
         return `
-          <div class="rank-row pos-${pos}">
+          <div class="rank-row pos-${pos}" data-steamid="${j.steam_id}" role="button" tabindex="0">
             <div class="rank-pos">${String(pos).padStart(2, "0")}</div>
             ${avatarHtml(j)}
             <div class="rank-name-wrap">
@@ -43,6 +43,17 @@ async function carregarRanking() {
         `;
       })
       .join("");
+
+    container.querySelectorAll(".rank-row").forEach((row) => {
+      const abrir = () => abrirPerfilJogador(row.dataset.steamid);
+      row.addEventListener("click", abrir);
+      row.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          abrir();
+        }
+      });
+    });
   } catch (err) {
     container.innerHTML = `<div class="loading">Erro ao carregar o ranking.</div>`;
   }
@@ -173,6 +184,10 @@ const liveEl = document.getElementById("sorteio-live");
 const roletaNomeEl = document.getElementById("roleta-nome");
 const socket = io();
 
+socket.on("online:count", (n) => {
+  if (onlineCountEl) onlineCountEl.textContent = n;
+});
+
 let roletaInterval = null;
 
 socket.on("sorteio:iniciado", ({ jogadores }) => {
@@ -201,6 +216,9 @@ socket.on("sorteio:resultado", ({ timeA, timeB, somaA, somaB }) => {
   renderizarTimes(timeA, timeB, somaA, somaB);
   btnSortear.textContent = "Sortear times";
   btnSortear.disabled = selecionados.size < 2;
+  // O registro no histórico é salvo pelo servidor logo depois de emitir
+  // o resultado, então dá uma folga curta antes de recarregar a lista.
+  setTimeout(carregarHistoricoSorteios, 500);
 });
 
 // ---------- Sorteio de mapa ----------
@@ -328,5 +346,126 @@ function renderizarTimes(timeA, timeB, somaA, somaB) {
 
   teamsResultEl.classList.remove("hidden");
 }
+
+// ---------- Modal de perfil do jogador ----------
+
+const modalEl = document.getElementById("player-modal");
+const modalContentEl = document.getElementById("modal-content");
+const modalCloseEl = document.getElementById("modal-close");
+
+async function abrirPerfilJogador(steamId) {
+  if (!steamId) return;
+  modalContentEl.innerHTML = `<div class="loading">Carregando…</div>`;
+  modalEl.classList.remove("hidden");
+
+  try {
+    const res = await fetch(`/api/player/${encodeURIComponent(steamId)}`);
+    if (!res.ok) throw new Error("Jogador não encontrado.");
+    const j = await res.json();
+    renderizarPerfilJogador(j);
+  } catch (err) {
+    modalContentEl.innerHTML = `<div class="loading">Erro ao carregar perfil.</div>`;
+  }
+}
+
+function renderizarPerfilJogador(j) {
+  const totalJogos = (j.game_win || 0) + (j.game_lose || 0);
+
+  const stats = [
+    { label: "Pontos", value: j.points },
+    { label: "Patente", value: j.rank || "—" },
+    { label: "Kills", value: j.kills },
+    { label: "Deaths", value: j.deaths },
+    { label: "Assistências", value: j.assists },
+    { label: "K/D", value: j.kd },
+    { label: "Headshots", value: j.headshots },
+    { label: "HS %", value: `${j.hs_pct}%` },
+    { label: "Precisão", value: `${j.accuracy}%` },
+    { label: "MVPs", value: j.mvp },
+    { label: "Vitórias", value: j.game_win },
+    { label: "Derrotas", value: j.game_lose },
+    { label: "Taxa de vitória", value: totalJogos > 0 ? `${j.win_rate}%` : "—" },
+    { label: "Rounds vencidos", value: j.round_win },
+    { label: "Bombas plantadas", value: j.bomb_planted },
+    { label: "Bombas defusadas", value: j.bomb_defused },
+  ];
+
+  modalContentEl.innerHTML = `
+    <div class="modal-profile-head">
+      ${avatarHtml(j)}
+      <div>
+        <div class="modal-profile-name">${escapeHtml(j.name || "Jogador")}</div>
+        <div class="modal-profile-rank">${escapeHtml(j.rank || "")}</div>
+      </div>
+    </div>
+    <div class="modal-stats-grid">
+      ${stats
+        .map(
+          (s) => `
+        <div class="modal-stat">
+          <span class="modal-stat-label">${escapeHtml(s.label)}</span>
+          <span class="modal-stat-value">${s.value}</span>
+        </div>
+      `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function fecharModal() {
+  modalEl.classList.add("hidden");
+}
+
+modalCloseEl.addEventListener("click", fecharModal);
+modalEl.addEventListener("click", (e) => {
+  if (e.target === modalEl) fecharModal();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") fecharModal();
+});
+
+// ---------- Contador de online (fixo no header) ----------
+
+const onlineCountEl = document.getElementById("online-count");
+
+// ---------- Histórico de sorteios ----------
+
+const historyEl = document.getElementById("draft-history");
+
+async function carregarHistoricoSorteios() {
+  if (!historyEl) return;
+  try {
+    const res = await fetch("/api/draft-history");
+    const historico = await res.json();
+
+    if (!historico.length) {
+      historyEl.innerHTML = `<div class="loading">Nenhum sorteio registrado ainda.</div>`;
+      return;
+    }
+
+    historyEl.innerHTML = historico
+      .map((h) => {
+        const data = new Date(h.criado_em);
+        const dataFmt = data.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+        const nomesA = h.timeA.map((j) => escapeHtml(j.name)).join(", ");
+        const nomesB = h.timeB.map((j) => escapeHtml(j.name)).join(", ");
+        return `
+          <div class="history-item">
+            <div class="history-item-date">${dataFmt}</div>
+            <div class="history-item-teams">
+              <div class="history-item-team"><span class="history-team-label">Time A (${h.somaA} pts):</span> ${nomesA}</div>
+              <div class="history-item-team"><span class="history-team-label">Time B (${h.somaB} pts):</span> ${nomesB}</div>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+  } catch (err) {
+    historyEl.innerHTML = `<div class="loading">Erro ao carregar histórico.</div>`;
+  }
+}
+
+carregarHistoricoSorteios();
 
 carregarRanking();

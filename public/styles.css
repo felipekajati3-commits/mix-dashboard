@@ -196,6 +196,15 @@ main {
   border: 1px solid var(--line);
   border-left: 3px solid var(--ct-dim);
   padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.rank-row:hover,
+.rank-row:focus-visible {
+  background: var(--panel-2);
+  border-color: var(--t);
+  outline: none;
 }
 
 .rank-row.pos-1 { border-left-color: var(--gold); }
@@ -708,4 +717,176 @@ main {
 @media (max-width: 640px) {
   .teams-result { grid-template-columns: 1fr; }
   .vs-divider { padding: 10px 0; }
+}
+
+/* ---------- Indicador de online (header) ---------- */
+
+.online-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.online-indicator #online-count {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.online-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3ecf6e;
+  box-shadow: 0 0 6px #3ecf6e;
+  flex-shrink: 0;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+/* ---------- Modal de perfil do jogador ---------- */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100;
+}
+
+.modal-overlay.hidden { display: none; }
+
+.modal-box {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--t);
+  max-width: 480px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 28px 24px 24px;
+  animation: reveal 0.15s ease;
+}
+
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px;
+}
+
+.modal-close:hover { color: var(--text); }
+
+.modal-profile-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.modal-profile-head .avatar-img,
+.modal-profile-head .avatar-fallback {
+  width: 56px;
+  height: 56px;
+}
+
+.modal-profile-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--t);
+}
+
+.modal-profile-rank {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+.modal-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.modal-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  padding: 10px 12px;
+}
+
+.modal-stat-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.modal-stat-value {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* ---------- Histórico de sorteios ---------- */
+
+.history-head { margin-top: 40px; }
+
+.draft-history {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history-item {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--t-dim);
+  padding: 12px 16px;
+}
+
+.history-item-date {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.history-item-teams {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.history-item-team {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.history-team-label {
+  color: var(--t);
+  font-weight: 600;
 }

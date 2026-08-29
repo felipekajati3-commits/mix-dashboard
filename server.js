@@ -17,9 +17,11 @@ io.on("connection", (socket) => {
   // Nada de especial a fazer aqui por enquanto, mas é útil pra debug
   // saber quantas pessoas estão vendo a página em tempo real.
   console.log(`Cliente conectado (${io.engine.clientsCount} online)`);
+  io.emit("online:count", io.engine.clientsCount);
 
   socket.on("disconnect", () => {
     console.log(`Cliente saiu (${io.engine.clientsCount} online)`);
+    io.emit("online:count", io.engine.clientsCount);
   });
 });
 
@@ -32,6 +34,23 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 5,
 });
+
+// ---------------- HISTÓRICO DE SORTEIOS (em memória) ----------------
+// Guardado só na memória do servidor (não no banco) e filtrado pra
+// mostrar apenas os sorteios de "hoje" - reseta sozinho todo dia,
+// e também some se o servidor reiniciar (não precisa durar muito).
+let historicoSorteios = []; // { criado_em: Date, timeA, timeB, somaA, somaB }
+
+function mesmoDia(a, b) {
+  return a.toDateString() === b.toDateString();
+}
+
+// Remove do array qualquer sorteio que não seja de hoje, pra não
+// acumular memória à toa com o passar dos dias.
+function limparHistoricoAntigo() {
+  const agora = new Date();
+  historicoSorteios = historicoSorteios.filter((h) => mesmoDia(h.criado_em, agora));
+}
 
 // Gera todas as combinacoes de indices de tamanho "k" a partir de "n"
 // indices possiveis (0..n-1). Usado pra testar toda divisao possivel
@@ -176,7 +195,7 @@ async function buscarAvatares(steamIds) {
 app.get("/api/leaderboard", async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT r.steam_id, r.name, r.points, r.rank,
+      `SELECT r.steam_id, r.name, r.points, r.\`rank\`,
               COALESCE(s.kills, 0) AS kills,
               COALESCE(s.deaths, 0) AS deaths,
               COALESCE(s.headshots, 0) AS headshots
@@ -247,6 +266,19 @@ app.post("/api/draft", async (req, res) => {
     setTimeout(() => {
       io.emit("sorteio:resultado", resultado);
       sorteioEmAndamento = false;
+
+      // Guarda o resultado no histórico do dia (em memória), pra dar
+      // pra consultar e ajudar a não repetir sempre a mesma combinação.
+      const timeANomes = resultado.timeA.map((j) => ({ steam_id: j.steam_id, name: j.name }));
+      const timeBNomes = resultado.timeB.map((j) => ({ steam_id: j.steam_id, name: j.name }));
+      historicoSorteios.push({
+        criado_em: new Date(),
+        timeA: timeANomes,
+        timeB: timeBNomes,
+        somaA: resultado.somaA,
+        somaB: resultado.somaB,
+      });
+      limparHistoricoAntigo();
     }, 3000);
 
     res.json({ ok: true });
@@ -295,6 +327,63 @@ app.post("/api/draft-mapa", async (req, res) => {
     console.error(err);
     mapaSorteioEmAndamento = false;
     res.status(500).json({ error: "Erro ao sortear o mapa." });
+  }
+});
+
+// Retorna os sorteios de hoje, mais recente primeiro.
+app.get("/api/draft-history", (req, res) => {
+  limparHistoricoAntigo();
+  const ordenado = [...historicoSorteios].sort((a, b) => b.criado_em - a.criado_em);
+  res.json(ordenado);
+});
+
+// Estatísticas detalhadas de um único jogador (usado no modal de perfil).
+app.get("/api/player/:steam_id", async (req, res) => {
+  try {
+    const { steam_id } = req.params;
+    const [rows] = await pool.query(
+      `SELECT r.steam_id, r.name, r.points, r.\`rank\`,
+              COALESCE(s.kills, 0) AS kills,
+              COALESCE(s.deaths, 0) AS deaths,
+              COALESCE(s.assists, 0) AS assists,
+              COALESCE(s.headshots, 0) AS headshots,
+              COALESCE(s.mvp, 0) AS mvp,
+              COALESCE(s.shoots, 0) AS shoots,
+              COALESCE(s.hits_given, 0) AS hits_given,
+              COALESCE(s.round_win, 0) AS round_win,
+              COALESCE(s.round_lose, 0) AS round_lose,
+              COALESCE(s.game_win, 0) AS game_win,
+              COALESCE(s.game_lose, 0) AS game_lose,
+              COALESCE(s.bomb_planted, 0) AS bomb_planted,
+              COALESCE(s.bomb_defused, 0) AS bomb_defused
+       FROM rank_mix_k4ranks r
+       LEFT JOIN rank_mix_k4stats s ON s.steam_id = r.steam_id
+       WHERE r.steam_id = ?
+       LIMIT 1`,
+      [steam_id]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ error: "Jogador não encontrado." });
+    }
+
+    const j = rows[0];
+    const totalJogos = j.game_win + j.game_lose;
+    const perfil = {
+      ...j,
+      hs_pct: j.kills > 0 ? Math.round((j.headshots / j.kills) * 100) : 0,
+      kd: j.deaths > 0 ? Math.round((j.kills / j.deaths) * 100) / 100 : j.kills,
+      win_rate: totalJogos > 0 ? Math.round((j.game_win / totalJogos) * 100) : 0,
+      accuracy: j.shoots > 0 ? Math.round((j.hits_given / j.shoots) * 100) : 0,
+    };
+
+    const avatares = await buscarAvatares([steam_id]);
+    perfil.avatar_url = avatares[steam_id] || null;
+
+    res.json(perfil);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao buscar perfil do jogador." });
   }
 });
 
