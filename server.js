@@ -176,11 +176,22 @@ async function buscarAvatares(steamIds) {
 app.get("/api/leaderboard", async (req, res) => {
   try {
     const [rows] = await pool.query(
-      "SELECT steam_id, name, points, `rank` FROM rank_mix_k4ranks ORDER BY points DESC LIMIT ?",
+      `SELECT r.steam_id, r.name, r.points, r.rank,
+              COALESCE(s.kills, 0) AS kills,
+              COALESCE(s.deaths, 0) AS deaths,
+              COALESCE(s.headshots, 0) AS headshots
+       FROM rank_mix_k4ranks r
+       LEFT JOIN rank_mix_k4stats s ON s.steam_id = r.steam_id
+       ORDER BY r.points DESC
+       LIMIT ?`,
       [config.leaderboardLimit]
     );
-    const avatares = await buscarAvatares(rows.map((r) => r.steam_id));
-    const comAvatar = rows.map((r) => ({ ...r, avatar_url: avatares[r.steam_id] || null }));
+    const comStats = rows.map((r) => ({
+      ...r,
+      hs_pct: r.kills > 0 ? Math.round((r.headshots / r.kills) * 100) : 0,
+    }));
+    const avatares = await buscarAvatares(comStats.map((r) => r.steam_id));
+    const comAvatar = comStats.map((r) => ({ ...r, avatar_url: avatares[r.steam_id] || null }));
     res.json(comAvatar);
   } catch (err) {
     console.error(err);

@@ -34,6 +34,7 @@ async function carregarRanking() {
             ${avatarHtml(j)}
             <div class="rank-name-wrap">
               <div class="rank-name">${escapeHtml(j.name || "Jogador")}</div>
+              <div class="rank-stats-line">Kills: ${j.kills ?? 0} &nbsp; Deaths: ${j.deaths ?? 0} &nbsp; HS: ${j.hs_pct ?? 0}%</div>
               <div class="rank-bar-track"><div class="rank-bar-fill" style="width:${pct}%"></div></div>
             </div>
             <div class="rank-tag">${escapeHtml(j.rank || "")}</div>

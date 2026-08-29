@@ -220,6 +220,15 @@ main {
   text-overflow: ellipsis;
 }
 
+.rank-stats-line {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f5934f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .rank-bar-track {
   height: 4px;
   background: var(--line);
