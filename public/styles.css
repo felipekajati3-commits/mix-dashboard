@@ -103,13 +103,18 @@ body {
 
 .tab-btn:hover {
   color: var(--text);
-  border-color: var(--ct);
+  border-color: var(--t);
 }
 
 .tab-btn.active {
-  background: var(--ct);
-  color: #0c0f12;
-  border-color: var(--ct);
+  background: var(--t);
+  color: #14181d;
+  border-color: var(--t);
+}
+
+.tab-btn.active:hover {
+  background: #f5934f;
+  border-color: #f5934f;
 }
 
 /* ---------- Botão conectar ao servidor ---------- */
@@ -215,6 +220,7 @@ main {
 .rank-name {
   font-weight: 600;
   font-size: 14px;
+  color: #f5934f;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -223,7 +229,7 @@ main {
 .rank-stats-line {
   font-size: 12px;
   font-weight: 600;
-  color: #f5934f;
+  color: #fff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
