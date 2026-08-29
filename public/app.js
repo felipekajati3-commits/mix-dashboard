@@ -29,7 +29,7 @@ async function carregarRanking() {
         const pos = i + 1;
         const pct = Math.max(4, (j.points / maxPts) * 100);
         return `
-          <div class="rank-row pos-${pos}" data-steamid="${j.steam_id}" role="button" tabindex="0">
+          <div class="rank-row pos-${pos}" data-steamid="${j.steam_id}" tabindex="0">
             <div class="rank-pos">${String(pos).padStart(2, "0")}</div>
             ${avatarHtml(j)}
             <div class="rank-name-wrap">
@@ -45,14 +45,17 @@ async function carregarRanking() {
       .join("");
 
     container.querySelectorAll(".rank-row").forEach((row) => {
-      const abrir = () => abrirPerfilJogador(row.dataset.steamid);
-      row.addEventListener("click", abrir);
-      row.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          abrir();
-        }
+      row.addEventListener("mouseenter", () => {
+        clearTimeout(tooltipTimeout);
+        mostrarTooltipJogador(row.dataset.steamid, row.getBoundingClientRect());
       });
+      row.addEventListener("mouseleave", () => {
+        tooltipTimeout = setTimeout(fecharModal, 120);
+      });
+      row.addEventListener("focus", () => {
+        mostrarTooltipJogador(row.dataset.steamid, row.getBoundingClientRect());
+      });
+      row.addEventListener("blur", fecharModal);
     });
   } catch (err) {
     container.innerHTML = `<div class="loading">Erro ao carregar o ranking.</div>`;
@@ -347,25 +350,61 @@ function renderizarTimes(timeA, timeB, somaA, somaB) {
   teamsResultEl.classList.remove("hidden");
 }
 
-// ---------- Modal de perfil do jogador ----------
+// ---------- Tooltip de perfil do jogador (aparece ao passar o mouse) ----------
 
 const modalEl = document.getElementById("player-modal");
 const modalContentEl = document.getElementById("modal-content");
-const modalCloseEl = document.getElementById("modal-close");
+let tooltipTimeout = null;
+const perfilCache = new Map(); // steam_id -> dados do perfil já buscados
 
-async function abrirPerfilJogador(steamId) {
+async function mostrarTooltipJogador(steamId, rect) {
   if (!steamId) return;
-  modalContentEl.innerHTML = `<div class="loading">Carregando…</div>`;
+
+  posicionarTooltip(rect);
   modalEl.classList.remove("hidden");
+
+  // Se já buscamos esse jogador antes nessa visita, mostra na hora
+  // sem precisar esperar o servidor de novo.
+  if (perfilCache.has(steamId)) {
+    renderizarPerfilJogador(perfilCache.get(steamId));
+    return;
+  }
+
+  modalContentEl.innerHTML = `<div class="loading">Carregando…</div>`;
 
   try {
     const res = await fetch(`/api/player/${encodeURIComponent(steamId)}`);
     if (!res.ok) throw new Error("Jogador não encontrado.");
     const j = await res.json();
+    perfilCache.set(steamId, j);
     renderizarPerfilJogador(j);
   } catch (err) {
     modalContentEl.innerHTML = `<div class="loading">Erro ao carregar perfil.</div>`;
   }
+}
+
+// Posiciona o tooltip do lado (ou embaixo) da linha que disparou o hover,
+// sempre tentando manter ele dentro da tela.
+function posicionarTooltip(rect) {
+  const largura = 300;
+  const alturaEstimada = 400;
+  const margem = 12;
+
+  let left = rect.right + margem;
+  if (left + largura > window.innerWidth - margem) {
+    left = rect.left - largura - margem;
+  }
+  if (left < margem) {
+    left = Math.max(margem, Math.min(rect.left, window.innerWidth - largura - margem));
+  }
+
+  let top = rect.top;
+  if (top + alturaEstimada > window.innerHeight - margem) {
+    top = Math.max(margem, window.innerHeight - alturaEstimada - margem);
+  }
+
+  modalEl.style.left = `${left}px`;
+  modalEl.style.top = `${top}px`;
 }
 
 function renderizarPerfilJogador(j) {
@@ -416,14 +455,6 @@ function renderizarPerfilJogador(j) {
 function fecharModal() {
   modalEl.classList.add("hidden");
 }
-
-modalCloseEl.addEventListener("click", fecharModal);
-modalEl.addEventListener("click", (e) => {
-  if (e.target === modalEl) fecharModal();
-});
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") fecharModal();
-});
 
 // ---------- Contador de online (fixo no header) ----------
 

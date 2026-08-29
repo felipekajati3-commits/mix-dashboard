@@ -22,14 +22,16 @@
     <button class="tab-btn" data-tab="sorteio">Sorteio</button>
     <button class="tab-btn" data-tab="mapa">Mapa</button>
   </nav>
-  <div class="online-indicator" title="Pessoas vendo o site agora">
-    <span class="online-dot"></span>
-    <span id="online-count">0</span> online
+  <div class="topbar-right">
+    <div class="online-indicator" title="Pessoas vendo o site agora">
+      <span class="online-dot"></span>
+      <span id="online-count">0</span> online
+    </div>
+    <a id="btn-connect" class="btn-connect" href="steam://connect/177.54.146.23:27114/192650">
+      <span class="connect-dot"></span>
+      Conectar ao Servidor
+    </a>
   </div>
-  <a id="btn-connect" class="btn-connect" href="steam://connect/177.54.146.23:27114/192650">
-    <span class="connect-dot"></span>
-    Conectar ao Servidor
-  </a>
 </header>
 
 <main>
@@ -125,12 +127,9 @@
 
 </div>
 
-<div id="player-modal" class="modal-overlay hidden">
-  <div class="modal-box">
-    <button id="modal-close" class="modal-close" aria-label="Fechar">✕</button>
-    <div id="modal-content">
-      <div class="loading">Carregando…</div>
-    </div>
+<div id="player-modal" class="player-tooltip hidden">
+  <div id="modal-content">
+    <div class="loading">Carregando…</div>
   </div>
 </div>
 
