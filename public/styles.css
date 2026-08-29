@@ -112,6 +112,44 @@ body {
   border-color: var(--ct);
 }
 
+/* ---------- Botão conectar ao servidor ---------- */
+
+.btn-connect {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--t);
+  color: #14181d;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 11px 20px;
+  border: 1px solid var(--t);
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-connect:hover {
+  background: #f5934f;
+}
+
+.btn-connect:active {
+  transform: translateY(1px);
+}
+
+.connect-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #14181d;
+  flex-shrink: 0;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
 /* ---------- Layout ---------- */
 
 main {
