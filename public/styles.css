@@ -1,5 +1,5 @@
 :root {
-  --bg: #000000;
+  --bg: #0c0f12;
   --panel: #14181d;
   --panel-2: #1b2027;
   --line: #262c33;
@@ -51,12 +51,10 @@ body {
   gap: 10px;
 }
 
-.brand-logo {
-  height: 46px;
-  width: auto;
-  display: block;
-  -webkit-mask-image: radial-gradient(ellipse 70% 70% at center, black 55%, transparent 100%);
-  mask-image: radial-gradient(ellipse 70% 70% at center, black 55%, transparent 100%);
+.brand-mark {
+  color: var(--ct);
+  font-family: var(--font-mono);
+  font-weight: 700;
 }
 
 .brand h1 {
@@ -112,44 +110,6 @@ body {
   border-color: var(--ct);
 }
 
-/* ---------- Botão conectar ao servidor ---------- */
-
-.btn-connect {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--t);
-  color: #14181d;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  text-decoration: none;
-  padding: 11px 20px;
-  border: 1px solid var(--t);
-  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.btn-connect:hover {
-  background: #f5934f;
-}
-
-.btn-connect:active {
-  transform: translateY(1px);
-}
-
-.connect-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #14181d;
-  flex-shrink: 0;
-  animation: pulse 1.2s ease-in-out infinite;
-}
-
 /* ---------- Layout ---------- */
 
 main {
@@ -184,9 +144,9 @@ main {
 
 .rank-row {
   display: grid;
-  grid-template-columns: 32px 28px 1fr auto 90px;
+  grid-template-columns: 40px 1fr auto 90px;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-left: 3px solid var(--ct-dim);
@@ -232,6 +192,13 @@ main {
   background: var(--ct);
 }
 
+.rank-stats {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.3px;
+}
+
 .rank-tag {
   font-size: 11px;
   color: var(--muted);
@@ -247,42 +214,6 @@ main {
 }
 
 .loading { color: var(--muted); padding: 20px 0; }
-
-/* ---------- Avatares ---------- */
-
-.avatar-img {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-  display: block;
-}
-
-.avatar-fallback {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--panel-2);
-  border: 1px solid var(--line);
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.rank-avatar-wrap {
-  width: 28px;
-  height: 28px;
-  flex-shrink: 0;
-}
-
-.team-player-name {
-  flex: 1;
-}
 
 /* ---------- Sorteio ---------- */
 
@@ -475,8 +406,7 @@ main {
 
 .team-list li {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  justify-content: space-between;
   font-size: 14px;
   padding: 6px 0;
 }
@@ -522,39 +452,6 @@ main {
 
 .sorteio-live.hidden { display: none; }
 
-/* ---------- Roleta de nomes (sorteio de times) ---------- */
-
-.sorteio-roleta {
-  background: var(--panel);
-  border: 1px solid var(--t);
-  padding: 16px 18px;
-  margin-top: 4px;
-  margin-bottom: 12px;
-  text-align: center;
-}
-
-.sorteio-roleta.hidden { display: none; }
-
-.roleta-label {
-  display: block;
-  font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  font-size: 12px;
-  color: var(--t);
-  margin-bottom: 8px;
-}
-
-.roleta-nome {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 22px;
-  color: var(--text);
-  letter-spacing: 0.5px;
-  overflow: hidden;
-}
-
 .live-dot {
   width: 9px;
   height: 9px;
@@ -573,93 +470,25 @@ main {
 
 .map-picker {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 6px;
+  border: 1px solid var(--line);
+  padding: 6px;
   margin-bottom: 18px;
 }
 
-.map-tile {
-  position: relative;
-  height: 90px;
-  background-size: cover;
-  background-position: center;
-  background-color: var(--panel-2);
-  border: 2px solid var(--line);
-  cursor: pointer;
-  display: flex;
-  align-items: flex-end;
-  overflow: hidden;
-  transition: border-color 0.15s ease, filter 0.15s ease;
-  filter: grayscale(70%) brightness(0.65);
-}
-
-.map-tile:hover {
-  filter: grayscale(30%) brightness(0.85);
-}
-
-.map-tile.selected {
-  border-color: var(--t);
-  filter: none;
-}
-
-.map-tile-name {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
-  padding: 18px 10px 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-}
-
-.map-tile-check {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 20px;
-  height: 20px;
-  background: var(--t);
-  color: #14181d;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  opacity: 0;
-  transform: scale(0.6);
-  transition: all 0.15s ease;
-  z-index: 1;
-}
-
-.map-tile.selected .map-tile-check {
-  opacity: 1;
-  transform: scale(1);
+.map-row {
+  justify-content: flex-start;
 }
 
 .map-result {
   margin-top: 12px;
-  background-size: cover;
-  background-position: center;
-  background-color: var(--panel);
+  background: var(--panel);
   border: 1px solid var(--line);
   border-top: 3px solid var(--gold);
-  padding: 44px 20px;
+  padding: 32px 20px;
   text-align: center;
   animation: reveal 0.35s ease;
-  position: relative;
-}
-
-.map-result::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.35));
-}
-
-.map-result-label,
-.map-result-name {
-  position: relative;
-  z-index: 1;
 }
 
 .map-result.hidden { display: none; }

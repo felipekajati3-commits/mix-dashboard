@@ -33,155 +33,46 @@ const pool = mysql.createPool({
   connectionLimit: 5,
 });
 
-// Gera todas as combinacoes de indices de tamanho "k" a partir de "n"
-// indices possiveis (0..n-1). Usado pra testar toda divisao possivel
-// de times do mesmo tamanho e achar a mais equilibrada em pontos.
-function* combinacoesIndices(n, k, inicio = 0, atual = []) {
-  if (atual.length === k) {
-    yield [...atual];
-    return;
-  }
-  for (let i = inicio; i <= n - (k - atual.length); i++) {
-    atual.push(i);
-    yield* combinacoesIndices(n, k, i + 1, atual);
-    atual.pop();
-  }
-}
-
-// Conta quantas combinacoes C(n, k) existem, sem estourar Number
-// pra numeros grandes (usado so pra decidir se vale a pena testar
-// TODAS as combinacoes ou fazer uma busca aleatoria).
-function contarCombinacoes(n, k) {
-  k = Math.min(k, n - k);
-  let resultado = 1;
-  for (let i = 0; i < k; i++) {
-    resultado = (resultado * (n - i)) / (i + 1);
-    if (resultado > 500000) return Infinity;
-  }
-  return Math.round(resultado);
-}
-
-// Distribui os jogadores em dois times SEMPRE do mesmo tamanho
-// (ex: 5x5), buscando entre todas as divisoes possiveis aquela com a
-// menor diferenca de pontos entre os times. Quando o numero de
-// jogadores e impar, um time fica com um jogador a mais (aleatorio
-// qual dos dois). Em caso de empate na diferenca de pontos, sorteia
-// entre as melhores opcoes pra nao ficar sempre o mesmo resultado.
+// Distribui os jogadores em dois times o mais equilibrado possivel,
+// embaralhando empates para o sorteio nao ficar sempre igual.
 function sortearTimes(jogadores) {
-  const n = jogadores.length;
-  const menor = Math.floor(n / 2);
-  const maior = n - menor;
-  const aRecebeExtra = Math.random() < 0.5;
-  const tamanhoA = aRecebeExtra ? maior : menor;
+  const embaralhados = [...jogadores].sort(() => Math.random() - 0.5);
+  const ordenados = embaralhados.sort((a, b) => b.points - a.points);
 
-  const totalPontos = jogadores.reduce((s, j) => s + j.points, 0);
+  const timeA = [];
+  const timeB = [];
+  let somaA = 0;
+  let somaB = 0;
 
-  const testarTodas = contarCombinacoes(n, tamanhoA) <= 500000;
-
-  let melhorDiff = Infinity;
-  let melhoresCombos = [];
-
-  if (testarTodas) {
-    for (const combo of combinacoesIndices(n, tamanhoA)) {
-      const somaA = combo.reduce((s, i) => s + jogadores[i].points, 0);
-      const diff = Math.abs(somaA - (totalPontos - somaA));
-      if (diff < melhorDiff) {
-        melhorDiff = diff;
-        melhoresCombos = [combo];
-      } else if (diff === melhorDiff) {
-        melhoresCombos.push(combo);
-      }
-    }
-  } else {
-    // Times grandes demais pra testar todas as combinacoes: faz uma
-    // busca aleatoria com muitas tentativas e fica com a melhor.
-    const indices = jogadores.map((_, i) => i);
-    for (let t = 0; t < 20000; t++) {
-      const embaralhados = [...indices].sort(() => Math.random() - 0.5);
-      const combo = embaralhados.slice(0, tamanhoA);
-      const somaA = combo.reduce((s, i) => s + jogadores[i].points, 0);
-      const diff = Math.abs(somaA - (totalPontos - somaA));
-      if (diff < melhorDiff) {
-        melhorDiff = diff;
-        melhoresCombos = [combo];
-      } else if (diff === melhorDiff) {
-        melhoresCombos.push(combo);
-      }
+  for (const jogador of ordenados) {
+    if (somaA <= somaB) {
+      timeA.push(jogador);
+      somaA += jogador.points;
+    } else {
+      timeB.push(jogador);
+      somaB += jogador.points;
     }
   }
-
-  const escolhido = melhoresCombos[Math.floor(Math.random() * melhoresCombos.length)];
-  const indicesA = new Set(escolhido);
-
-  const timeA = jogadores.filter((_, i) => indicesA.has(i));
-  const timeB = jogadores.filter((_, i) => !indicesA.has(i));
-  const somaA = timeA.reduce((s, j) => s + j.points, 0);
-  const somaB = timeB.reduce((s, j) => s + j.points, 0);
 
   return { timeA, timeB, somaA, somaB };
 }
 
-// ---------------- AVATARES (STEAM API) ----------------
-
-// Cache simples em memória: evita bater na API da Steam toda hora
-// (ela tem limite de chamadas). Cada avatar fica guardado por 30 min.
-const avatarCache = new Map(); // steam_id -> { url, expira }
-const AVATAR_CACHE_MS = 30 * 60 * 1000;
-
-// Busca avatares de uma lista de steam_ids, usando cache quando possivel
-// e so chamando a API da Steam pelos que faltam (em lotes de 100, que e
-// o maximo aceito por chamada).
-async function buscarAvatares(steamIds) {
-  const agora = Date.now();
-  const resultado = {};
-  const faltando = [];
-
-  for (const id of steamIds) {
-    const cache = avatarCache.get(id);
-    if (cache && cache.expira > agora) {
-      resultado[id] = cache.url;
-    } else {
-      faltando.push(id);
-    }
-  }
-
-  if (!faltando.length || !config.steamApiKey) return resultado;
-
-  // A API da Steam aceita no maximo 100 steamids por chamada.
-  for (let i = 0; i < faltando.length; i += 100) {
-    const lote = faltando.slice(i, i + 100);
-    try {
-      const url = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${config.steamApiKey}&steamids=${lote.join(",")}`;
-      const resp = await fetch(url);
-      if (!resp.ok) continue;
-      const data = await resp.json();
-      const players = data?.response?.players || [];
-      for (const p of players) {
-        const avatarUrl = p.avatarfull || p.avatarmedium || p.avatar || null;
-        if (avatarUrl) {
-          resultado[p.steamid] = avatarUrl;
-          avatarCache.set(p.steamid, { url: avatarUrl, expira: agora + AVATAR_CACHE_MS });
-        }
-      }
-    } catch (err) {
-      console.error("Erro ao buscar avatares na Steam API:", err.message);
-    }
-  }
-
-  return resultado;
-}
-
-
+// ---------------- ROTAS ----------------
 
 app.get("/api/leaderboard", async (req, res) => {
   try {
     const [rows] = await pool.query(
-      "SELECT steam_id, name, points, `rank` FROM rank_mix_k4ranks ORDER BY points DESC LIMIT ?",
+      `SELECT r.steam_id, r.name, r.points, r.\`rank\`,
+              COALESCE(s.kills, 0) AS kills,
+              COALESCE(s.deaths, 0) AS deaths,
+              COALESCE(s.headshots, 0) AS headshots
+       FROM rank_mix_k4ranks r
+       LEFT JOIN rank_mix_k4stats s ON s.steam_id = r.steam_id
+       ORDER BY r.points DESC
+       LIMIT ?`,
       [config.leaderboardLimit]
     );
-    const avatares = await buscarAvatares(rows.map((r) => r.steam_id));
-    const comAvatar = rows.map((r) => ({ ...r, avatar_url: avatares[r.steam_id] || null }));
-    res.json(comAvatar);
+    res.json(rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erro ao buscar o ranking." });
@@ -196,9 +87,7 @@ app.get("/api/players", async (req, res) => {
       "SELECT steam_id, name, points FROM rank_mix_k4ranks WHERE name LIKE ? ORDER BY points DESC LIMIT 200",
       [busca]
     );
-    const avatares = await buscarAvatares(rows.map((r) => r.steam_id));
-    const comAvatar = rows.map((r) => ({ ...r, avatar_url: avatares[r.steam_id] || null }));
-    res.json(comAvatar);
+    res.json(rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erro ao buscar jogadores." });
