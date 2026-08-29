@@ -1,23 +1,3 @@
-// ---------- Conectar ao servidor ----------
-
-const btnConnect = document.getElementById("btn-connect");
-if (btnConnect) {
-  btnConnect.addEventListener("click", () => {
-    const inicio = Date.now();
-    // Se depois de um tempinho a aba ainda estiver em foco, é sinal de
-    // que o navegador não conseguiu abrir o Steam (não instalado, ou
-    // o navegador bloqueou o protocolo) — aí mostra uma dica.
-    setTimeout(() => {
-      if (document.visibilityState === "visible" && Date.now() - inicio < 3500) {
-        alert(
-          "Não conseguimos abrir o Steam automaticamente.\n\n" +
-          "Abra o jogo, aperte ` (aspas simples) pra abrir o console e digite:\n\n" +
-          "connect 177.54.146.23:27114; password 192650"
-        );
-      }
-    }, 2000);
-  });
-}
 
 // ---------- Tabs ----------
 
