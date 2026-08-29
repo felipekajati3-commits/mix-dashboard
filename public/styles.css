@@ -297,6 +297,7 @@ main {
 
 .team-player-name {
   flex: 1;
+  color: var(--t);
 }
 
 /* ---------- Sorteio ---------- */
@@ -356,6 +357,7 @@ main {
   flex: 1;
   font-size: 14px;
   font-weight: 500;
+  color: var(--t);
 }
 
 .player-row .player-pts {
