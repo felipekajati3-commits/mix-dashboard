@@ -1,5 +1,5 @@
 :root {
-  --bg: #0c0f12;
+  --bg: #000000;
   --panel: #14181d;
   --panel-2: #1b2027;
   --line: #262c33;
@@ -51,10 +51,12 @@ body {
   gap: 10px;
 }
 
-.brand-mark {
-  color: var(--ct);
-  font-family: var(--font-mono);
-  font-weight: 700;
+.brand-logo {
+  height: 46px;
+  width: auto;
+  display: block;
+  -webkit-mask-image: radial-gradient(ellipse 70% 70% at center, black 55%, transparent 100%);
+  mask-image: radial-gradient(ellipse 70% 70% at center, black 55%, transparent 100%);
 }
 
 .brand h1 {
