@@ -33,26 +33,90 @@ const pool = mysql.createPool({
   connectionLimit: 5,
 });
 
-// Distribui os jogadores em dois times o mais equilibrado possivel,
-// embaralhando empates para o sorteio nao ficar sempre igual.
+// Gera todas as combinacoes de indices de tamanho "k" a partir de "n"
+// indices possiveis (0..n-1). Usado pra testar toda divisao possivel
+// de times do mesmo tamanho e achar a mais equilibrada em pontos.
+function* combinacoesIndices(n, k, inicio = 0, atual = []) {
+  if (atual.length === k) {
+    yield [...atual];
+    return;
+  }
+  for (let i = inicio; i <= n - (k - atual.length); i++) {
+    atual.push(i);
+    yield* combinacoesIndices(n, k, i + 1, atual);
+    atual.pop();
+  }
+}
+
+// Conta quantas combinacoes C(n, k) existem, sem estourar Number
+// pra numeros grandes (usado so pra decidir se vale a pena testar
+// TODAS as combinacoes ou fazer uma busca aleatoria).
+function contarCombinacoes(n, k) {
+  k = Math.min(k, n - k);
+  let resultado = 1;
+  for (let i = 0; i < k; i++) {
+    resultado = (resultado * (n - i)) / (i + 1);
+    if (resultado > 500000) return Infinity;
+  }
+  return Math.round(resultado);
+}
+
+// Distribui os jogadores em dois times SEMPRE do mesmo tamanho
+// (ex: 5x5), buscando entre todas as divisoes possiveis aquela com a
+// menor diferenca de pontos entre os times. Quando o numero de
+// jogadores e impar, um time fica com um jogador a mais (aleatorio
+// qual dos dois). Em caso de empate na diferenca de pontos, sorteia
+// entre as melhores opcoes pra nao ficar sempre o mesmo resultado.
 function sortearTimes(jogadores) {
-  const embaralhados = [...jogadores].sort(() => Math.random() - 0.5);
-  const ordenados = embaralhados.sort((a, b) => b.points - a.points);
+  const n = jogadores.length;
+  const menor = Math.floor(n / 2);
+  const maior = n - menor;
+  const aRecebeExtra = Math.random() < 0.5;
+  const tamanhoA = aRecebeExtra ? maior : menor;
 
-  const timeA = [];
-  const timeB = [];
-  let somaA = 0;
-  let somaB = 0;
+  const totalPontos = jogadores.reduce((s, j) => s + j.points, 0);
 
-  for (const jogador of ordenados) {
-    if (somaA <= somaB) {
-      timeA.push(jogador);
-      somaA += jogador.points;
-    } else {
-      timeB.push(jogador);
-      somaB += jogador.points;
+  const testarTodas = contarCombinacoes(n, tamanhoA) <= 500000;
+
+  let melhorDiff = Infinity;
+  let melhoresCombos = [];
+
+  if (testarTodas) {
+    for (const combo of combinacoesIndices(n, tamanhoA)) {
+      const somaA = combo.reduce((s, i) => s + jogadores[i].points, 0);
+      const diff = Math.abs(somaA - (totalPontos - somaA));
+      if (diff < melhorDiff) {
+        melhorDiff = diff;
+        melhoresCombos = [combo];
+      } else if (diff === melhorDiff) {
+        melhoresCombos.push(combo);
+      }
+    }
+  } else {
+    // Times grandes demais pra testar todas as combinacoes: faz uma
+    // busca aleatoria com muitas tentativas e fica com a melhor.
+    const indices = jogadores.map((_, i) => i);
+    for (let t = 0; t < 20000; t++) {
+      const embaralhados = [...indices].sort(() => Math.random() - 0.5);
+      const combo = embaralhados.slice(0, tamanhoA);
+      const somaA = combo.reduce((s, i) => s + jogadores[i].points, 0);
+      const diff = Math.abs(somaA - (totalPontos - somaA));
+      if (diff < melhorDiff) {
+        melhorDiff = diff;
+        melhoresCombos = [combo];
+      } else if (diff === melhorDiff) {
+        melhoresCombos.push(combo);
+      }
     }
   }
+
+  const escolhido = melhoresCombos[Math.floor(Math.random() * melhoresCombos.length)];
+  const indicesA = new Set(escolhido);
+
+  const timeA = jogadores.filter((_, i) => indicesA.has(i));
+  const timeB = jogadores.filter((_, i) => !indicesA.has(i));
+  const somaA = timeA.reduce((s, j) => s + j.points, 0);
+  const somaB = timeB.reduce((s, j) => s + j.points, 0);
 
   return { timeA, timeB, somaA, somaB };
 }
