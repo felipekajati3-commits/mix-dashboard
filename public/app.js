@@ -11,18 +11,6 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
 
 // ---------- Ranking ----------
 
-// Ícone e cor por patente do K4-System (agrupadas por faixa).
-function iconePatente(rank) {
-  const r = (rank || "").toUpperCase();
-  if (r.includes("GLOBAL ELITE")) return { icon: "ti-diamond", cls: "patente-elite" };
-  if (r.includes("SUPREME")) return { icon: "ti-crown", cls: "patente-elite" };
-  if (r.includes("LEGENDARY EAGLE")) return { icon: "ti-feather", cls: "patente-eagle" };
-  if (r.includes("DISTINGUISHED") || r.includes("MASTER GUARDIAN")) return { icon: "ti-shield-star", cls: "patente-guardian" };
-  if (r.includes("GOLD NOVA")) return { icon: "ti-star", cls: "patente-gold" };
-  if (r.includes("SILVER")) return { icon: "ti-shield", cls: "patente-silver" };
-  return { icon: "ti-shield", cls: "patente-silver" };
-}
-
 async function carregarRanking() {
   const container = document.getElementById("leaderboard");
   try {
@@ -40,14 +28,10 @@ async function carregarRanking() {
       .map((j, i) => {
         const pos = i + 1;
         const pct = Math.max(4, (j.points / maxPts) * 100);
-        const pat = iconePatente(j.rank);
         return `
           <div class="rank-row pos-${pos}">
             <div class="rank-pos">${String(pos).padStart(2, "0")}</div>
-            <div class="rank-avatar-wrap">
-              ${avatarHtml(j)}
-              <i class="ti ${pat.icon} rank-icon-badge ${pat.cls}"></i>
-            </div>
+            ${avatarHtml(j)}
             <div class="rank-name-wrap">
               <div class="rank-name">${escapeHtml(j.name || "Jogador")}</div>
               <div class="rank-bar-track"><div class="rank-bar-fill" style="width:${pct}%"></div></div>
@@ -249,7 +233,7 @@ function renderizarMapPicker() {
     const marcado = mapaSelecionados.has(m.id);
     return `
       <div class="map-tile ${marcado ? "selected" : ""}" data-id="${m.id}" style="background-image:url('${m.img}')" role="button" tabindex="0" aria-pressed="${marcado}">
-        <div class="map-tile-check"><i class="ti ti-check"></i></div>
+        <div class="map-tile-check">✓</div>
         <span class="map-tile-name">${escapeHtml(m.name)}</span>
       </div>
     `;
@@ -323,6 +307,7 @@ socket.on("mapa:resultado", ({ mapaId }) => {
   const mapa = MAPAS.find((m) => m.id === mapaId);
   mapaLiveEl.classList.add("hidden");
   mapResultNameEl.textContent = mapa ? mapa.name : mapaId;
+  mapResultEl.style.backgroundImage = mapa ? `url('${mapa.img}')` : "none";
   mapResultEl.classList.remove("hidden");
   btnSortearMapa.textContent = "Sortear mapa";
   btnSortearMapa.disabled = mapaSelecionados.size < 1;

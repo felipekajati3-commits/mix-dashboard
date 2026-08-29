@@ -275,37 +275,14 @@ main {
 }
 
 .rank-avatar-wrap {
-  position: relative;
   width: 28px;
   height: 28px;
   flex-shrink: 0;
 }
 
-.rank-icon-badge {
-  position: absolute;
-  bottom: -3px;
-  right: -3px;
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 9px;
-}
-
 .team-player-name {
   flex: 1;
 }
-
-/* Ícones de patente, agrupados por faixa de rank */
-.patente-silver { color: #9aa2ad; }
-.patente-gold { color: #c9a04a; }
-.patente-guardian { color: var(--ct); }
-.patente-eagle { color: var(--t); }
-.patente-elite { color: var(--gold); }
 
 /* ---------- Sorteio ---------- */
 
@@ -661,12 +638,28 @@ main {
 
 .map-result {
   margin-top: 12px;
-  background: var(--panel);
+  background-size: cover;
+  background-position: center;
+  background-color: var(--panel);
   border: 1px solid var(--line);
   border-top: 3px solid var(--gold);
-  padding: 32px 20px;
+  padding: 44px 20px;
   text-align: center;
   animation: reveal 0.35s ease;
+  position: relative;
+}
+
+.map-result::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.35));
+}
+
+.map-result-label,
+.map-result-name {
+  position: relative;
+  z-index: 1;
 }
 
 .map-result.hidden { display: none; }
