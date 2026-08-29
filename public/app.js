@@ -355,11 +355,20 @@ function renderizarTimes(timeA, timeB, somaA, somaB) {
 const modalEl = document.getElementById("player-modal");
 const modalContentEl = document.getElementById("modal-content");
 let tooltipTimeout = null;
+let ultimoRectAncora = null; // linha (rect) que abriu o tooltip, pra poder reposicionar depois
 const perfilCache = new Map(); // steam_id -> dados do perfil já buscados
+
+// Mantém o tooltip aberto se o mouse entrar nele (útil quando o conteúdo
+// é grande e precisa rolar), e fecha se o mouse sair dele também.
+modalEl.addEventListener("mouseenter", () => clearTimeout(tooltipTimeout));
+modalEl.addEventListener("mouseleave", () => {
+  tooltipTimeout = setTimeout(fecharModal, 120);
+});
 
 async function mostrarTooltipJogador(steamId, rect) {
   if (!steamId) return;
 
+  ultimoRectAncora = rect;
   posicionarTooltip(rect);
   modalEl.classList.remove("hidden");
 
@@ -384,11 +393,14 @@ async function mostrarTooltipJogador(steamId, rect) {
 }
 
 // Posiciona o tooltip do lado (ou embaixo) da linha que disparou o hover,
-// sempre tentando manter ele dentro da tela.
-function posicionarTooltip(rect) {
-  const largura = 300;
-  const alturaEstimada = 400;
+// sempre tentando manter ele dentro da tela. Quando já sabemos a altura
+// real do conteúdo (depois de renderizado), usamos ela em vez de um
+// palpite — assim o tooltip nunca fica cortado embaixo da tela.
+function posicionarTooltip(rect, alturaReal) {
+  const largura = 320;
   const margem = 12;
+  const alturaMax = window.innerHeight - margem * 2;
+  const alturaEstimada = Math.min(alturaReal || 380, alturaMax);
 
   let left = rect.right + margem;
   if (left + largura > window.innerWidth - margem) {
@@ -450,6 +462,15 @@ function renderizarPerfilJogador(j) {
         .join("")}
     </div>
   `;
+
+  // O número de estatísticas mostradas pode variar, então só depois de
+  // desenhar o conteúdo é que sabemos a altura real — reposiciona com
+  // base nela pra garantir que nada fique cortado fora da tela.
+  if (ultimoRectAncora) {
+    requestAnimationFrame(() => {
+      posicionarTooltip(ultimoRectAncora, modalEl.offsetHeight);
+    });
+  }
 }
 
 function fecharModal() {
