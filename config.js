@@ -17,5 +17,11 @@ module.exports = {
 
   steamApiKey: process.env.STEAM_API_KEY || "04B6564650DCBC25DA0677E4E8DACC1A",
 
+  // Senha compartilhada com o plugin do servidor de CS2 (o mesmo valor
+  // precisa estar configurado lá). Só quem souber essa senha consegue
+  // consultar o time de um jogador pela rota /api/plugin/time/:steam_id.
+  // IMPORTANTE: troque esse valor por algo só seu antes de usar.
+  pluginSecret: process.env.PLUGIN_SECRET || "power1999",
+
   leaderboardLimit: 50,
 };

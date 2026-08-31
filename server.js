@@ -239,6 +239,11 @@ app.get("/api/players", async (req, res) => {
 // clicando "Sortear" quase junto), o que bagunçaria o que todo mundo vê.
 let sorteioEmAndamento = false;
 
+// Guarda o time de cada steam_id do sorteio mais recente, pra o plugin do
+// servidor de CS2 poder consultar "esse jogador caiu em qual time?" quando
+// ele entrar. Fica só em memória (reinicia quando o site reinicia).
+let ultimoSorteioTimes = null;
+
 app.post("/api/draft", async (req, res) => {
   try {
     if (sorteioEmAndamento) {
@@ -279,6 +284,15 @@ app.post("/api/draft", async (req, res) => {
         somaB: resultado.somaB,
       });
       limparHistoricoAntigo();
+
+      // Time A entra como CT, Time B como T no servidor de CS2. Guarda
+      // por steam_id (como string) pra bater certinho com o que o
+      // plugin do jogo manda.
+      ultimoSorteioTimes = {
+        criado_em: new Date(),
+        ctSteamIds: timeANomes.map((j) => String(j.steam_id)),
+        tSteamIds: timeBNomes.map((j) => String(j.steam_id)),
+      };
     }, 3000);
 
     res.json({ ok: true });
@@ -335,6 +349,30 @@ app.get("/api/draft-history", (req, res) => {
   limparHistoricoAntigo();
   const ordenado = [...historicoSorteios].sort((a, b) => b.criado_em - a.criado_em);
   res.json(ordenado);
+});
+
+// Usado pelo plugin do servidor de CS2 pra saber em qual time colocar um
+// jogador assim que ele entra, de acordo com o sorteio mais recente feito
+// no site. Protegido por uma senha simples (compartilhada com o plugin),
+// já que não precisa de login de usuário — só o servidor de jogo chama isso.
+app.get("/api/plugin/time/:steam_id", (req, res) => {
+  const segredoRecebido = req.header("x-plugin-secret");
+  if (!segredoRecebido || segredoRecebido !== config.pluginSecret) {
+    return res.status(401).json({ error: "Não autorizado." });
+  }
+
+  if (!ultimoSorteioTimes) {
+    return res.json({ team: null });
+  }
+
+  const steamId = String(req.params.steam_id);
+  if (ultimoSorteioTimes.ctSteamIds.includes(steamId)) {
+    return res.json({ team: "CT" });
+  }
+  if (ultimoSorteioTimes.tSteamIds.includes(steamId)) {
+    return res.json({ team: "T" });
+  }
+  return res.json({ team: null });
 });
 
 // Estatísticas detalhadas de um único jogador (usado no modal de perfil).
