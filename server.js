@@ -375,6 +375,51 @@ app.get("/api/plugin/time/:steam_id", (req, res) => {
   return res.json({ team: null });
 });
 
+// Guarda o resultado da última partida (quem ganhou, o placar), recebido
+// via webhook do próprio MatchZy quando a série termina.
+let ultimoResultadoPartida = null;
+
+// Chamado pelo MatchZy (configurado via matchzy_remote_log_url) toda vez
+// que qualquer evento de partida acontece. A gente só se importa com o
+// evento "series_end" (fim da partida) — os outros são só confirmados
+// com 200 OK e ignorados, pra não fazer o MatchZy ficar tentando de novo.
+app.post("/api/matchzy/evento", (req, res) => {
+  const segredoRecebido = req.header("x-plugin-secret");
+  if (!segredoRecebido || segredoRecebido !== config.pluginSecret) {
+    return res.status(401).json({ error: "Não autorizado." });
+  }
+
+  const evento = req.body;
+
+  if (evento.event !== "series_end") {
+    return res.json({ ok: true });
+  }
+
+  // O MatchZy chama de "team1" o time que começou do lado CT e "team2" o
+  // que começou do lado T (o nosso plugin já coloca Time A na CT e Time B
+  // na T ao entrar). Então: team1 = Time A, team2 = Time B.
+  let vencedor = null;
+  if (evento.winner?.team === "team1") vencedor = "A";
+  else if (evento.winner?.team === "team2") vencedor = "B";
+
+  ultimoResultadoPartida = {
+    criado_em: new Date(),
+    vencedor, // "A" | "B" | null (null = empate ou sem vencedor)
+    placarA: evento.team1_series_score ?? null,
+    placarB: evento.team2_series_score ?? null,
+  };
+
+  // Se ainda tiver o sorteio dessa rodada no histórico do dia, anexa o
+  // resultado nele também, pra aparecer junto na lista de sorteios de hoje.
+  if (historicoSorteios.length > 0) {
+    historicoSorteios[historicoSorteios.length - 1].resultado = ultimoResultadoPartida;
+  }
+
+  io.emit("partida:resultado", ultimoResultadoPartida);
+
+  res.json({ ok: true });
+});
+
 // Estatísticas detalhadas de um único jogador (usado no modal de perfil).
 app.get("/api/player/:steam_id", async (req, res) => {
   try {

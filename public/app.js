@@ -207,6 +207,26 @@ socket.on("online:count", (n) => {
 });
 
 let roletaInterval = null;
+const resultadoPartidaEl = document.getElementById("resultado-partida");
+
+// Chega quando o MatchZy avisa que a partida terminou (webhook configurado
+// no servidor de CS2). Mostra um banner dentro do painel de times dizendo
+// quem ganhou, sem precisar dar F5 na página.
+socket.on("partida:resultado", (resultado) => {
+  if (!resultadoPartidaEl) return;
+
+  if (!resultado.vencedor) {
+    resultadoPartidaEl.className = "resultado-partida empate";
+    resultadoPartidaEl.textContent = `Empate — ${resultado.placarA ?? "?"} x ${resultado.placarB ?? "?"}`;
+  } else {
+    const nomeTime = resultado.vencedor === "A" ? "Time A" : "Time B";
+    const classeTime = resultado.vencedor === "A" ? "ct" : "t";
+    resultadoPartidaEl.className = `resultado-partida ${classeTime}`;
+    resultadoPartidaEl.textContent = `🏆 ${nomeTime} venceu — ${resultado.placarA ?? "?"} x ${resultado.placarB ?? "?"}`;
+  }
+
+  resultadoPartidaEl.classList.remove("hidden");
+});
 
 socket.on("sorteio:iniciado", ({ jogadores }) => {
   msgEl.textContent = "";
@@ -214,6 +234,13 @@ socket.on("sorteio:iniciado", ({ jogadores }) => {
   liveEl.classList.remove("hidden");
   btnSortear.disabled = true;
   btnSortear.textContent = "Sorteando…";
+
+  // Um sorteio novo começou, então o resultado da partida anterior (se tinha
+  // algum sendo mostrado) não faz mais sentido nessa tela.
+  if (resultadoPartidaEl) {
+    resultadoPartidaEl.classList.add("hidden");
+    resultadoPartidaEl.innerHTML = "";
+  }
 
   // Fica trocando o nome exibido rapidamente, tipo caça-níquel, enquanto
   // o servidor calcula o resultado — só efeito visual, não influencia o sorteio.
@@ -500,6 +527,25 @@ const onlineCountEl = document.getElementById("online-count");
 
 const historyEl = document.getElementById("draft-history");
 
+// Monta o "selo" de resultado (quem ganhou + placar) pra um item do
+// histórico, se essa rodada já tiver um resultado de partida associado
+// (chega via webhook do MatchZy quando a série termina).
+function renderizarResultadoHistorico(resultado) {
+  if (!resultado) return "";
+
+  if (!resultado.vencedor) {
+    return `<div class="history-item-resultado empate">Empate ${resultado.placarA ?? "?"} x ${resultado.placarB ?? "?"}</div>`;
+  }
+
+  const nomeTime = resultado.vencedor === "A" ? "Time A" : "Time B";
+  const classeTime = resultado.vencedor === "A" ? "ct" : "t";
+  return `
+    <div class="history-item-resultado ${classeTime}">
+      🏆 ${nomeTime} venceu — ${resultado.placarA ?? "?"} x ${resultado.placarB ?? "?"}
+    </div>
+  `;
+}
+
 async function carregarHistoricoSorteios() {
   if (!historyEl) return;
   try {
@@ -524,6 +570,7 @@ async function carregarHistoricoSorteios() {
               <div class="history-item-team"><span class="history-team-label">Time A (${h.somaA} pts):</span> ${nomesA}</div>
               <div class="history-item-team"><span class="history-team-label">Time B (${h.somaB} pts):</span> ${nomesB}</div>
             </div>
+            ${renderizarResultadoHistorico(h.resultado)}
           </div>
         `;
       })

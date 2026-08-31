@@ -21,7 +21,7 @@ module.exports = {
   // precisa estar configurado lá). Só quem souber essa senha consegue
   // consultar o time de um jogador pela rota /api/plugin/time/:steam_id.
   // IMPORTANTE: troque esse valor por algo só seu antes de usar.
-  pluginSecret: process.env.PLUGIN_SECRET || "power1999",
+  pluginSecret: process.env.PLUGIN_SECRET || "troque-essa-senha-agora",
 
   leaderboardLimit: 50,
 };

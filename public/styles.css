@@ -472,6 +472,49 @@ main {
   padding: 9px 18px;
 }
 
+.resultado-partida {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  padding: 12px 20px;
+  margin-bottom: 18px;
+  border: 1px solid var(--line);
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+}
+
+.resultado-partida.hidden { display: none; }
+
+.resultado-partida.ct {
+  color: var(--ct);
+  border-color: rgba(91, 141, 239, 0.5);
+  box-shadow: 0 0 0 1px rgba(91, 141, 239, 0.2), 0 0 20px rgba(91, 141, 239, 0.15);
+  text-shadow: 0 0 10px rgba(91, 141, 239, 0.5);
+}
+
+.resultado-partida.t {
+  color: var(--t);
+  border-color: rgba(232, 130, 60, 0.5);
+  box-shadow: 0 0 0 1px rgba(232, 130, 60, 0.2), 0 0 20px rgba(232, 130, 60, 0.15);
+  text-shadow: 0 0 10px rgba(232, 130, 60, 0.5);
+}
+
+.resultado-partida.empate {
+  color: var(--muted);
+}
+
+.history-item-resultado {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.history-item-resultado.ct { color: var(--ct); }
+.history-item-resultado.t { color: var(--t); }
+.history-item-resultado.empate { color: var(--muted); }
+
 .team-panel {
   background: var(--panel);
   border: 1px solid var(--line);
