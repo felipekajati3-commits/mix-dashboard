@@ -2,6 +2,7 @@ const express = require("express");
 const mysql = require("mysql2/promise");
 const http = require("http");
 const { Server } = require("socket.io");
+const { Rcon } = require("rcon-client");
 const config = require("./config");
 
 const app = express();
@@ -244,6 +245,44 @@ let sorteioEmAndamento = false;
 // ele entrar. Fica só em memória (reinicia quando o site reinicia).
 let ultimoSorteioTimes = null;
 
+// Avisa o servidor de CS2, na hora, sobre o time de cada jogador do sorteio
+// mais recente — assim o plugin já sabe pra onde mandar cada um assim que
+// ele conectar, sem precisar esperar uma chamada HTTP nesse momento (o que
+// causava a tela de escolha de time aparecer antes da troca automática).
+// Se o RCON falhar por qualquer motivo, não trava o site — o plugin ainda
+// tem, como reserva, a forma antiga (consultar a API) de descobrir o time.
+async function avisarServidorSobreSorteio(ctSteamIds, tSteamIds) {
+  if (!config.rcon.host || !config.rcon.password) {
+    console.warn("[RCON] Dados de RCON não configurados — pulando aviso ao servidor.");
+    return;
+  }
+
+  const listaOuVazio = (lista) => (lista.length ? lista.join(",") : "_");
+  const comando = `mixdash_settimes "${listaOuVazio(ctSteamIds)}" "${listaOuVazio(tSteamIds)}"`;
+
+  let rcon;
+  try {
+    rcon = await Rcon.connect({
+      host: config.rcon.host,
+      port: config.rcon.port,
+      password: config.rcon.password,
+      timeout: 4000,
+    });
+    await rcon.send(comando);
+    console.log("[RCON] Times do sorteio enviados pro servidor com sucesso.");
+  } catch (err) {
+    console.warn("[RCON] Não consegui avisar o servidor sobre o sorteio:", err.message);
+  } finally {
+    if (rcon) {
+      try {
+        await rcon.end();
+      } catch {
+        // já desconectado ou com erro, não tem o que fazer aqui
+      }
+    }
+  }
+}
+
 app.post("/api/draft", async (req, res) => {
   try {
     if (sorteioEmAndamento) {
@@ -293,6 +332,10 @@ app.post("/api/draft", async (req, res) => {
         ctSteamIds: timeANomes.map((j) => String(j.steam_id)),
         tSteamIds: timeBNomes.map((j) => String(j.steam_id)),
       };
+
+      // Manda pro servidor na hora — não precisa esperar, roda em segundo
+      // plano (por isso não tem "await" aqui).
+      avisarServidorSobreSorteio(ultimoSorteioTimes.ctSteamIds, ultimoSorteioTimes.tSteamIds);
     }, 3000);
 
     res.json({ ok: true });

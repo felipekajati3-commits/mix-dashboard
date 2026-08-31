@@ -23,5 +23,14 @@ module.exports = {
   // IMPORTANTE: troque esse valor por algo só seu antes de usar.
   pluginSecret: process.env.PLUGIN_SECRET || "troque-essa-senha-agora",
 
+  // Dados de RCON do servidor de CS2 (painel da FireGames > Startup/Network,
+  // costuma mostrar como "RCON Password"). Sem esses três valores certos, o
+  // site não consegue avisar o servidor sobre o sorteio.
+  rcon: {
+    host: process.env.RCON_HOST || "",
+    port: Number(process.env.RCON_PORT) || 27015,
+    password: process.env.RCON_PASSWORD || "",
+  },
+
   leaderboardLimit: 50,
 };
