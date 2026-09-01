@@ -21,6 +21,7 @@
     <button class="tab-btn active" data-tab="ranking">Ranking</button>
     <button class="tab-btn" data-tab="sorteio">Sorteio</button>
     <button class="tab-btn" data-tab="mapa">Mapa</button>
+    <button class="tab-btn" data-tab="temporadas">Temporadas</button>
   </nav>
   <div class="topbar-right">
     <div class="online-indicator" title="Pessoas vendo o site agora">
@@ -125,6 +126,21 @@
     </div>
 
     <div id="mapa-msg" class="msg"></div>
+  </section>
+
+  <section id="tab-temporadas" class="tab-panel">
+    <div class="section-head">
+      <h2>Temporadas passadas</h2>
+      <p class="muted">Ranking congelado de temporadas anteriores, só pra consulta — não conta pra pontuação atual.</p>
+    </div>
+
+    <div id="season-select-wrap" class="season-select-wrap">
+      <select id="season-select" class="season-select"></select>
+    </div>
+
+    <div id="season-leaderboard" class="leaderboard">
+      <div class="loading">Carregando temporada…</div>
+    </div>
   </section>
 
 </main>

@@ -185,6 +185,30 @@ main {
 
 .muted { color: var(--muted); font-size: 14px; margin: 0; }
 
+/* ---------- Temporadas (seletor) ---------- */
+
+.season-select-wrap {
+  margin-bottom: 16px;
+}
+
+.season-select-wrap.hidden { display: none; }
+
+.season-select {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 10px 14px;
+  min-width: 200px;
+  cursor: pointer;
+}
+
+.season-select:focus {
+  outline: none;
+  border-color: var(--t);
+}
+
 /* ---------- Leaderboard ---------- */
 
 .leaderboard {

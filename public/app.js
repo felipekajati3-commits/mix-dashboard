@@ -11,6 +11,50 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
 
 // ---------- Ranking ----------
 
+// Desenha uma lista de jogadores no estilo do ranking dentro de um container
+// qualquer. Usada tanto pelo ranking ao vivo quanto pelas temporadas
+// arquivadas (que são só uma "foto" congelada, sem hover com stats atuais).
+function renderizarListaRanking(jogadores, container, { comTooltip = true } = {}) {
+  const maxPts = Math.max(...jogadores.map((j) => j.points), 1);
+
+  container.innerHTML = jogadores
+    .map((j, i) => {
+      const pos = i + 1;
+      const pct = Math.max(4, (j.points / maxPts) * 100);
+      const hsPct = j.hs_pct ?? (j.kills > 0 ? Math.round((j.headshots / j.kills) * 100) : 0);
+      return `
+        <div class="rank-row pos-${pos}" data-steamid="${j.steam_id}" tabindex="0">
+          <div class="rank-pos">${String(pos).padStart(2, "0")}</div>
+          ${avatarHtml(j)}
+          <div class="rank-name-wrap">
+            <div class="rank-name">${escapeHtml(j.name || "Jogador")}</div>
+            <div class="rank-stats-line">Kills: ${j.kills ?? 0} &nbsp; Deaths: ${j.deaths ?? 0} &nbsp; HS: ${hsPct}%</div>
+            <div class="rank-bar-track"><div class="rank-bar-fill" style="width:${pct}%"></div></div>
+          </div>
+          <div class="rank-tag">${escapeHtml(j.rank || "")}</div>
+          <div class="rank-points">${j.points} pts</div>
+        </div>
+      `;
+    })
+    .join("");
+
+  if (!comTooltip) return;
+
+  container.querySelectorAll(".rank-row").forEach((row) => {
+    row.addEventListener("mouseenter", () => {
+      clearTimeout(tooltipTimeout);
+      mostrarTooltipJogador(row.dataset.steamid, row.getBoundingClientRect());
+    });
+    row.addEventListener("mouseleave", () => {
+      tooltipTimeout = setTimeout(fecharModal, 120);
+    });
+    row.addEventListener("focus", () => {
+      mostrarTooltipJogador(row.dataset.steamid, row.getBoundingClientRect());
+    });
+    row.addEventListener("blur", fecharModal);
+  });
+}
+
 async function carregarRanking() {
   const container = document.getElementById("leaderboard");
   try {
@@ -22,45 +66,63 @@ async function carregarRanking() {
       return;
     }
 
-    const maxPts = Math.max(...jogadores.map((j) => j.points), 1);
-
-    container.innerHTML = jogadores
-      .map((j, i) => {
-        const pos = i + 1;
-        const pct = Math.max(4, (j.points / maxPts) * 100);
-        return `
-          <div class="rank-row pos-${pos}" data-steamid="${j.steam_id}" tabindex="0">
-            <div class="rank-pos">${String(pos).padStart(2, "0")}</div>
-            ${avatarHtml(j)}
-            <div class="rank-name-wrap">
-              <div class="rank-name">${escapeHtml(j.name || "Jogador")}</div>
-              <div class="rank-stats-line">Kills: ${j.kills ?? 0} &nbsp; Deaths: ${j.deaths ?? 0} &nbsp; HS: ${j.hs_pct ?? 0}%</div>
-              <div class="rank-bar-track"><div class="rank-bar-fill" style="width:${pct}%"></div></div>
-            </div>
-            <div class="rank-tag">${escapeHtml(j.rank || "")}</div>
-            <div class="rank-points">${j.points} pts</div>
-          </div>
-        `;
-      })
-      .join("");
-
-    container.querySelectorAll(".rank-row").forEach((row) => {
-      row.addEventListener("mouseenter", () => {
-        clearTimeout(tooltipTimeout);
-        mostrarTooltipJogador(row.dataset.steamid, row.getBoundingClientRect());
-      });
-      row.addEventListener("mouseleave", () => {
-        tooltipTimeout = setTimeout(fecharModal, 120);
-      });
-      row.addEventListener("focus", () => {
-        mostrarTooltipJogador(row.dataset.steamid, row.getBoundingClientRect());
-      });
-      row.addEventListener("blur", fecharModal);
-    });
+    renderizarListaRanking(jogadores, container, { comTooltip: true });
   } catch (err) {
     container.innerHTML = `<div class="loading">Erro ao carregar o ranking.</div>`;
   }
 }
+
+// ---------- Temporadas passadas (arquivo estático, não vem do banco) ----------
+// Os dados ficam num arquivo fixo (public/data/temporadas.json) — pra
+// arquivar uma temporada nova, é só editar esse arquivo e subir pro
+// GitHub de novo, sem precisar mexer no banco de dados.
+
+let temporadasCache = null;
+
+async function carregarTemporadas() {
+  const selectWrap = document.getElementById("season-select-wrap");
+  const selectEl = document.getElementById("season-select");
+  const container = document.getElementById("season-leaderboard");
+
+  try {
+    const res = await fetch("data/temporadas.json");
+    if (!res.ok) throw new Error("Arquivo não encontrado.");
+    temporadasCache = await res.json();
+
+    const chaves = Object.keys(temporadasCache);
+    if (!chaves.length) {
+      selectWrap.classList.add("hidden");
+      container.innerHTML = `<div class="loading">Nenhuma temporada arquivada ainda.</div>`;
+      return;
+    }
+
+    selectEl.innerHTML = chaves
+      .map((k) => `<option value="${k}">${escapeHtml(temporadasCache[k].label || k)}</option>`)
+      .join("");
+    selectEl.addEventListener("change", () => mostrarTemporada(selectEl.value));
+
+    mostrarTemporada(chaves[0]);
+  } catch (err) {
+    selectWrap.classList.add("hidden");
+    container.innerHTML = `<div class="loading">Nenhuma temporada arquivada ainda.</div>`;
+  }
+}
+
+function mostrarTemporada(chave) {
+  const container = document.getElementById("season-leaderboard");
+  const dados = temporadasCache?.[chave];
+
+  if (!dados || !dados.jogadores?.length) {
+    container.innerHTML = `<div class="loading">Nenhum jogador nessa temporada.</div>`;
+    return;
+  }
+
+  renderizarListaRanking(dados.jogadores, container, { comTooltip: false });
+}
+
+carregarTemporadas();
+
+
 
 function escapeHtml(str) {
   const div = document.createElement("div");
