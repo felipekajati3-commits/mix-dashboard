@@ -337,14 +337,33 @@ app.get("/api/draft-history", (req, res) => {
   res.json(ordenado);
 });
 
-// Guarda o resultado da última partida (quem ganhou, o placar), recebido
-// via webhook do próprio MatchZy quando a série termina.
+// Guarda o resultado da última partida (quem ganhou, o placar de rounds),
+// recebido via webhook do próprio MatchZy quando a partida termina.
 let ultimoResultadoPartida = null;
 
+// O MatchZy manda o placar de rounds (tipo 16 x 10) num evento separado
+// ("map_result"), que chega um pouco ANTES do "series_end" (que traz só
+// quem ganhou, sem o placar de rounds). Guarda aqui temporariamente pra
+// juntar os dois quando o "series_end" chegar.
+let ultimoPlacarDeRounds = null;
+
+// Tenta achar o placar de rounds dentro do objeto de um time, testando
+// alguns nomes de campo possíveis (o MatchZy não documenta isso 100%
+// explicitamente, então cobrimos as variações mais prováveis).
+function extrairPlacarDeRounds(timeObj) {
+  if (!timeObj || typeof timeObj !== "object") return null;
+  const camposPossiveis = ["score", "round_score", "roundScore", "team_score"];
+  for (const campo of camposPossiveis) {
+    if (typeof timeObj[campo] === "number") return timeObj[campo];
+  }
+  return null;
+}
+
 // Chamado pelo MatchZy (configurado via matchzy_remote_log_url) toda vez
-// que qualquer evento de partida acontece. A gente só se importa com o
-// evento "series_end" (fim da partida) — os outros são só confirmados
-// com 200 OK e ignorados, pra não fazer o MatchZy ficar tentando de novo.
+// que qualquer evento de partida acontece. A gente usa dois eventos:
+// "map_result" (placar de rounds do mapa) e "series_end" (quem ganhou a
+// partida) — os outros são só confirmados com 200 OK e ignorados, pra não
+// fazer o MatchZy ficar tentando de novo.
 app.post("/api/matchzy/evento", (req, res) => {
   const segredoRecebido = req.header("x-plugin-secret");
   if (!segredoRecebido || segredoRecebido !== config.pluginSecret) {
@@ -352,6 +371,20 @@ app.post("/api/matchzy/evento", (req, res) => {
   }
 
   const evento = req.body;
+
+  if (evento.event === "map_result") {
+    const placarA = extrairPlacarDeRounds(evento.team1);
+    const placarB = extrairPlacarDeRounds(evento.team2);
+
+    if (placarA !== null && placarB !== null) {
+      ultimoPlacarDeRounds = { placarA, placarB };
+    } else {
+      // Não achamos o campo esperado — loga o evento inteiro pra ajustar
+      // o nome do campo certo depois, sem quebrar nada nesse meio tempo.
+      console.warn("[MatchZy] Não achei o placar de rounds no evento map_result:", JSON.stringify(evento));
+    }
+    return res.json({ ok: true });
+  }
 
   if (evento.event !== "series_end") {
     return res.json({ ok: true });
@@ -367,9 +400,14 @@ app.post("/api/matchzy/evento", (req, res) => {
   ultimoResultadoPartida = {
     criado_em: new Date(),
     vencedor, // "A" | "B" | null (null = empate ou sem vencedor)
-    placarA: evento.team1_series_score ?? null,
-    placarB: evento.team2_series_score ?? null,
+    // Preferimos o placar de rounds real (do map_result); se por algum
+    // motivo ele não chegou, caímos pro placar de mapas ganhos na série
+    // (que em BO1 é sempre 1x0, mas é melhor que nada).
+    placarA: ultimoPlacarDeRounds?.placarA ?? evento.team1_series_score ?? null,
+    placarB: ultimoPlacarDeRounds?.placarB ?? evento.team2_series_score ?? null,
   };
+
+  ultimoPlacarDeRounds = null; // limpa pra não vazar pra próxima partida
 
   // Se ainda tiver o sorteio dessa rodada no histórico do dia, anexa o
   // resultado nele também, pra aparecer junto na lista de sorteios de hoje.
