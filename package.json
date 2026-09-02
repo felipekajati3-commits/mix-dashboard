@@ -12,7 +12,6 @@
   "dependencies": {
     "express": "^4.19.2",
     "mysql2": "^3.11.0",
-    "rcon-client": "^4.2.5",
     "socket.io": "^4.7.5"
   }
 }
