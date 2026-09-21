@@ -77,9 +77,9 @@
       "tipo": "steam",
       "steam_id": "76561198000147200",
       "nome": "max The Wizard",
-      "tier": 1,
-      "tier_anterior": 2,
-      "movido_em": "2026-09-21T19:57:33.795Z"
+      "tier": 2,
+      "tier_anterior": 1,
+      "movido_em": "2026-09-21T19:57:47.378Z"
     },
     {
       "id": "m34og5ximubg7wi0",
@@ -325,5 +325,5 @@
       "movido_em": null
     }
   ],
-  "atualizado_em": "2026-09-21T19:57:33.795Z"
+  "atualizado_em": "2026-09-21T19:57:47.378Z"
 }
