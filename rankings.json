@@ -239,9 +239,9 @@
       "tipo": "steam",
       "steam_id": "76561199062714228",
       "nome": "Avestruz",
-      "tier": 3,
-      "tier_anterior": null,
-      "movido_em": null
+      "tier": 4,
+      "tier_anterior": 3,
+      "movido_em": "2026-09-21T19:58:35.077Z"
     },
     {
       "id": "joam62cmmubgggev",
@@ -325,5 +325,5 @@
       "movido_em": null
     }
   ],
-  "atualizado_em": "2026-09-21T19:58:28.672Z"
+  "atualizado_em": "2026-09-21T19:58:35.077Z"
 }
