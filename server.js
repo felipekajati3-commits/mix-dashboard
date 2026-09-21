@@ -2,7 +2,9 @@ const express = require("express");
 const mysql = require("mysql2/promise");
 const http = require("http");
 const { Server } = require("socket.io");
+const crypto = require("crypto");
 const config = require("./config");
+const store = require("./store");
 
 const app = express();
 app.use(express.json());
@@ -80,12 +82,24 @@ function contarCombinacoes(n, k) {
   return Math.round(resultado);
 }
 
+// Quanto um jogador "vale" pro equilibrio dos times, a partir do
+// nivel (1 a 5) que voce definiu no painel de admin. Rank 1 e o
+// melhor e vale mais; rank 5 e o mais fraco e vale menos.
+function pesoDe(jogador) {
+  return config.pesosPorTier[jogador.tier] ?? 3;
+}
+
 // Distribui os jogadores em dois times SEMPRE do mesmo tamanho
 // (ex: 5x5), buscando entre todas as divisoes possiveis aquela com a
-// menor diferenca de pontos entre os times. Quando o numero de
+// menor diferenca de forca entre os times. Quando o numero de
 // jogadores e impar, um time fica com um jogador a mais (aleatorio
-// qual dos dois). Em caso de empate na diferenca de pontos, sorteia
-// entre as melhores opcoes pra nao ficar sempre o mesmo resultado.
+// qual dos dois). Em caso de empate na diferenca, sorteia entre as
+// melhores opcoes pra nao ficar sempre o mesmo resultado.
+//
+// A compensacao que voce descreveu ("se um time ficou com 2 rank 1,
+// os 2 rank 5 vao junto") sai sozinha dessa conta - nao precisa de
+// regra separada. Ex: 3 rank 1, 3 rank 2, 1 rank 3 e 3 rank 5 dao
+// 16 x 17, e qualquer outra divisao fica pior que isso.
 function sortearTimes(jogadores) {
   const n = jogadores.length;
   const menor = Math.floor(n / 2);
@@ -93,7 +107,7 @@ function sortearTimes(jogadores) {
   const aRecebeExtra = Math.random() < 0.5;
   const tamanhoA = aRecebeExtra ? maior : menor;
 
-  const totalPontos = jogadores.reduce((s, j) => s + j.points, 0);
+  const totalPontos = jogadores.reduce((s, j) => s + pesoDe(j), 0);
 
   const testarTodas = contarCombinacoes(n, tamanhoA) <= 500000;
 
@@ -102,7 +116,7 @@ function sortearTimes(jogadores) {
 
   if (testarTodas) {
     for (const combo of combinacoesIndices(n, tamanhoA)) {
-      const somaA = combo.reduce((s, i) => s + jogadores[i].points, 0);
+      const somaA = combo.reduce((s, i) => s + pesoDe(jogadores[i]), 0);
       const diff = Math.abs(somaA - (totalPontos - somaA));
       if (diff < melhorDiff) {
         melhorDiff = diff;
@@ -118,7 +132,7 @@ function sortearTimes(jogadores) {
     for (let t = 0; t < 20000; t++) {
       const embaralhados = [...indices].sort(() => Math.random() - 0.5);
       const combo = embaralhados.slice(0, tamanhoA);
-      const somaA = combo.reduce((s, i) => s + jogadores[i].points, 0);
+      const somaA = combo.reduce((s, i) => s + pesoDe(jogadores[i]), 0);
       const diff = Math.abs(somaA - (totalPontos - somaA));
       if (diff < melhorDiff) {
         melhorDiff = diff;
@@ -134,8 +148,8 @@ function sortearTimes(jogadores) {
 
   const timeA = jogadores.filter((_, i) => indicesA.has(i));
   const timeB = jogadores.filter((_, i) => !indicesA.has(i));
-  const somaA = timeA.reduce((s, j) => s + j.points, 0);
-  const somaB = timeB.reduce((s, j) => s + j.points, 0);
+  const somaA = timeA.reduce((s, j) => s + pesoDe(j), 0);
+  const somaB = timeB.reduce((s, j) => s + pesoDe(j), 0);
 
   return { timeA, timeB, somaA, somaB };
 }
@@ -192,6 +206,170 @@ async function buscarAvatares(steamIds) {
 
 
 
+// ---------------- LOGIN DO ADMIN ----------------
+// Em vez de trazer uma biblioteca de sessão, o login é um cookie
+// assinado: dentro dele vai só a data de validade, e junto vai uma
+// assinatura feita com o SESSION_SECRET. Sem o segredo ninguém
+// consegue forjar um cookie válido, e o servidor não precisa guardar
+// nada na memória (o que sobrevive a restart do Render).
+
+function assinar(valor) {
+  return crypto.createHmac("sha256", config.sessionSecret).update(valor).digest("hex");
+}
+
+function criarTokenAdmin() {
+  const expiraEm = String(Date.now() + config.sessionHoras * 60 * 60 * 1000);
+  return `${expiraEm}.${assinar(expiraEm)}`;
+}
+
+function tokenValido(token) {
+  if (typeof token !== "string" || !token.includes(".")) return false;
+  const [expiraEm, assinatura] = token.split(".");
+  const esperada = assinar(expiraEm);
+
+  // timingSafeEqual exige buffers do mesmo tamanho; comparar assim
+  // evita dar pistas do segredo pelo tempo de resposta.
+  const a = Buffer.from(assinatura || "", "utf8");
+  const b = Buffer.from(esperada, "utf8");
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return false;
+
+  return Number(expiraEm) > Date.now();
+}
+
+function lerCookie(req, nome) {
+  const bruto = req.headers.cookie || "";
+  for (const parte of bruto.split(";")) {
+    const [chave, ...resto] = parte.trim().split("=");
+    if (chave === nome) return decodeURIComponent(resto.join("="));
+  }
+  return null;
+}
+
+// Usado nas rotas que só o admin pode chamar.
+function exigirAdmin(req, res, next) {
+  if (tokenValido(lerCookie(req, "mix_admin"))) return next();
+  return res.status(401).json({ error: "Faça login como admin primeiro." });
+}
+
+app.post("/api/admin/login", (req, res) => {
+  const senha = String(req.body?.senha || "");
+  const esperada = config.adminPassword;
+
+  const a = Buffer.from(senha, "utf8");
+  const b = Buffer.from(esperada, "utf8");
+  const confere = a.length === b.length && crypto.timingSafeEqual(a, b);
+
+  if (!confere) {
+    return res.status(401).json({ error: "Senha incorreta." });
+  }
+
+  res.setHeader(
+    "Set-Cookie",
+    `mix_admin=${criarTokenAdmin()}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${config.sessionHoras * 3600}${
+      process.env.NODE_ENV === "production" ? "; Secure" : ""
+    }`
+  );
+  res.json({ ok: true });
+});
+
+app.post("/api/admin/logout", (req, res) => {
+  res.setHeader("Set-Cookie", "mix_admin=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0");
+  res.json({ ok: true });
+});
+
+// A tela de admin chama isso ao abrir, pra saber se já mostra a lista
+// ou se pede a senha.
+app.get("/api/admin/status", (req, res) => {
+  res.json({
+    logado: tokenValido(lerCookie(req, "mix_admin")),
+    salvandoNoGitHub: store.usandoGitHub(),
+  });
+});
+
+// ---------------- RANKINGS MANUAIS (1 a 5) ----------------
+
+// Lista pública: é o que alimenta a tela de sorteio.
+app.get("/api/rankings", async (req, res) => {
+  try {
+    const dados = await store.ler();
+    const comSteam = dados.jogadores.filter((j) => j.steam_id).map((j) => j.steam_id);
+    const avatares = await buscarAvatares(comSteam);
+    res.json({
+      atualizado_em: dados.atualizado_em,
+      jogadores: dados.jogadores.map((j) => ({
+        ...j,
+        name: j.nome, // alias: o front já usa "name" nos componentes existentes
+        avatar_url: avatares[j.steam_id] || null,
+      })),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao carregar os rankings." });
+  }
+});
+
+// Salva a lista inteira de uma vez (a tela de admin manda tudo junto).
+app.post("/api/admin/rankings", exigirAdmin, async (req, res) => {
+  try {
+    const jogadores = req.body?.jogadores;
+    if (!Array.isArray(jogadores)) {
+      return res.status(400).json({ error: "Formato inválido." });
+    }
+    if (jogadores.length > 200) {
+      return res.status(400).json({ error: "Limite de 200 jogadores." });
+    }
+    const salvos = await store.salvar(jogadores);
+    res.json(salvos);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || "Erro ao salvar os rankings." });
+  }
+});
+
+// Procura um perfil da Steam pelo link ou pelo ID, pra você conseguir
+// adicionar no ranking alguém que ainda nem jogou no servidor (e que
+// por isso não existe na base do K4).
+app.get("/api/admin/steam", exigirAdmin, async (req, res) => {
+  try {
+    const entrada = String(req.query.q || "").trim();
+    if (!entrada) return res.status(400).json({ error: "Informe o link ou o ID da Steam." });
+
+    // Aceita: 7656119... | steamcommunity.com/profiles/7656119... |
+    // steamcommunity.com/id/apelido | só o apelido da URL customizada.
+    let steamId = null;
+    const soNumeros = entrada.match(/^\d{17}$/);
+    const porPerfil = entrada.match(/profiles\/(\d{17})/);
+    const porApelido = entrada.match(/\/id\/([^/?#]+)/);
+
+    if (soNumeros) steamId = entrada;
+    else if (porPerfil) steamId = porPerfil[1];
+    else {
+      const apelido = porApelido ? porApelido[1] : entrada;
+      const url = `https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key=${config.steamApiKey}&vanityurl=${encodeURIComponent(apelido)}`;
+      const resp = await fetch(url);
+      const data = await resp.json();
+      if (data?.response?.success === 1) steamId = data.response.steamid;
+    }
+
+    if (!steamId) return res.status(404).json({ error: "Não achei esse perfil na Steam." });
+
+    const url = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${config.steamApiKey}&steamids=${steamId}`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+    const p = data?.response?.players?.[0];
+    if (!p) return res.status(404).json({ error: "Perfil não encontrado." });
+
+    res.json({
+      steam_id: p.steamid,
+      nome: p.personaname,
+      avatar_url: p.avatarfull || p.avatarmedium || null,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao consultar a Steam." });
+  }
+});
+
 app.get("/api/leaderboard", async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -245,10 +423,28 @@ app.post("/api/draft", async (req, res) => {
       return res.status(409).json({ error: "Já tem um sorteio em andamento. Aguarde terminar." });
     }
 
-    const jogadores = req.body.jogadores;
+    // O navegador manda só os ids de quem foi marcado. O nível de cada
+    // um vem do arquivo de rankings aqui no servidor, nunca do cliente
+    // — senão daria pra alguém editar o rank no próprio navegador e
+    // bagunçar o equilíbrio do sorteio.
+    const ids = req.body.ids;
 
-    if (!Array.isArray(jogadores) || jogadores.length < 2) {
+    if (!Array.isArray(ids) || ids.length < 2) {
       return res.status(400).json({ error: "Selecione pelo menos 2 jogadores para sortear." });
+    }
+
+    const dados = await store.ler();
+    const porId = new Map(dados.jogadores.map((j) => [j.id, j]));
+    const avatares = await buscarAvatares(dados.jogadores.filter((j) => j.steam_id).map((j) => j.steam_id));
+    const jogadores = ids
+      .map((id) => porId.get(id))
+      .filter(Boolean)
+      .map((j) => ({ ...j, name: j.nome, avatar_url: avatares[j.steam_id] || null }));
+
+    if (jogadores.length < 2) {
+      return res.status(400).json({
+        error: "Os jogadores selecionados não estão mais no ranking. Recarregue a página.",
+      });
     }
 
     sorteioEmAndamento = true;
@@ -269,8 +465,10 @@ app.post("/api/draft", async (req, res) => {
 
       // Guarda o resultado no histórico do dia (em memória), pra dar
       // pra consultar e ajudar a não repetir sempre a mesma combinação.
-      const timeANomes = resultado.timeA.map((j) => ({ steam_id: j.steam_id, name: j.name }));
-      const timeBNomes = resultado.timeB.map((j) => ({ steam_id: j.steam_id, name: j.name }));
+      const resumir = (time) =>
+        time.map((j) => ({ id: j.id, steam_id: j.steam_id, name: j.nome, tier: j.tier }));
+      const timeANomes = resumir(resultado.timeA);
+      const timeBNomes = resumir(resultado.timeB);
       historicoSorteios.push({
         criado_em: new Date(),
         timeA: timeANomes,

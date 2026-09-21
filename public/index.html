@@ -28,6 +28,7 @@
       <span class="online-dot"></span>
       <span id="online-count">0</span> players online
     </div>
+    <a class="admin-link" href="/admin.html" title="Painel de rankings">⚙</a>
     <a id="btn-connect" class="btn-connect" href="steam://connect/177.54.146.23:27114/192650">
       <span class="connect-dot"></span>
       Conectar ao Servidor
@@ -50,10 +51,10 @@
   <section id="tab-sorteio" class="tab-panel">
     <div class="section-head">
       <h2>Sorteio de times</h2>
-      <p class="muted">Selecione quem vai jogar hoje. O sorteio monta dois times com a soma de pontos mais equilibrada possível.</p>
+      <p class="muted">Selecione quem vai jogar hoje. O sorteio monta dois times com a soma de níveis mais equilibrada possível.</p>
     </div>
 
-    <input id="player-search" class="search-input" type="text" placeholder="Buscar jogador pelo nome…" />
+    <input id="player-search" class="search-input" type="text" placeholder="Filtrar pelo nome…" />
 
     <div id="player-picker" class="player-picker">
       <div class="loading">Carregando jogadores…</div>
@@ -77,7 +78,7 @@
       <div class="team-panel team-ct">
         <div class="team-header">
           <span class="team-label">TIME A</span>
-          <span class="team-total" id="team-a-total">0 pts</span>
+          <span class="team-total" id="team-a-total">força 0</span>
         </div>
         <ul id="team-a-list" class="team-list"></ul>
       </div>
@@ -85,7 +86,7 @@
       <div class="team-panel team-t">
         <div class="team-header">
           <span class="team-label">TIME B</span>
-          <span class="team-total" id="team-b-total">0 pts</span>
+          <span class="team-total" id="team-b-total">força 0</span>
         </div>
         <ul id="team-b-list" class="team-list"></ul>
       </div>

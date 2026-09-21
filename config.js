@@ -24,4 +24,33 @@ module.exports = {
   pluginSecret: process.env.PLUGIN_SECRET || "troque-essa-senha-agora",
 
   leaderboardLimit: 50,
+
+  // ---------------- Painel de admin ----------------
+  // Senha pra entrar em /admin.html e editar os rankings manuais.
+  // Defina ADMIN_PASSWORD no painel do Render - o valor abaixo e so
+  // um padrao inseguro pra rodar na sua maquina.
+  adminPassword: process.env.ADMIN_PASSWORD || "admin",
+
+  // Segredo usado pra assinar o cookie de login do admin. Se mudar,
+  // todo mundo que estava logado precisa entrar de novo.
+  sessionSecret: process.env.SESSION_SECRET || "troque-esse-segredo",
+
+  // Quanto tempo o login do admin dura antes de pedir a senha de novo.
+  sessionHoras: 12,
+
+  // ---------------- Onde os rankings ficam salvos ----------------
+  // Um JSON commitado numa branch separada do proprio repositorio.
+  // O token precisa ter permissao de escrita em "Contents" nesse repo.
+  github: {
+    token: process.env.GITHUB_TOKEN || "",
+    repo: process.env.GITHUB_REPO || "felipekajati3-commits/mix-dashboard",
+    branch: process.env.GITHUB_BRANCH || "data",
+    arquivo: process.env.GITHUB_ARQUIVO || "rankings.json",
+  },
+
+  // ---------------- Pesos do sorteio ----------------
+  // Quanto cada nivel "vale" na hora de equilibrar os times. Rank 1 e
+  // o melhor jogador, rank 5 o mais fraco. O sorteio monta os times
+  // buscando a menor diferenca possivel entre a soma dos dois lados.
+  pesosPorTier: { 1: 5, 2: 4, 3: 3, 4: 2, 5: 1 },
 };

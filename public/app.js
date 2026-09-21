@@ -152,12 +152,16 @@ const selectedCountEl = document.getElementById("selected-count");
 const msgEl = document.getElementById("sorteio-msg");
 const teamsResultEl = document.getElementById("teams-result");
 
-async function carregarJogadores(termo = "") {
+let filtroNome = "";
+
+// A lista do sorteio vem dos rankings manuais (definidos no /admin.html),
+// e não mais da tabela de pontos do K4.
+async function carregarJogadores() {
   pickerEl.innerHTML = `<div class="loading">Carregando jogadores…</div>`;
   try {
-    const url = termo ? `/api/players?q=${encodeURIComponent(termo)}` : "/api/players";
-    const res = await fetch(url);
-    todosJogadores = await res.json();
+    const res = await fetch("/api/rankings");
+    const data = await res.json();
+    todosJogadores = data.jogadores || [];
     renderizarPicker();
   } catch (err) {
     pickerEl.innerHTML = `<div class="loading">Erro ao carregar jogadores.</div>`;
@@ -166,23 +170,50 @@ async function carregarJogadores(termo = "") {
 
 function renderizarPicker() {
   if (todosJogadores.length === 0) {
-    pickerEl.innerHTML = `<div class="loading">Nenhum jogador encontrado.</div>`;
+    pickerEl.innerHTML = `<div class="loading">Nenhum jogador cadastrado ainda. Cadastre os rankings em <a href="/admin.html">/admin.html</a>.</div>`;
     return;
   }
 
-  pickerEl.innerHTML = todosJogadores
-    .map((j) => {
-      const marcado = selecionados.has(j.steam_id);
+  // Filtro é local: a lista inteira já está na memória, não precisa
+  // voltar no servidor a cada letra digitada.
+  const termo = filtroNome.toLowerCase();
+  const visiveis = termo
+    ? todosJogadores.filter((j) => j.name.toLowerCase().includes(termo))
+    : todosJogadores;
+
+  if (visiveis.length === 0) {
+    pickerEl.innerHTML = `<div class="loading">Nenhum jogador com esse nome.</div>`;
+    return;
+  }
+
+  // Agrupa por nível, do rank 1 (mais forte) ao rank 5.
+  const blocos = [1, 2, 3, 4, 5]
+    .map((tier) => {
+      const doTier = visiveis.filter((j) => j.tier === tier);
+      if (!doTier.length) return "";
+
+      const linhas = doTier
+        .map((j) => {
+          const marcado = selecionados.has(j.id);
+          return `
+            <label class="player-row ${marcado ? "selected" : ""}" data-id="${j.id}">
+              <input type="checkbox" ${marcado ? "checked" : ""} />
+              ${avatarHtml(j)}
+              <span class="player-name">${escapeHtml(j.name)}</span>
+              <span class="player-pts tier-badge tier-${tier}">R${tier}</span>
+            </label>`;
+        })
+        .join("");
+
       return `
-        <label class="player-row ${marcado ? "selected" : ""}" data-id="${j.steam_id}">
-          <input type="checkbox" ${marcado ? "checked" : ""} />
-          ${avatarHtml(j)}
-          <span class="player-name">${escapeHtml(j.name)}</span>
-          <span class="player-pts">${j.points} pts</span>
-        </label>
-      `;
+        <div class="picker-grupo">
+          <div class="picker-grupo-head">RANK ${tier}</div>
+          ${linhas}
+        </div>`;
     })
     .join("");
+
+  pickerEl.innerHTML = blocos;
 
   pickerEl.querySelectorAll(".player-row").forEach((row) => {
     const checkbox = row.querySelector("input");
@@ -192,7 +223,7 @@ function renderizarPicker() {
     // deixava a borda azul e o checkbox dessincronizados.
     checkbox.addEventListener("change", () => {
       const id = row.dataset.id;
-      const jogador = todosJogadores.find((j) => j.steam_id === id);
+      const jogador = todosJogadores.find((j) => j.id === id);
       if (checkbox.checked) {
         selecionados.set(id, jogador);
       } else {
@@ -213,7 +244,10 @@ function atualizarContagem() {
 let debounceTimer;
 searchEl.addEventListener("input", () => {
   clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => carregarJogadores(searchEl.value.trim()), 250);
+  debounceTimer = setTimeout(() => {
+    filtroNome = searchEl.value.trim();
+    renderizarPicker();
+  }, 150);
 });
 
 btnSortear.addEventListener("click", async () => {
@@ -222,11 +256,12 @@ btnSortear.addEventListener("click", async () => {
   btnSortear.textContent = "Sorteando…";
 
   try {
-    const jogadores = Array.from(selecionados.values());
+    // Manda só os ids: quem decide o nível de cada um é o servidor.
+    const ids = Array.from(selecionados.keys());
     const res = await fetch("/api/draft", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jogadores }),
+      body: JSON.stringify({ ids }),
     });
     if (!res.ok) {
       const data = await res.json();
@@ -440,15 +475,15 @@ socket.on("mapa:resultado", ({ mapaId }) => {
 });
 
 function renderizarTimes(timeA, timeB, somaA, somaB) {
-  document.getElementById("team-a-total").textContent = `${somaA} pts`;
-  document.getElementById("team-b-total").textContent = `${somaB} pts`;
+  document.getElementById("team-a-total").textContent = `força ${somaA}`;
+  document.getElementById("team-b-total").textContent = `força ${somaB}`;
 
   document.getElementById("team-a-list").innerHTML = timeA
-    .map((j) => `<li>${avatarHtml(j)}<span class="team-player-name">${escapeHtml(j.name)}</span> <span class="pts">${j.points}</span></li>`)
+    .map((j) => `<li>${avatarHtml(j)}<span class="team-player-name">${escapeHtml(j.name)}</span> <span class="pts tier-badge tier-${j.tier}">R${j.tier}</span></li>`)
     .join("");
 
   document.getElementById("team-b-list").innerHTML = timeB
-    .map((j) => `<li>${avatarHtml(j)}<span class="team-player-name">${escapeHtml(j.name)}</span> <span class="pts">${j.points}</span></li>`)
+    .map((j) => `<li>${avatarHtml(j)}<span class="team-player-name">${escapeHtml(j.name)}</span> <span class="pts tier-badge tier-${j.tier}">R${j.tier}</span></li>`)
     .join("");
 
   teamsResultEl.classList.remove("hidden");

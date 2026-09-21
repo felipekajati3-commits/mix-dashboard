@@ -1,0 +1,164 @@
+/* ---------- Painel de admin ----------
+   Reaproveita as variaveis e os componentes do styles.css; aqui ficam
+   so as pecas que existem exclusivamente nessa tela. */
+
+.hidden { display: none !important; }
+
+.login-wrap {
+  display: flex;
+  justify-content: center;
+  padding-top: 60px;
+}
+
+.login-box {
+  width: 100%;
+  max-width: 380px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 28px;
+}
+
+.login-box h2 {
+  font-family: var(--font-display);
+  margin: 0 0 6px;
+  letter-spacing: 0.04em;
+}
+
+.login-box .search-input { margin: 18px 0 12px; width: 100%; }
+.login-box .btn { width: 100%; }
+
+.admin-actions { margin-bottom: 22px; }
+
+.admin-add {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-add .search-input { flex: 1 1 280px; margin: 0; }
+
+.resultado-busca {
+  margin-top: 10px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.busca-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.busca-row:last-child { border-bottom: none; }
+.busca-row:hover { background: var(--panel-2); }
+.busca-row .busca-nome { flex: 1; font-weight: 500; }
+.busca-row .busca-info { color: var(--muted); font-size: 12px; font-family: var(--font-mono); }
+
+.rankings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.tier-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tier-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-family: var(--font-display);
+  letter-spacing: 0.06em;
+}
+
+.tier-head strong { font-size: 18px; }
+.tier-head .tier-qtd { color: var(--muted); font-size: 12px; font-family: var(--font-mono); }
+
+/* Cor por nivel: do azul (mais forte) ao laranja (mais fraco), pra
+   bater com a identidade CT/T do resto do site. */
+.tier-card[data-tier="1"] { border-top: 3px solid var(--ct); }
+.tier-card[data-tier="2"] { border-top: 3px solid #5f7fa8; }
+.tier-card[data-tier="3"] { border-top: 3px solid var(--gold); }
+.tier-card[data-tier="4"] { border-top: 3px solid #b8743f; }
+.tier-card[data-tier="5"] { border-top: 3px solid var(--t); }
+
+.tier-lista { display: flex; flex-direction: column; gap: 6px; min-height: 8px; }
+
+.tier-jogador {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.tier-jogador .nome-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 2px 0;
+}
+
+.tier-jogador .nome-input:focus {
+  outline: none;
+  border-bottom: 1px solid var(--ct);
+}
+
+.tier-jogador.vaga { border-style: dashed; }
+
+.tier-jogador .mover {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  border-radius: 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 5px;
+  cursor: pointer;
+}
+
+.tier-jogador .mover:hover { color: var(--text); border-color: var(--muted); }
+.tier-jogador .remover { color: #d9534f; }
+
+.btn-vaga {
+  background: transparent;
+  border: 1px dashed var(--line);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 7px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+
+.btn-vaga:hover { color: var(--text); border-color: var(--ct); }
+
+.admin-save-bar {
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(to top, var(--bg) 70%, transparent);
+  padding: 16px 0;
+  margin-top: 24px;
+}
+
+.save-state { color: var(--muted); font-size: 12px; font-family: var(--font-mono); }
