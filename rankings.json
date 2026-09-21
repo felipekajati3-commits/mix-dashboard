@@ -323,7 +323,16 @@
       "tier": 3,
       "tier_anterior": null,
       "movido_em": null
+    },
+    {
+      "id": "y392tb2lmubscla4",
+      "tipo": "steam",
+      "steam_id": "76561199215655481",
+      "nome": "GhostLCS",
+      "tier": 3,
+      "tier_anterior": null,
+      "movido_em": null
     }
   ],
-  "atualizado_em": "2026-09-21T19:58:55.504Z"
+  "atualizado_em": "2026-09-21T21:57:36.500Z"
 }
