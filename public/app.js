@@ -163,6 +163,7 @@ async function carregarJogadores() {
     const data = await res.json();
     todosJogadores = data.jogadores || [];
     renderizarPicker();
+    atualizarContagem();
   } catch (err) {
     pickerEl.innerHTML = `<div class="loading">Erro ao carregar jogadores.</div>`;
   }
@@ -186,28 +187,35 @@ function renderizarPicker() {
     return;
   }
 
-  // Agrupa por nível, do rank 1 (mais forte) ao rank 5.
+  // Agrupa por nível, do rank 1 (mais forte) ao rank 5 - uma coluna
+  // por nível, igual ao layout do admin.
+  const ICONE_TIER = { 1: "🔥", 2: "⚡", 3: "🎯", 4: "🖌️", 5: "💀" };
+
   const blocos = [1, 2, 3, 4, 5]
     .map((tier) => {
       const doTier = visiveis.filter((j) => j.tier === tier);
-      if (!doTier.length) return "";
 
-      const linhas = doTier
-        .map((j) => {
-          const marcado = selecionados.has(j.id);
-          return `
-            <label class="player-row ${marcado ? "selected" : ""}" data-id="${j.id}">
-              <input type="checkbox" ${marcado ? "checked" : ""} />
-              ${avatarHtml(j)}
-              <span class="player-name">${escapeHtml(j.name)}</span>
-              <span class="player-pts tier-badge tier-${tier}">R${tier}</span>
-            </label>`;
-        })
-        .join("");
+      const linhas = doTier.length
+        ? doTier
+            .map((j) => {
+              const marcado = selecionados.has(j.id);
+              const vazio = !j.name || !j.name.trim();
+              return `
+                <label class="player-row ${marcado ? "selected" : ""} ${vazio ? "vaga-vazia" : ""}" data-id="${j.id}">
+                  <input type="checkbox" ${marcado ? "checked" : ""} ${vazio ? "disabled" : ""} />
+                  ${avatarHtml(j)}
+                  <span class="player-name">${escapeHtml(vazio ? "(vaga vazia)" : j.name)}</span>
+                </label>`;
+            })
+            .join("")
+        : `<div class="picker-vazio">Ninguém nesse nível ainda.</div>`;
 
       return `
-        <div class="picker-grupo">
-          <div class="picker-grupo-head">RANK ${tier}</div>
+        <div class="picker-grupo" data-tier="${tier}">
+          <div class="picker-grupo-head">
+            <span class="picker-grupo-icon">${ICONE_TIER[tier]}</span>
+            RANK ${tier}
+          </div>
           ${linhas}
         </div>`;
     })
@@ -237,7 +245,8 @@ function renderizarPicker() {
 
 function atualizarContagem() {
   const n = selecionados.size;
-  selectedCountEl.textContent = `${n} selecionado${n === 1 ? "" : "s"}`;
+  const total = todosJogadores.filter((j) => j.name && j.name.trim()).length;
+  selectedCountEl.textContent = `${n} / ${total}`;
   btnSortear.disabled = n < 2;
 }
 
@@ -277,6 +286,16 @@ btnSortear.addEventListener("click", async () => {
 });
 
 carregarJogadores();
+
+// ---------- Botão "Limpar" ----------
+// Desmarca todo mundo sem esconder o resultado nem recarregar a lista.
+
+const btnLimpar = document.getElementById("btn-limpar");
+btnLimpar.addEventListener("click", () => {
+  selecionados.clear();
+  renderizarPicker();
+  atualizarContagem();
+});
 
 // ---------- Botão "Novo sorteio" ----------
 // Some com o resultado atual e desmarca todo mundo, sem precisar recarregar

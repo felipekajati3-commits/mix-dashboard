@@ -61,8 +61,14 @@
     </div>
 
     <div class="sorteio-controls">
-      <span id="selected-count" class="selected-count">0 selecionados</span>
-      <button id="btn-sortear" class="btn btn-primary" disabled>Sortear times</button>
+      <div class="selected-count-big">
+        <span class="label">JOGADORES SELECIONADOS</span>
+        <span id="selected-count" class="valor">0 / 0</span>
+      </div>
+      <div class="sorteio-controls-right">
+        <button id="btn-limpar" class="btn btn-outline" type="button">Limpar</button>
+        <button id="btn-sortear" class="btn btn-primary" disabled>Sortear times</button>
+      </div>
     </div>
 
     <div id="sorteio-live" class="sorteio-roleta hidden">

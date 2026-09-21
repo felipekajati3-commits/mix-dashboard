@@ -359,61 +359,18 @@ main {
 }
 .search-input::placeholder { color: var(--muted); }
 
-.player-picker {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: 340px;
-  overflow-y: auto;
-  border: 1px solid var(--line);
-  padding: 6px;
-  margin-bottom: 18px;
-}
-
-.player-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: all 0.1s ease;
-}
-
-.player-row:hover { background: var(--panel-2); }
-
-.player-row.selected {
-  background: var(--panel-2);
-  border-color: var(--ct);
-}
-
-.player-row input[type="checkbox"] {
-  accent-color: var(--ct);
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-}
-
-.player-row .player-name {
-  flex: 1;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--t);
-  text-shadow: 0 0 10px rgba(232, 130, 60, 0.45);
-}
-
-.player-row .player-pts {
-  font-family: var(--font-mono);
-  color: var(--muted);
-  font-size: 13px;
-}
-
 .sorteio-controls {
   display: flex;
-  gap: 16px;
+  justify-content: space-between;
   align-items: center;
+  gap: 16px;
   margin-bottom: 24px;
   flex-wrap: wrap;
+}
+
+.sorteio-controls-right {
+  display: flex;
+  gap: 10px;
 }
 
 .selected-count {
@@ -978,23 +935,127 @@ main {
 
 /* ---------- Seletor do sorteio agrupado por nível ---------- */
 
-.picker-grupo {
-  display: contents;
+.player-picker {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+  align-items: start;
 }
 
+@media (max-width: 900px) {
+  .player-picker { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 520px) {
+  .player-picker { grid-template-columns: 1fr; }
+}
+
+.picker-grupo {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.picker-grupo[data-tier="1"] { border-top: 3px solid #4caf6e; }
+.picker-grupo[data-tier="2"] { border-top: 3px solid var(--ct); }
+.picker-grupo[data-tier="3"] { border-top: 3px solid var(--gold); }
+.picker-grupo[data-tier="4"] { border-top: 3px solid #d9536e; }
+.picker-grupo[data-tier="5"] { border-top: 3px solid #9b6bd4; }
+
 .picker-grupo-head {
-  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--font-display);
   font-size: 13px;
-  letter-spacing: 0.12em;
-  color: var(--muted);
-  margin: 10px 0 2px;
-  padding-bottom: 4px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text);
+  padding-bottom: 8px;
+  margin-bottom: 4px;
   border-bottom: 1px solid var(--line);
 }
 
-/* Etiqueta do nível (R1 a R5), usada no seletor e no resultado dos
-   times. Vai do azul CT (mais forte) ao laranja T (mais fraco). */
+.picker-grupo-icon { font-size: 14px; line-height: 1; }
+
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.1s ease;
+}
+
+.player-row:hover { background: var(--panel-2); }
+.player-row.selected { background: var(--panel-2); border-color: var(--ct); }
+
+.player-row .avatar,
+.player-row .avatar-fallback {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.player-row input[type="checkbox"] {
+  accent-color: var(--ct);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.player-row .player-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: none;
+}
+
+.player-row.vaga-vazia .player-name {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.picker-vazio {
+  color: var(--muted);
+  font-size: 13px;
+  padding: 4px;
+}
+
+.selected-count-big {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.selected-count-big .label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.selected-count-big .valor {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--t);
+}
+
+/* Etiqueta do nível (R1 a R5), usada no resultado dos times. */
 .tier-badge {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -1005,11 +1066,11 @@ main {
   line-height: 1.4;
 }
 
-.tier-badge.tier-1 { color: var(--ct); }
-.tier-badge.tier-2 { color: #7e9cc4; }
+.tier-badge.tier-1 { color: #4caf6e; }
+.tier-badge.tier-2 { color: var(--ct); }
 .tier-badge.tier-3 { color: var(--gold); }
-.tier-badge.tier-4 { color: #c98c57; }
-.tier-badge.tier-5 { color: var(--t); }
+.tier-badge.tier-4 { color: #d9536e; }
+.tier-badge.tier-5 { color: #9b6bd4; }
 
 .admin-link {
   color: var(--muted);
@@ -1020,3 +1081,4 @@ main {
 }
 
 .admin-link:hover { opacity: 1; color: var(--text); }
+
