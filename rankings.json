@@ -257,9 +257,9 @@
       "tipo": "steam",
       "steam_id": "76561199108628392",
       "nome": "https://www.twitch.tv/objecctt",
-      "tier": 5,
-      "tier_anterior": 4,
-      "movido_em": "2026-09-21T19:58:46.985Z"
+      "tier": 4,
+      "tier_anterior": 5,
+      "movido_em": "2026-09-21T19:58:49.793Z"
     },
     {
       "id": "ky77prf9mubgh0f0",
@@ -325,5 +325,5 @@
       "movido_em": null
     }
   ],
-  "atualizado_em": "2026-09-21T19:58:46.985Z"
+  "atualizado_em": "2026-09-21T19:58:49.793Z"
 }
