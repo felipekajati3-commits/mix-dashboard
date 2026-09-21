@@ -167,9 +167,9 @@
       "tipo": "steam",
       "steam_id": "76561199624307524",
       "nome": "Falkes",
-      "tier": 4,
-      "tier_anterior": 3,
-      "movido_em": "2026-09-21T19:58:25.080Z"
+      "tier": 3,
+      "tier_anterior": 4,
+      "movido_em": "2026-09-21T19:58:28.672Z"
     },
     {
       "id": "jv4v3u38mubgbh4d",
@@ -325,5 +325,5 @@
       "movido_em": null
     }
   ],
-  "atualizado_em": "2026-09-21T19:58:25.080Z"
+  "atualizado_em": "2026-09-21T19:58:28.672Z"
 }
