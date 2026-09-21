@@ -21,7 +21,10 @@ const config = require("./config");
 const ARQUIVO_LOCAL = path.join(__dirname, "rankings.local.json");
 
 const ESTRUTURA_VAZIA = {
-  jogadores: [], // { id, tipo: "steam"|"vaga", steam_id, nome, tier }
+  // { id, tipo: "steam"|"vaga", steam_id, nome, tier,
+  //   tier_anterior, movido_em }  <- os dois ultimos alimentam as setas
+  //   de subiu/desceu na aba Ranking (ver salvar()).
+  jogadores: [],
   atualizado_em: null,
 };
 
@@ -64,9 +67,17 @@ function normalizar(dados) {
         steam_id: j.steam_id ? String(j.steam_id) : null,
         nome: String(j.nome).slice(0, 40),
         tier: Math.min(5, Math.max(1, Number(j.tier) || 3)),
+        tier_anterior: tierValido(j.tier_anterior),
+        movido_em: j.movido_em ? String(j.movido_em) : null,
       })),
     atualizado_em: dados.atualizado_em || null,
   };
+}
+
+// Devolve o nivel (1 a 5) ou null quando nao ha nivel anterior guardado.
+function tierValido(valor) {
+  const n = Number(valor);
+  return Number.isInteger(n) && n >= 1 && n <= 5 ? n : null;
 }
 
 function criarId() {
@@ -152,11 +163,8 @@ async function ler({ forcar = false } = {}) {
   return dados;
 }
 
-// Salva a lista inteira de jogadores de uma vez (e como a tela de
-// admin funciona: voce edita tudo e clica em salvar uma vez so).
-async function salvar(jogadores) {
-  const dados = normalizar({ jogadores, atualizado_em: new Date().toISOString() });
-
+// Grava (GitHub ou arquivo local) e atualiza o cache.
+async function persistir(dados) {
   if (usandoGitHub()) {
     await gravarNoGitHub(dados);
   } else {
@@ -168,4 +176,45 @@ async function salvar(jogadores) {
   return dados;
 }
 
-module.exports = { ler, salvar, criarId, usandoGitHub };
+// Salva a lista inteira de jogadores de uma vez (e como a tela de
+// admin funciona: voce edita tudo e clica em salvar uma vez so).
+//
+// E aqui que nascem as setas do ranking: comparamos o nivel de cada
+// jogador com o que ja estava salvo. Se mudou, guardamos o nivel
+// antigo em "tier_anterior" (e quando foi em "movido_em"). Se nao
+// mudou, mantemos o que ja tinha - entao a seta continua la ate a
+// proxima mudanca ou ate o admin clicar em "Zerar setas". O cliente
+// nunca manda esses campos: quem decide e sempre o servidor.
+async function salvar(jogadores) {
+  const novos = normalizar({ jogadores }).jogadores;
+
+  let atuais = [];
+  try {
+    atuais = (await ler({ forcar: true })).jogadores;
+  } catch (err) {
+    // Sem conseguir ler o que ja existe, melhor salvar sem setas do que
+    // perder a edicao do admin.
+    console.warn("Não consegui ler os rankings antes de salvar:", err.message);
+  }
+  const antesPorId = new Map(atuais.map((j) => [j.id, j]));
+  const agora = new Date().toISOString();
+
+  const comSetas = novos.map((j) => {
+    const antes = antesPorId.get(j.id);
+    if (!antes) return { ...j, tier_anterior: null, movido_em: null }; // jogador novo
+    if (antes.tier !== j.tier) return { ...j, tier_anterior: antes.tier, movido_em: agora };
+    return { ...j, tier_anterior: antes.tier_anterior, movido_em: antes.movido_em };
+  });
+
+  return persistir({ jogadores: comSetas, atualizado_em: agora });
+}
+
+// Apaga todas as setas (todo mundo volta pro "-"), sem mexer em nivel
+// nem em nome de ninguem.
+async function zerarSetas() {
+  const atuais = await ler({ forcar: true });
+  const limpos = atuais.jogadores.map((j) => ({ ...j, tier_anterior: null, movido_em: null }));
+  return persistir({ jogadores: limpos, atualizado_em: new Date().toISOString() });
+}
+
+module.exports = { ler, salvar, zerarSetas, criarId, usandoGitHub };

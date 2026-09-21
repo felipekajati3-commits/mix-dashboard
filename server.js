@@ -326,6 +326,16 @@ app.post("/api/admin/rankings", exigirAdmin, async (req, res) => {
   }
 });
 
+// Zera as setas de subiu/desceu do ranking (todo mundo volta pro "-").
+app.post("/api/admin/rankings/zerar-setas", exigirAdmin, async (req, res) => {
+  try {
+    res.json(await store.zerarSetas());
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || "Erro ao zerar as setas." });
+  }
+});
+
 // Procura um perfil da Steam pelo link ou pelo ID, pra você conseguir
 // adicionar no ranking alguém que ainda nem jogou no servidor (e que
 // por isso não existe na base do K4).
@@ -370,33 +380,10 @@ app.get("/api/admin/steam", exigirAdmin, async (req, res) => {
   }
 });
 
-app.get("/api/leaderboard", async (req, res) => {
-  try {
-    const [rows] = await pool.query(
-      `SELECT r.steam_id, r.name, r.points, r.\`rank\`,
-              COALESCE(s.kills, 0) AS kills,
-              COALESCE(s.deaths, 0) AS deaths,
-              COALESCE(s.headshots, 0) AS headshots
-       FROM rank_mix_k4ranks r
-       LEFT JOIN rank_mix_k4stats s ON s.steam_id = r.steam_id
-       ORDER BY r.points DESC
-       LIMIT ?`,
-      [config.leaderboardLimit]
-    );
-    const comStats = rows.map((r) => ({
-      ...r,
-      hs_pct: r.kills > 0 ? Math.round((r.headshots / r.kills) * 100) : 0,
-    }));
-    const avatares = await buscarAvatares(comStats.map((r) => r.steam_id));
-    const comAvatar = comStats.map((r) => ({ ...r, avatar_url: avatares[r.steam_id] || null }));
-    res.json(comAvatar);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao buscar o ranking." });
-  }
-});
-
-// Lista de jogadores para o seletor do sorteio (busca opcional por nome).
+// Busca por nome na base antiga do servidor (tabela do K4, que parou de
+// ser atualizada). Hoje so o painel de admin usa isso, pra achar o
+// steam_id de quem ja jogou antes; o ranking e o sorteio NAO dependem
+// mais dessa tabela.
 app.get("/api/players", async (req, res) => {
   try {
     const busca = req.query.q ? `%${req.query.q}%` : "%";
@@ -429,6 +416,15 @@ app.post("/api/draft", async (req, res) => {
     // bagunçar o equilíbrio do sorteio.
     const ids = req.body.ids;
 
+    // Nomes provisórios: o lápis do sorteio deixa trocar o nome de uma
+    // vaga ("Complete 1") só para este sorteio. Chega como { id: nome }.
+    // Só vale para vagas personalizadas — jogador com Steam nunca tem o
+    // nome trocado por aqui — e nada disso é salvo no ranking.
+    const nomesTemp =
+      req.body.nomes && typeof req.body.nomes === "object" && !Array.isArray(req.body.nomes)
+        ? req.body.nomes
+        : {};
+
     if (!Array.isArray(ids) || ids.length < 2) {
       return res.status(400).json({ error: "Selecione pelo menos 2 jogadores para sortear." });
     }
@@ -439,7 +435,10 @@ app.post("/api/draft", async (req, res) => {
     const jogadores = ids
       .map((id) => porId.get(id))
       .filter(Boolean)
-      .map((j) => ({ ...j, name: j.nome, avatar_url: avatares[j.steam_id] || null }));
+      .map((j) => {
+        const temp = j.tipo === "vaga" ? String(nomesTemp[j.id] ?? "").trim().slice(0, 40) : "";
+        return { ...j, name: temp || j.nome, avatar_url: avatares[j.steam_id] || null };
+      });
 
     if (jogadores.length < 2) {
       return res.status(400).json({
@@ -466,7 +465,7 @@ app.post("/api/draft", async (req, res) => {
       // Guarda o resultado no histórico do dia (em memória), pra dar
       // pra consultar e ajudar a não repetir sempre a mesma combinação.
       const resumir = (time) =>
-        time.map((j) => ({ id: j.id, steam_id: j.steam_id, name: j.nome, tier: j.tier }));
+        time.map((j) => ({ id: j.id, steam_id: j.steam_id, name: j.name, tier: j.tier }));
       const timeANomes = resumir(resultado.timeA);
       const timeBNomes = resumir(resultado.timeB);
       historicoSorteios.push({
@@ -616,56 +615,6 @@ app.post("/api/matchzy/evento", (req, res) => {
   io.emit("partida:resultado", ultimoResultadoPartida);
 
   res.json({ ok: true });
-});
-
-// Estatísticas detalhadas de um único jogador (usado no modal de perfil).
-app.get("/api/player/:steam_id", async (req, res) => {
-  try {
-    const { steam_id } = req.params;
-    const [rows] = await pool.query(
-      `SELECT r.steam_id, r.name, r.points, r.\`rank\`,
-              COALESCE(s.kills, 0) AS kills,
-              COALESCE(s.deaths, 0) AS deaths,
-              COALESCE(s.assists, 0) AS assists,
-              COALESCE(s.headshots, 0) AS headshots,
-              COALESCE(s.mvp, 0) AS mvp,
-              COALESCE(s.shoots, 0) AS shoots,
-              COALESCE(s.hits_given, 0) AS hits_given,
-              COALESCE(s.round_win, 0) AS round_win,
-              COALESCE(s.round_lose, 0) AS round_lose,
-              COALESCE(s.game_win, 0) AS game_win,
-              COALESCE(s.game_lose, 0) AS game_lose,
-              COALESCE(s.bomb_planted, 0) AS bomb_planted,
-              COALESCE(s.bomb_defused, 0) AS bomb_defused
-       FROM rank_mix_k4ranks r
-       LEFT JOIN rank_mix_k4stats s ON s.steam_id = r.steam_id
-       WHERE r.steam_id = ?
-       LIMIT 1`,
-      [steam_id]
-    );
-
-    if (!rows.length) {
-      return res.status(404).json({ error: "Jogador não encontrado." });
-    }
-
-    const j = rows[0];
-    const totalJogos = j.game_win + j.game_lose;
-    const perfil = {
-      ...j,
-      hs_pct: j.kills > 0 ? Math.round((j.headshots / j.kills) * 100) : 0,
-      kd: j.deaths > 0 ? Math.round((j.kills / j.deaths) * 100) / 100 : j.kills,
-      win_rate: totalJogos > 0 ? Math.round((j.game_win / totalJogos) * 100) : 0,
-      accuracy: j.shoots > 0 ? Math.round((j.hits_given / j.shoots) * 100) : 0,
-    };
-
-    const avatares = await buscarAvatares([steam_id]);
-    perfil.avatar_url = avatares[steam_id] || null;
-
-    res.json(perfil);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao buscar perfil do jogador." });
-  }
 });
 
 const PORT = process.env.PORT || 3000;

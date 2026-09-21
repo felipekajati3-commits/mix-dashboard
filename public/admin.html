@@ -46,7 +46,8 @@
       <h2>Rankings dos jogadores</h2>
       <p class="muted">
         Rank 1 é o mais forte e rank 5 o mais fraco. Cada nível aceita quantos jogadores você quiser.
-        As mudanças só valem depois de clicar em salvar.
+        As mudanças só valem depois de clicar em salvar. Quem subir ou descer de nível ganha uma seta
+        na aba Ranking do site; ela fica até a próxima mudança ou até você clicar em "Zerar setas".
       </p>
     </div>
 
@@ -68,7 +69,10 @@
 
     <div class="sorteio-controls admin-save-bar">
       <span id="admin-contagem" class="selected-count">0 jogadores</span>
-      <button id="btn-salvar" class="btn btn-primary" type="button" disabled>Salvar alterações</button>
+      <div class="sorteio-controls-right">
+        <button id="btn-zerar-setas" class="btn btn-outline" type="button" title="Tira as setas de subiu/desceu do ranking de todo mundo">Zerar setas</button>
+        <button id="btn-salvar" class="btn btn-primary" type="button" disabled>Salvar alterações</button>
+      </div>
     </div>
 
     <div id="admin-msg" class="msg"></div>

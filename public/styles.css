@@ -163,10 +163,18 @@ body {
 
 /* ---------- Layout ---------- */
 
+/* Largura ampla: o Ranking e o Sorteio têm 5 colunas (uma por nível) e
+   precisam de espaço pra caber todas sem barra de rolagem. Mapa e admin
+   continuam na largura estreita de sempre (ver #tab-mapa e admin.css). */
 main {
-  max-width: 920px;
+  max-width: 1360px;
   margin: 0 auto;
   padding: 40px 24px 80px;
+}
+
+#tab-mapa {
+  max-width: 920px;
+  margin: 0 auto;
 }
 
 .tab-panel { display: none; }
@@ -185,13 +193,7 @@ main {
 
 .muted { color: var(--muted); font-size: 14px; margin: 0; }
 
-/* ---------- Temporadas (seletor) ---------- */
-
-.season-select-wrap {
-  margin-bottom: 16px;
-}
-
-.season-select-wrap.hidden { display: none; }
+/* ---------- Seletor (usado no painel de admin) ---------- */
 
 .season-select {
   background: var(--panel);
@@ -207,98 +209,6 @@ main {
 .season-select:focus {
   outline: none;
   border-color: var(--t);
-}
-
-/* ---------- Leaderboard ---------- */
-
-.leaderboard {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.rank-row {
-  display: grid;
-  grid-template-columns: 32px 28px 1fr auto 90px;
-  align-items: center;
-  gap: 12px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--ct-dim);
-  padding: 12px 16px;
-  cursor: default;
-  transition: background 0.15s ease, border-color 0.15s ease;
-}
-
-.rank-row:hover,
-.rank-row:focus-visible {
-  background: var(--panel-2);
-  border-color: var(--t);
-  outline: none;
-}
-
-.rank-row.pos-1 { border-left-color: var(--gold); }
-.rank-row.pos-2 { border-left-color: #b8bec6; }
-.rank-row.pos-3 { border-left-color: #a0653a; }
-
-.rank-pos {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  color: var(--muted);
-}
-
-.rank-row.pos-1 .rank-pos { color: var(--gold); }
-
-.rank-name-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-
-.rank-name {
-  font-weight: 600;
-  font-size: 14px;
-  color: #f5934f;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-shadow: 0 0 10px rgba(245, 147, 79, 0.45);
-}
-
-.rank-stats-line {
-  font-size: 12px;
-  font-weight: 600;
-  color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.rank-bar-track {
-  height: 4px;
-  background: var(--line);
-  width: 100%;
-  max-width: 220px;
-}
-
-.rank-bar-fill {
-  height: 100%;
-  background: var(--ct);
-}
-
-.rank-tag {
-  font-size: 11px;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  justify-self: end;
-}
-
-.rank-points {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  text-align: right;
 }
 
 .loading { color: var(--muted); padding: 20px 0; }
@@ -326,12 +236,6 @@ main {
   justify-content: center;
   font-size: 12px;
   font-weight: 700;
-  flex-shrink: 0;
-}
-
-.rank-avatar-wrap {
-  width: 28px;
-  height: 28px;
   flex-shrink: 0;
 }
 
@@ -790,109 +694,6 @@ main {
   animation: pulse 1.6s ease-in-out infinite;
 }
 
-/* ---------- Tooltip de perfil do jogador (hover) ---------- */
-
-.player-tooltip {
-  position: fixed;
-  z-index: 100;
-  width: 320px;
-  max-width: 92vw;
-  max-height: 85vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-top: 3px solid var(--t);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
-  padding: 16px 16px 18px;
-  pointer-events: auto;
-  animation: reveal 0.12s ease;
-  box-sizing: border-box;
-}
-
-.player-tooltip.hidden { display: none; }
-
-.player-tooltip::-webkit-scrollbar { width: 6px; }
-.player-tooltip::-webkit-scrollbar-thumb {
-  background: var(--line);
-  border-radius: 3px;
-}
-
-.modal-profile-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--line);
-  min-width: 0;
-}
-
-.modal-profile-head .avatar-img,
-.modal-profile-head .avatar-fallback {
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
-}
-
-.modal-profile-head > div {
-  min-width: 0;
-}
-
-.modal-profile-name {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 18px;
-  color: var(--t);
-  overflow-wrap: break-word;
-  word-break: break-word;
-}
-
-.modal-profile-rank {
-  font-size: 11px;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-top: 2px;
-}
-
-.modal-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.modal-stat {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  background: var(--panel-2);
-  border: 1px solid var(--line);
-  padding: 7px 8px;
-  min-width: 0;
-}
-
-.modal-stat-label {
-  font-size: 10px;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.modal-stat-value {
-  font-family: var(--font-mono);
-  font-size: 14px;
-  font-weight: 700;
-  color: #fff;
-  white-space: normal;
-  overflow-wrap: break-word;
-  word-break: break-word;
-  line-height: 1.25;
-}
-
 /* ---------- Histórico de sorteios ---------- */
 
 .history-head { margin-top: 40px; }
@@ -933,24 +734,31 @@ main {
   font-weight: 600;
 }
 
-/* ---------- Seletor do sorteio agrupado por nível ---------- */
+/* ---------- Colunas por nível (Ranking e Sorteio) ---------- */
 
+/* minmax(0, 1fr) é o que garante 5 colunas IGUAIS: com "1fr" puro a coluna
+   nunca encolhe abaixo do conteúdo, e um nome comprido empurrava o Rank 1
+   pra 2x a largura das outras (e o Rank 5 pra fora da tela). */
 .player-picker {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 18px;
-  align-items: start;
+  align-items: stretch; /* colunas com a mesma altura */
 }
 
-@media (max-width: 900px) {
-  .player-picker { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 1100px) {
+  .player-picker { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
-@media (max-width: 520px) {
-  .player-picker { grid-template-columns: 1fr; }
+@media (max-width: 720px) {
+  .player-picker { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .player-picker { grid-template-columns: minmax(0, 1fr); }
 }
 
 .picker-grupo {
+  min-width: 0;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -982,6 +790,15 @@ main {
 
 .picker-grupo-icon { font-size: 14px; line-height: 1; }
 
+.picker-grupo-qtd {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
 .player-row {
   display: flex;
   align-items: center;
@@ -996,10 +813,12 @@ main {
 .player-row:hover { background: var(--panel-2); }
 .player-row.selected { background: var(--panel-2); border-color: var(--ct); }
 
-.player-row .avatar,
-.player-row .avatar-fallback {
-  width: 22px;
-  height: 22px;
+.player-row .avatar-img,
+.player-row .avatar-fallback,
+.ranking-row .avatar-img,
+.ranking-row .avatar-fallback {
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
 }
 
@@ -1082,3 +901,99 @@ main {
 
 .admin-link:hover { opacity: 1; color: var(--text); }
 
+/* ---------- Aba Ranking: linhas e setas de subiu / desceu ---------- */
+
+.rank-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin: -12px 0 18px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ranking-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+
+.ranking-row:hover { background: var(--panel-2); }
+
+.ranking-row .player-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rank-move {
+  flex-shrink: 0;
+  min-width: 20px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: default;
+}
+
+.rank-move.up { color: #3ecf6e; }
+.rank-move.down { color: #e5484d; }
+.rank-move.same { color: var(--muted); font-weight: 500; }
+
+/* ---------- Lápis: editar nome provisório no sorteio ---------- */
+
+.btn-lapis {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: var(--muted);
+  cursor: pointer;
+  opacity: 0.75;
+  transition: color 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+}
+
+.btn-lapis:hover,
+.btn-lapis:focus-visible {
+  color: var(--t);
+  border-color: var(--t);
+  opacity: 1;
+  outline: none;
+}
+
+/* Vaga que já recebeu um nome provisório fica com o lápis destacado. */
+.btn-lapis.ativo { color: var(--t); opacity: 1; }
+
+.nome-temp-input {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg);
+  border: 1px solid var(--t);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  padding: 3px 6px;
+}
+
+.nome-temp-input:focus { outline: none; }

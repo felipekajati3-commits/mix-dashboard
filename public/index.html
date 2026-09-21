@@ -21,7 +21,6 @@
     <button class="tab-btn active" data-tab="ranking">Ranking</button>
     <button class="tab-btn" data-tab="sorteio">Sorteio</button>
     <button class="tab-btn" data-tab="mapa">Mapa</button>
-    <button class="tab-btn" data-tab="temporadas">Temporadas</button>
   </nav>
   <div class="topbar-right">
     <div class="online-indicator" title="Pessoas vendo o site agora">
@@ -40,10 +39,17 @@
 
   <section id="tab-ranking" class="tab-panel active">
     <div class="section-head">
-      <h2>Classificação geral</h2>
-      <p class="muted">Pontuação acumulada de todos os jogadores registrados no K4-System.</p>
+      <h2>Ranking</h2>
+      <p class="muted">Níveis definidos pela equipe: Rank 1 é o mais forte, Rank 5 o mais fraco. A seta mostra quem mudou de nível na última atualização.</p>
     </div>
-    <div id="leaderboard" class="leaderboard">
+
+    <div class="rank-legend">
+      <span class="legend-item"><span class="rank-move up">▲</span> subiu</span>
+      <span class="legend-item"><span class="rank-move down">▼</span> desceu</span>
+      <span class="legend-item"><span class="rank-move same">–</span> manteve</span>
+    </div>
+
+    <div id="ranking-grid" class="player-picker ranking-grid">
       <div class="loading">Carregando ranking…</div>
     </div>
   </section>
@@ -135,29 +141,8 @@
     <div id="mapa-msg" class="msg"></div>
   </section>
 
-  <section id="tab-temporadas" class="tab-panel">
-    <div class="section-head">
-      <h2>Temporadas passadas</h2>
-      <p class="muted">Ranking congelado de temporadas anteriores, só pra consulta — não conta pra pontuação atual.</p>
-    </div>
-
-    <div id="season-select-wrap" class="season-select-wrap">
-      <select id="season-select" class="season-select"></select>
-    </div>
-
-    <div id="season-leaderboard" class="leaderboard">
-      <div class="loading">Carregando temporada…</div>
-    </div>
-  </section>
-
 </main>
 
-</div>
-
-<div id="player-modal" class="player-tooltip hidden">
-  <div id="modal-content">
-    <div class="loading">Carregando…</div>
-  </div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>

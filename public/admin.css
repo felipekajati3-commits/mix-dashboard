@@ -4,6 +4,10 @@
 
 .hidden { display: none !important; }
 
+/* O admin continua na largura estreita; so o Ranking e o Sorteio do site
+   usam a largura ampla (ver main em styles.css). */
+main { max-width: 920px; }
+
 .login-wrap {
   display: flex;
   justify-content: center;

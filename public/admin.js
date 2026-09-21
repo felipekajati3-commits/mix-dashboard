@@ -313,6 +313,29 @@ btnSalvar.addEventListener("click", async () => {
   }
 });
 
+// ---------------- Zerar setas ----------------
+// As setas de subiu/desceu (aba Ranking do site) ficam até o jogador mudar
+// de nível de novo. Este botão limpa todas de uma vez.
+
+const btnZerarSetas = document.getElementById("btn-zerar-setas");
+
+btnZerarSetas.addEventListener("click", async () => {
+  if (!confirm("Zerar as setas de subiu/desceu de todo mundo? Os níveis e nomes não mudam.")) return;
+
+  btnZerarSetas.disabled = true;
+  adminMsg.textContent = "";
+  try {
+    const res = await fetch("/api/admin/rankings/zerar-setas", { method: "POST" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erro ao zerar as setas.");
+    adminMsg.textContent = "Setas zeradas.";
+  } catch (err) {
+    adminMsg.textContent = err.message;
+  } finally {
+    btnZerarSetas.disabled = false;
+  }
+});
+
 // Avisa antes de fechar a aba com alteração pendente.
 window.addEventListener("beforeunload", (e) => {
   if (alterado) e.preventDefault();

@@ -6,145 +6,64 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
     document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
     btn.classList.add("active");
     document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
+
+    // Ranking e Sorteio usam a mesma lista. Ao voltar pra uma delas,
+    // busca de novo em silêncio, pra pegar mudanças que o admin salvou
+    // enquanto a página estava aberta (sem perder o que já foi marcado).
+    if (btn.dataset.tab === "ranking" || btn.dataset.tab === "sorteio") {
+      carregarJogadores({ silencioso: true });
+    }
   });
 });
 
-// ---------- Ranking ----------
+// ---------- Utilitários ----------
 
-// Desenha uma lista de jogadores no estilo do ranking dentro de um container
-// qualquer. Usada tanto pelo ranking ao vivo quanto pelas temporadas
-// arquivadas (que são só uma "foto" congelada, sem hover com stats atuais).
-function renderizarListaRanking(jogadores, container, { comTooltip = true } = {}) {
-  const maxPts = Math.max(...jogadores.map((j) => j.points), 1);
-
-  container.innerHTML = jogadores
-    .map((j, i) => {
-      const pos = i + 1;
-      const pct = Math.max(4, (j.points / maxPts) * 100);
-      const hsPct = j.hs_pct ?? (j.kills > 0 ? Math.round((j.headshots / j.kills) * 100) : 0);
-      return `
-        <div class="rank-row pos-${pos}" data-steamid="${j.steam_id}" tabindex="0">
-          <div class="rank-pos">${String(pos).padStart(2, "0")}</div>
-          ${avatarHtml(j)}
-          <div class="rank-name-wrap">
-            <div class="rank-name">${escapeHtml(j.name || "Jogador")}</div>
-            <div class="rank-stats-line">Kills: ${j.kills ?? 0} &nbsp; Deaths: ${j.deaths ?? 0} &nbsp; HS: ${hsPct}%</div>
-            <div class="rank-bar-track"><div class="rank-bar-fill" style="width:${pct}%"></div></div>
-          </div>
-          <div class="rank-tag">${escapeHtml(j.rank || "")}</div>
-          <div class="rank-points">${j.points} pts</div>
-        </div>
-      `;
-    })
-    .join("");
-
-  if (!comTooltip) return;
-
-  container.querySelectorAll(".rank-row").forEach((row) => {
-    row.addEventListener("mouseenter", () => {
-      clearTimeout(tooltipTimeout);
-      mostrarTooltipJogador(row.dataset.steamid, row.getBoundingClientRect());
-    });
-    row.addEventListener("mouseleave", () => {
-      tooltipTimeout = setTimeout(fecharModal, 120);
-    });
-    row.addEventListener("focus", () => {
-      mostrarTooltipJogador(row.dataset.steamid, row.getBoundingClientRect());
-    });
-    row.addEventListener("blur", fecharModal);
-  });
-}
-
-async function carregarRanking() {
-  const container = document.getElementById("leaderboard");
-  try {
-    const res = await fetch("/api/leaderboard");
-    const jogadores = await res.json();
-
-    if (!jogadores.length) {
-      container.innerHTML = `<div class="loading">Nenhum jogador registrado ainda.</div>`;
-      return;
-    }
-
-    renderizarListaRanking(jogadores, container, { comTooltip: true });
-  } catch (err) {
-    container.innerHTML = `<div class="loading">Erro ao carregar o ranking.</div>`;
-  }
-}
-
-// ---------- Temporadas passadas (arquivo estático, não vem do banco) ----------
-// Os dados ficam num arquivo fixo (public/data/temporadas.json) — pra
-// arquivar uma temporada nova, é só editar esse arquivo e subir pro
-// GitHub de novo, sem precisar mexer no banco de dados.
-
-let temporadasCache = null;
-
-async function carregarTemporadas() {
-  const selectWrap = document.getElementById("season-select-wrap");
-  const selectEl = document.getElementById("season-select");
-  const container = document.getElementById("season-leaderboard");
-
-  try {
-    const res = await fetch("data/temporadas.json");
-    if (!res.ok) throw new Error("Arquivo não encontrado.");
-    temporadasCache = await res.json();
-
-    const chaves = Object.keys(temporadasCache);
-    if (!chaves.length) {
-      selectWrap.classList.add("hidden");
-      container.innerHTML = `<div class="loading">Nenhuma temporada arquivada ainda.</div>`;
-      return;
-    }
-
-    selectEl.innerHTML = chaves
-      .map((k) => `<option value="${k}">${escapeHtml(temporadasCache[k].label || k)}</option>`)
-      .join("");
-    selectEl.addEventListener("change", () => mostrarTemporada(selectEl.value));
-
-    mostrarTemporada(chaves[0]);
-  } catch (err) {
-    selectWrap.classList.add("hidden");
-    container.innerHTML = `<div class="loading">Nenhuma temporada arquivada ainda.</div>`;
-  }
-}
-
-function mostrarTemporada(chave) {
-  const container = document.getElementById("season-leaderboard");
-  const dados = temporadasCache?.[chave];
-
-  if (!dados || !dados.jogadores?.length) {
-    container.innerHTML = `<div class="loading">Nenhum jogador nessa temporada.</div>`;
-    return;
-  }
-
-  renderizarListaRanking(dados.jogadores, container, { comTooltip: false });
-}
-
-carregarTemporadas();
-
-
-
+// Escapa também aspas, porque os nomes são usados dentro de atributos
+// (title, aria-label…) além de texto normal.
 function escapeHtml(str) {
+  return String(str ?? "").replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+  );
+}
+
+// Chamado pelo onerror do <img> do avatar: troca a foto quebrada por um
+// círculo com a inicial (guardada em data-inicial, sem montar JS em string).
+function avatarFallback(img) {
   const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
+  div.className = "avatar-fallback";
+  div.textContent = img.dataset.inicial || "?";
+  img.replaceWith(div);
 }
 
 // Monta o <img> do avatar da Steam, ou um círculo com a inicial do nome
-// quando não tiver foto (ex: Steam API fora do ar, perfil privado).
+// quando não tiver foto (ex: vaga personalizada, perfil privado).
 function avatarHtml(jogador) {
+  const inicial = escapeHtml((jogador.name || "?").trim().charAt(0).toUpperCase() || "?");
   if (jogador.avatar_url) {
-    return `<img class="avatar-img" src="${jogador.avatar_url}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'avatar-fallback',textContent:'${(jogador.name || "?").charAt(0).toUpperCase()}'}))" />`;
+    return `<img class="avatar-img" src="${escapeHtml(jogador.avatar_url)}" alt="" loading="lazy" data-inicial="${inicial}" onerror="avatarFallback(this)" />`;
   }
-  const inicial = (jogador.name || "?").charAt(0).toUpperCase();
-  return `<div class="avatar-fallback">${escapeHtml(inicial)}</div>`;
+  return `<div class="avatar-fallback">${inicial}</div>`;
 }
 
-// ---------- Sorteio (seleção manual de jogadores) ----------
+// ---------- Lista de jogadores (base do Ranking e do Sorteio) ----------
+// Os dois vêm dos rankings manuais definidos em /admin.html (níveis 1 a 5).
+// O K4-System não é mais usado.
+
+const TIERS = [1, 2, 3, 4, 5];
+const ICONE_TIER = { 1: "🔥", 2: "⚡", 3: "🎯", 4: "🖌️", 5: "💀" };
+
+// Vagas de preenchimento ("Complete 1", "Complete 2"…) existem só pra
+// completar o sorteio. Não são jogadores de verdade, então não entram
+// na aba Ranking.
+const VAGA_PLACEHOLDER = /^complete\s*\d*$/i;
 
 let todosJogadores = [];
-const selecionados = new Map(); // steam_id -> jogador
+let filtroNome = "";
 
+const selecionados = new Map(); // id -> jogador
+const nomesTemp = new Map(); // id -> nome provisório (só vale nos sorteios)
+
+const rankingGridEl = document.getElementById("ranking-grid");
 const btnSortear = document.getElementById("btn-sortear");
 const pickerEl = document.getElementById("player-picker");
 const searchEl = document.getElementById("player-search");
@@ -152,21 +71,127 @@ const selectedCountEl = document.getElementById("selected-count");
 const msgEl = document.getElementById("sorteio-msg");
 const teamsResultEl = document.getElementById("teams-result");
 
-let filtroNome = "";
+// Nome que aparece na tela: o provisório (lápis), se existir, ou o do ranking.
+function nomeExibido(j) {
+  return (nomesTemp.get(j.id) || j.name || "").trim();
+}
 
-// A lista do sorteio vem dos rankings manuais (definidos no /admin.html),
-// e não mais da tabela de pontos do K4.
-async function carregarJogadores() {
-  pickerEl.innerHTML = `<div class="loading">Carregando jogadores…</div>`;
+// Monta as 5 colunas (uma por nível). Cada tela passa a sua função pra
+// desenhar cada linha, e o resto (cabeçalho, contagem, vazio) é igual.
+function colunasPorTier(jogadores, renderLinha, textoVazio) {
+  return TIERS.map((tier) => {
+    const doTier = jogadores.filter((j) => j.tier === tier);
+    const linhas = doTier.length
+      ? doTier.map(renderLinha).join("")
+      : `<div class="picker-vazio">${textoVazio}</div>`;
+    return `
+      <div class="picker-grupo" data-tier="${tier}">
+        <div class="picker-grupo-head">
+          <span class="picker-grupo-icon">${ICONE_TIER[tier]}</span>
+          RANK ${tier}
+          <span class="picker-grupo-qtd">${doTier.length}</span>
+        </div>
+        ${linhas}
+      </div>`;
+  }).join("");
+}
+
+async function carregarJogadores({ silencioso = false } = {}) {
+  if (!silencioso) {
+    pickerEl.innerHTML = `<div class="loading">Carregando jogadores…</div>`;
+    rankingGridEl.innerHTML = `<div class="loading">Carregando ranking…</div>`;
+  }
   try {
-    const res = await fetch("/api/rankings");
+    const res = await fetch("/api/rankings", { cache: "no-store" });
+    if (!res.ok) throw new Error("Falha ao carregar.");
     const data = await res.json();
     todosJogadores = data.jogadores || [];
+
+    // Quem saiu do ranking não pode continuar marcado nem com nome provisório.
+    const idsAtuais = new Set(todosJogadores.map((j) => j.id));
+    for (const id of [...selecionados.keys()]) if (!idsAtuais.has(id)) selecionados.delete(id);
+    for (const id of [...nomesTemp.keys()]) if (!idsAtuais.has(id)) nomesTemp.delete(id);
+
+    renderizarRanking();
     renderizarPicker();
     atualizarContagem();
   } catch (err) {
+    if (silencioso) return; // mantém o que já estava na tela
     pickerEl.innerHTML = `<div class="loading">Erro ao carregar jogadores.</div>`;
+    rankingGridEl.innerHTML = `<div class="loading">Erro ao carregar o ranking.</div>`;
   }
+}
+
+// ---------- Ranking (com setas de subiu / desceu) ----------
+
+// Compara o nível atual com o que o jogador tinha antes da última mudança.
+// Nível MENOR = mais forte, então ir de 3 pra 2 é SUBIR.
+function movimentoDe(j) {
+  const antes = Number(j.tier_anterior);
+  if (!antes || antes === j.tier) {
+    return { classe: "same", simbolo: "–", titulo: "Manteve o nível" };
+  }
+  const data = j.movido_em
+    ? ` em ${new Date(j.movido_em).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}`
+    : "";
+  if (j.tier < antes) {
+    return { classe: "up", simbolo: "▲", titulo: `Subiu do Rank ${antes} para o Rank ${j.tier}${data}` };
+  }
+  return { classe: "down", simbolo: "▼", titulo: `Desceu do Rank ${antes} para o Rank ${j.tier}${data}` };
+}
+
+function linhaRanking(j) {
+  const mov = movimentoDe(j);
+  const nome = escapeHtml(j.name);
+  return `
+    <div class="ranking-row">
+      ${avatarHtml(j)}
+      <span class="player-name" title="${nome}">${nome}</span>
+      <span class="rank-move ${mov.classe}" title="${escapeHtml(mov.titulo)}" aria-label="${escapeHtml(mov.titulo)}">${mov.simbolo}</span>
+    </div>`;
+}
+
+function renderizarRanking() {
+  const reais = todosJogadores.filter(
+    (j) => j.name && j.name.trim() && !VAGA_PLACEHOLDER.test(j.name.trim())
+  );
+
+  if (!reais.length) {
+    rankingGridEl.innerHTML = `<div class="loading">Nenhum jogador cadastrado ainda.</div>`;
+    return;
+  }
+
+  rankingGridEl.innerHTML = colunasPorTier(reais, linhaRanking, "Ninguém nesse nível ainda.");
+}
+
+// ---------- Sorteio (seleção manual de jogadores) ----------
+
+const ICONE_LAPIS = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
+
+function linhaPicker(j) {
+  const nome = nomeExibido(j);
+  const marcado = selecionados.has(j.id);
+  const vazio = !nome;
+  const ehVaga = j.tipo === "vaga";
+  const renomeado = nomesTemp.has(j.id);
+  const nomeSeguro = escapeHtml(vazio ? "(vaga vazia)" : nome);
+  const tituloNome = renomeado ? `${nome} (original: ${j.name || "vazio"})` : nome;
+
+  // O lápis só aparece nas vagas personalizadas ("Complete 1"…): elas
+  // existem justamente pra receber, de vez em quando, um jogador que
+  // não está no ranking. A troca vale só pros sorteios, não vai pro ranking.
+  const lapis = ehVaga
+    ? `<button type="button" class="btn-lapis ${renomeado ? "ativo" : ""}"
+         title="Editar nome (vale só para o sorteio)" aria-label="Editar nome de ${nomeSeguro}">${ICONE_LAPIS}</button>`
+    : "";
+
+  return `
+    <label class="player-row ${marcado ? "selected" : ""} ${vazio ? "vaga-vazia" : ""}" data-id="${escapeHtml(j.id)}">
+      <input type="checkbox" ${marcado ? "checked" : ""} ${vazio ? "disabled" : ""} />
+      ${avatarHtml({ ...j, name: nome })}
+      <span class="player-name" title="${escapeHtml(tituloNome)}">${nomeSeguro}</span>
+      ${lapis}
+    </label>`;
 }
 
 function renderizarPicker() {
@@ -179,7 +204,7 @@ function renderizarPicker() {
   // voltar no servidor a cada letra digitada.
   const termo = filtroNome.toLowerCase();
   const visiveis = termo
-    ? todosJogadores.filter((j) => j.name.toLowerCase().includes(termo))
+    ? todosJogadores.filter((j) => nomeExibido(j).toLowerCase().includes(termo))
     : todosJogadores;
 
   if (visiveis.length === 0) {
@@ -187,44 +212,10 @@ function renderizarPicker() {
     return;
   }
 
-  // Agrupa por nível, do rank 1 (mais forte) ao rank 5 - uma coluna
-  // por nível, igual ao layout do admin.
-  const ICONE_TIER = { 1: "🔥", 2: "⚡", 3: "🎯", 4: "🖌️", 5: "💀" };
-
-  const blocos = [1, 2, 3, 4, 5]
-    .map((tier) => {
-      const doTier = visiveis.filter((j) => j.tier === tier);
-
-      const linhas = doTier.length
-        ? doTier
-            .map((j) => {
-              const marcado = selecionados.has(j.id);
-              const vazio = !j.name || !j.name.trim();
-              return `
-                <label class="player-row ${marcado ? "selected" : ""} ${vazio ? "vaga-vazia" : ""}" data-id="${j.id}">
-                  <input type="checkbox" ${marcado ? "checked" : ""} ${vazio ? "disabled" : ""} />
-                  ${avatarHtml(j)}
-                  <span class="player-name">${escapeHtml(vazio ? "(vaga vazia)" : j.name)}</span>
-                </label>`;
-            })
-            .join("")
-        : `<div class="picker-vazio">Ninguém nesse nível ainda.</div>`;
-
-      return `
-        <div class="picker-grupo" data-tier="${tier}">
-          <div class="picker-grupo-head">
-            <span class="picker-grupo-icon">${ICONE_TIER[tier]}</span>
-            RANK ${tier}
-          </div>
-          ${linhas}
-        </div>`;
-    })
-    .join("");
-
-  pickerEl.innerHTML = blocos;
+  pickerEl.innerHTML = colunasPorTier(visiveis, linhaPicker, "Ninguém nesse nível ainda.");
 
   pickerEl.querySelectorAll(".player-row").forEach((row) => {
-    const checkbox = row.querySelector("input");
+    const checkbox = row.querySelector("input[type=checkbox]");
     // Escuta "change" do checkbox (dispara uma única vez por interação real,
     // seja clicando no checkbox ou em qualquer ponto da linha) em vez de
     // "click" na linha inteira — isso evita o bug de clique duplicado que
@@ -240,12 +231,68 @@ function renderizarPicker() {
       row.classList.toggle("selected", checkbox.checked);
       atualizarContagem();
     });
+
+    row.querySelector(".btn-lapis")?.addEventListener("click", (e) => {
+      // Está dentro de um <label>: sem isso o clique também marcaria o checkbox.
+      e.preventDefault();
+      e.stopPropagation();
+      iniciarEdicaoNome(row);
+    });
   });
+}
+
+// Troca o nome da linha por um campo de texto. Enter ou clicar fora
+// confirma; Esc cancela; deixar vazio volta pro nome original.
+function iniciarEdicaoNome(row) {
+  const id = row.dataset.id;
+  const jogador = todosJogadores.find((j) => j.id === id);
+  const nomeEl = row.querySelector(".player-name");
+  if (!jogador || !nomeEl) return;
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "nome-temp-input";
+  input.maxLength = 40;
+  input.value = nomesTemp.get(id) ?? jogador.name ?? "";
+  input.placeholder = jogador.name || "Nome do jogador…";
+  input.setAttribute("aria-label", "Nome provisório do jogador");
+  nomeEl.replaceWith(input);
+  input.focus();
+  input.select();
+
+  let encerrado = false;
+  const concluir = (confirmar) => {
+    if (encerrado) return; // Enter + blur chegam quase juntos
+    encerrado = true;
+
+    if (confirmar) {
+      const novo = input.value.trim();
+      if (novo && novo !== jogador.name) nomesTemp.set(id, novo);
+      else nomesTemp.delete(id);
+    }
+    // Vaga que ficou sem nome não pode continuar marcada pro sorteio.
+    if (!nomeExibido(jogador)) selecionados.delete(id);
+
+    renderizarPicker();
+    atualizarContagem();
+  };
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      concluir(true);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      concluir(false);
+    }
+  });
+  input.addEventListener("blur", () => concluir(true));
+  input.addEventListener("click", (e) => e.stopPropagation());
 }
 
 function atualizarContagem() {
   const n = selecionados.size;
-  const total = todosJogadores.filter((j) => j.name && j.name.trim()).length;
+  const total = todosJogadores.filter((j) => nomeExibido(j)).length;
   selectedCountEl.textContent = `${n} / ${total}`;
   btnSortear.disabled = n < 2;
 }
@@ -265,12 +312,17 @@ btnSortear.addEventListener("click", async () => {
   btnSortear.textContent = "Sorteando…";
 
   try {
-    // Manda só os ids: quem decide o nível de cada um é o servidor.
+    // Manda os ids de quem foi marcado. O nível de cada um quem decide é o
+    // servidor. Os nomes provisórios (lápis) vão junto, só dos marcados; o
+    // servidor só aceita eles em vagas personalizadas.
     const ids = Array.from(selecionados.keys());
+    const nomes = {};
+    for (const id of ids) if (nomesTemp.has(id)) nomes[id] = nomesTemp.get(id);
+
     const res = await fetch("/api/draft", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids }),
+      body: JSON.stringify({ ids, nomes }),
     });
     if (!res.ok) {
       const data = await res.json();
@@ -289,6 +341,7 @@ carregarJogadores();
 
 // ---------- Botão "Limpar" ----------
 // Desmarca todo mundo sem esconder o resultado nem recarregar a lista.
+// Os nomes provisórios continuam (é só desmarcar).
 
 const btnLimpar = document.getElementById("btn-limpar");
 btnLimpar.addEventListener("click", () => {
@@ -508,133 +561,6 @@ function renderizarTimes(timeA, timeB, somaA, somaB) {
   teamsResultEl.classList.remove("hidden");
 }
 
-// ---------- Tooltip de perfil do jogador (aparece ao passar o mouse) ----------
-
-const modalEl = document.getElementById("player-modal");
-const modalContentEl = document.getElementById("modal-content");
-let tooltipTimeout = null;
-let ultimoRectAncora = null; // linha (rect) que abriu o tooltip, pra poder reposicionar depois
-const perfilCache = new Map(); // steam_id -> dados do perfil já buscados
-
-// Mantém o tooltip aberto se o mouse entrar nele (útil quando o conteúdo
-// é grande e precisa rolar), e fecha se o mouse sair dele também.
-modalEl.addEventListener("mouseenter", () => clearTimeout(tooltipTimeout));
-modalEl.addEventListener("mouseleave", () => {
-  tooltipTimeout = setTimeout(fecharModal, 120);
-});
-
-async function mostrarTooltipJogador(steamId, rect) {
-  if (!steamId) return;
-
-  ultimoRectAncora = rect;
-  posicionarTooltip(rect);
-  modalEl.classList.remove("hidden");
-
-  // Se já buscamos esse jogador antes nessa visita, mostra na hora
-  // sem precisar esperar o servidor de novo.
-  if (perfilCache.has(steamId)) {
-    renderizarPerfilJogador(perfilCache.get(steamId));
-    return;
-  }
-
-  modalContentEl.innerHTML = `<div class="loading">Carregando…</div>`;
-
-  try {
-    const res = await fetch(`/api/player/${encodeURIComponent(steamId)}`);
-    if (!res.ok) throw new Error("Jogador não encontrado.");
-    const j = await res.json();
-    perfilCache.set(steamId, j);
-    renderizarPerfilJogador(j);
-  } catch (err) {
-    modalContentEl.innerHTML = `<div class="loading">Erro ao carregar perfil.</div>`;
-  }
-}
-
-// Posiciona o tooltip do lado (ou embaixo) da linha que disparou o hover,
-// sempre tentando manter ele dentro da tela. Quando já sabemos a altura
-// real do conteúdo (depois de renderizado), usamos ela em vez de um
-// palpite — assim o tooltip nunca fica cortado embaixo da tela.
-function posicionarTooltip(rect, alturaReal) {
-  const largura = 320;
-  const margem = 12;
-  const alturaMax = window.innerHeight - margem * 2;
-  const alturaEstimada = Math.min(alturaReal || 380, alturaMax);
-
-  let left = rect.right + margem;
-  if (left + largura > window.innerWidth - margem) {
-    left = rect.left - largura - margem;
-  }
-  if (left < margem) {
-    left = Math.max(margem, Math.min(rect.left, window.innerWidth - largura - margem));
-  }
-
-  let top = rect.top;
-  if (top + alturaEstimada > window.innerHeight - margem) {
-    top = Math.max(margem, window.innerHeight - alturaEstimada - margem);
-  }
-
-  modalEl.style.left = `${left}px`;
-  modalEl.style.top = `${top}px`;
-}
-
-function renderizarPerfilJogador(j) {
-  const totalJogos = (j.game_win || 0) + (j.game_lose || 0);
-
-  const stats = [
-    { label: "Pontos", value: j.points },
-    { label: "Patente", value: j.rank || "—" },
-    { label: "Kills", value: j.kills },
-    { label: "Deaths", value: j.deaths },
-    { label: "Assistências", value: j.assists },
-    { label: "K/D", value: j.kd },
-    { label: "Headshots", value: j.headshots },
-    { label: "HS %", value: `${j.hs_pct}%` },
-    { label: "Precisão", value: `${j.accuracy}%` },
-    { label: "MVPs", value: j.mvp },
-    { label: "Vitórias", value: j.game_win },
-    { label: "Derrotas", value: j.game_lose },
-    { label: "Taxa de vitória", value: totalJogos > 0 ? `${j.win_rate}%` : "—" },
-    { label: "Rounds vencidos", value: j.round_win },
-    { label: "Bombas plantadas", value: j.bomb_planted },
-    { label: "Bombas defusadas", value: j.bomb_defused },
-  ];
-
-  modalContentEl.innerHTML = `
-    <div class="modal-profile-head">
-      ${avatarHtml(j)}
-      <div>
-        <div class="modal-profile-name">${escapeHtml(j.name || "Jogador")}</div>
-        <div class="modal-profile-rank">${escapeHtml(j.rank || "")}</div>
-      </div>
-    </div>
-    <div class="modal-stats-grid">
-      ${stats
-        .map(
-          (s) => `
-        <div class="modal-stat">
-          <span class="modal-stat-label">${escapeHtml(s.label)}</span>
-          <span class="modal-stat-value">${s.value}</span>
-        </div>
-      `
-        )
-        .join("")}
-    </div>
-  `;
-
-  // O número de estatísticas mostradas pode variar, então só depois de
-  // desenhar o conteúdo é que sabemos a altura real — reposiciona com
-  // base nela pra garantir que nada fique cortado fora da tela.
-  if (ultimoRectAncora) {
-    requestAnimationFrame(() => {
-      posicionarTooltip(ultimoRectAncora, modalEl.offsetHeight);
-    });
-  }
-}
-
-function fecharModal() {
-  modalEl.classList.add("hidden");
-}
-
 // ---------- Contador de online (fixo no header) ----------
 
 const onlineCountEl = document.getElementById("online-count");
@@ -698,4 +624,3 @@ async function carregarHistoricoSorteios() {
 
 carregarHistoricoSorteios();
 
-carregarRanking();
