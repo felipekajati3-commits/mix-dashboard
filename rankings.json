@@ -293,9 +293,9 @@
       "tipo": "steam",
       "steam_id": "76561198790152105",
       "nome": "panco",
-      "tier": 5,
-      "tier_anterior": 4,
-      "movido_em": "2026-09-21T19:58:53.105Z"
+      "tier": 4,
+      "tier_anterior": 5,
+      "movido_em": "2026-09-21T19:58:55.504Z"
     },
     {
       "id": "1jmr4d73mubgi7gf",
@@ -325,5 +325,5 @@
       "movido_em": null
     }
   ],
-  "atualizado_em": "2026-09-21T19:58:53.105Z"
+  "atualizado_em": "2026-09-21T19:58:55.504Z"
 }
