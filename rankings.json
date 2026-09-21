@@ -54,7 +54,7 @@
       "tipo": "steam",
       "steam_id": "76561199652109305",
       "nome": "✪ KU$H 011",
-      "tier": 1
+      "tier": 2
     },
     {
       "id": "8oac2t3amubg7tmy",
@@ -152,7 +152,7 @@
       "tipo": "steam",
       "steam_id": "76561199103146494",
       "nome": "GRIMM",
-      "tier": 2
+      "tier": 3
     },
     {
       "id": "9d4vaa67mubgenaa",
@@ -229,7 +229,7 @@
       "tipo": "steam",
       "steam_id": "76561198790152105",
       "nome": "panco",
-      "tier": 5
+      "tier": 4
     },
     {
       "id": "1jmr4d73mubgi7gf",
@@ -246,5 +246,5 @@
       "tier": 5
     }
   ],
-  "atualizado_em": "2026-09-21T16:26:58.050Z"
+  "atualizado_em": "2026-09-21T18:06:55.061Z"
 }
