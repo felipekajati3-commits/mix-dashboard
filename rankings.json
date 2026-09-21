@@ -6,7 +6,42 @@
       "steam_id": "76561199532829551",
       "nome": "Powerzin",
       "tier": 2
+    },
+    {
+      "id": "kfvn8gwbmubg5rw7",
+      "tipo": "vaga",
+      "steam_id": null,
+      "nome": "Complete 1",
+      "tier": 1
+    },
+    {
+      "id": "6mjycv1dmubg61lf",
+      "tipo": "vaga",
+      "steam_id": null,
+      "nome": "Complete 2",
+      "tier": 2
+    },
+    {
+      "id": "7h3mlu7nmubg66rd",
+      "tipo": "vaga",
+      "steam_id": null,
+      "nome": "Complete 3",
+      "tier": 3
+    },
+    {
+      "id": "b10mk95omubg6aeq",
+      "tipo": "vaga",
+      "steam_id": null,
+      "nome": "Complete 4",
+      "tier": 4
+    },
+    {
+      "id": "cae7av8xmubg6dfr",
+      "tipo": "vaga",
+      "steam_id": null,
+      "nome": "Complete 5",
+      "tier": 5
     }
   ],
-  "atualizado_em": "2026-09-21T16:14:09.656Z"
+  "atualizado_em": "2026-09-21T16:16:51.906Z"
 }
