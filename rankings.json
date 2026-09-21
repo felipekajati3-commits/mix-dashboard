@@ -138,7 +138,7 @@
       "tipo": "steam",
       "steam_id": "76561199030261015",
       "nome": "MatheuRO",
-      "tier": 3
+      "tier": 4
     },
     {
       "id": "x6vjc46gmubgbn8h",
@@ -166,7 +166,7 @@
       "tipo": "steam",
       "steam_id": "76561199018880641",
       "nome": "Toddy",
-      "tier": 2
+      "tier": 3
     },
     {
       "id": "ycwe97uumubgf69v",
@@ -246,5 +246,5 @@
       "tier": 5
     }
   ],
-  "atualizado_em": "2026-09-21T18:11:15.858Z"
+  "atualizado_em": "2026-09-21T18:12:10.726Z"
 }
