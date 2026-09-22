@@ -57,10 +57,20 @@
   <section id="tab-sorteio" class="tab-panel">
     <div class="section-head">
       <h2>Sorteio de times</h2>
-      <p class="muted">Selecione quem vai jogar hoje. O sorteio monta dois times com a soma de níveis mais equilibrada possível.</p>
+      <p class="muted">Selecione quem vai jogar hoje. Depois escolha entre sortear os times ou, quando sobrar gente pra pouca vaga, sortear quem fica com as vagas disponíveis.</p>
+    </div>
+
+    <div class="sorteio-modos">
+      <button class="modo-btn active" data-modo="times" type="button">Sortear times</button>
+      <button class="modo-btn" data-modo="vaga" type="button">Sortear vagas</button>
     </div>
 
     <input id="player-search" class="search-input" type="text" placeholder="Filtrar pelo nome…" />
+
+    <div id="vaga-config" class="vaga-config hidden">
+      <label for="input-vagas">Quantas vagas serão sorteadas?</label>
+      <input id="input-vagas" class="vagas-input" type="number" min="1" value="1" />
+    </div>
 
     <div id="player-picker" class="player-picker">
       <div class="loading">Carregando jogadores…</div>
@@ -101,6 +111,29 @@
           <span class="team-total" id="team-b-total">força 0</span>
         </div>
         <ul id="team-b-list" class="team-list"></ul>
+      </div>
+    </div>
+
+    <div id="vaga-live" class="sorteio-roleta hidden">
+      <span class="roleta-label">Sorteando as vagas…</span>
+      <div id="roleta-vaga-nome" class="roleta-nome">—</div>
+    </div>
+
+    <div id="vaga-result" class="vaga-result hidden">
+      <button id="btn-novo-sorteio-vaga" class="btn btn-primary vaga-result-reset" type="button">
+        Novo sorteio de vagas
+      </button>
+      <div class="vaga-result-col">
+        <div class="vaga-result-head">
+          <span class="vaga-result-label ok">✔ Vagas sorteadas</span>
+        </div>
+        <ul id="vaga-sorteados-list" class="team-list"></ul>
+      </div>
+      <div class="vaga-result-col">
+        <div class="vaga-result-head">
+          <span class="vaga-result-label fora">Ficaram de fora</span>
+        </div>
+        <ul id="vaga-fora-list" class="team-list"></ul>
       </div>
     </div>
 

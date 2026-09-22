@@ -486,6 +486,96 @@ app.post("/api/draft", async (req, res) => {
   }
 });
 
+// Embaralha um array (Fisher-Yates) sem alterar o original. Usado no
+// sorteio de vagas, onde cada jogador precisa ter exatamente a mesma
+// chance de ficar com uma das vagas.
+function embaralhar(array) {
+  const copia = [...array];
+  for (let i = copia.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copia[i], copia[j]] = [copia[j], copia[i]];
+  }
+  return copia;
+}
+
+// Impede que dois sorteios de vaga rodem ao mesmo tempo.
+let vagaSorteioEmAndamento = false;
+
+// Sorteia quem, dentre os jogadores marcados, fica com as vagas
+// disponíveis. Ex: 4 jogadores marcados e 2 vagas -> sorteia 2 deles.
+// Usa a mesma lista de jogadores do sorteio de times (mesmo endpoint de
+// leitura dos rankings), então os nomes provisórios (lápis) valem aqui
+// também.
+app.post("/api/draft-vaga", async (req, res) => {
+  try {
+    if (vagaSorteioEmAndamento) {
+      return res.status(409).json({ error: "Já tem um sorteio de vaga em andamento. Aguarde terminar." });
+    }
+
+    const ids = req.body.ids;
+    const vagas = Number(req.body.vagas);
+
+    const nomesTemp =
+      req.body.nomes && typeof req.body.nomes === "object" && !Array.isArray(req.body.nomes)
+        ? req.body.nomes
+        : {};
+
+    if (!Array.isArray(ids) || ids.length < 2) {
+      return res.status(400).json({ error: "Selecione pelo menos 2 jogadores para sortear vaga." });
+    }
+    if (!Number.isInteger(vagas) || vagas < 1) {
+      return res.status(400).json({ error: "Informe quantas vagas serão sorteadas." });
+    }
+
+    const dados = await store.ler();
+    const porId = new Map(dados.jogadores.map((j) => [j.id, j]));
+    const avatares = await buscarAvatares(dados.jogadores.filter((j) => j.steam_id).map((j) => j.steam_id));
+    const jogadores = ids
+      .map((id) => porId.get(id))
+      .filter(Boolean)
+      .map((j) => {
+        const temp = j.tipo === "vaga" ? String(nomesTemp[j.id] ?? "").trim().slice(0, 40) : "";
+        return { ...j, name: temp || j.nome, avatar_url: avatares[j.steam_id] || null };
+      });
+
+    if (jogadores.length < 2) {
+      return res.status(400).json({
+        error: "Os jogadores selecionados não estão mais no ranking. Recarregue a página.",
+      });
+    }
+    if (vagas >= jogadores.length) {
+      return res.status(400).json({
+        error: "O número de vagas precisa ser menor que o número de jogadores selecionados.",
+      });
+    }
+
+    vagaSorteioEmAndamento = true;
+
+    // Calculado uma única vez no servidor, pra todo mundo ver o mesmo resultado.
+    const embaralhados = embaralhar(jogadores);
+    const sorteados = embaralhados.slice(0, vagas);
+    const idsSorteados = new Set(sorteados.map((j) => j.id));
+    const restantes = jogadores.filter((j) => !idsSorteados.has(j.id));
+
+    // Avisa todo mundo conectado que o sorteio começou, pra tela deles
+    // mostrar a animação em vez de aparecer o resultado do nada.
+    io.emit("vaga:iniciado", { jogadores });
+
+    // Segura um pouco antes de revelar, só pra dar tempo da animação
+    // de "sorteando..." rodar na tela de todo mundo.
+    setTimeout(() => {
+      io.emit("vaga:resultado", { sorteados, restantes, vagas });
+      vagaSorteioEmAndamento = false;
+    }, 3000);
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    vagaSorteioEmAndamento = false;
+    res.status(500).json({ error: "Erro ao sortear a vaga." });
+  }
+});
+
 // Sorteia um mapa aleatório dentre a lista marcada.
 function sortearMapa(mapas) {
   const indice = Math.floor(Math.random() * mapas.length);

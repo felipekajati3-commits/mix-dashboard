@@ -71,6 +71,23 @@ const selectedCountEl = document.getElementById("selected-count");
 const msgEl = document.getElementById("sorteio-msg");
 const teamsResultEl = document.getElementById("teams-result");
 
+// ---------- Modo do sorteio: times ou vagas ----------
+// As duas opções usam a MESMA seleção de jogadores (Map "selecionados"
+// acima); só muda o que acontece ao clicar em sortear e como o
+// resultado é mostrado.
+
+let modoSorteio = "times"; // "times" | "vaga"
+
+const modoBtns = document.querySelectorAll(".modo-btn");
+const vagaConfigEl = document.getElementById("vaga-config");
+const inputVagas = document.getElementById("input-vagas");
+const vagaLiveEl = document.getElementById("vaga-live");
+const roletaVagaNomeEl = document.getElementById("roleta-vaga-nome");
+const vagaResultEl = document.getElementById("vaga-result");
+const vagaSorteadosListEl = document.getElementById("vaga-sorteados-list");
+const vagaForaListEl = document.getElementById("vaga-fora-list");
+const btnNovoSorteioVaga = document.getElementById("btn-novo-sorteio-vaga");
+
 // Nome que aparece na tela: o provisório (lápis), se existir, ou o do ranking.
 function nomeExibido(j) {
   return (nomesTemp.get(j.id) || j.name || "").trim();
@@ -294,8 +311,39 @@ function atualizarContagem() {
   const n = selecionados.size;
   const total = todosJogadores.filter((j) => nomeExibido(j)).length;
   selectedCountEl.textContent = `${n} / ${total}`;
-  btnSortear.disabled = n < 2;
+
+  if (modoSorteio === "vaga") {
+    const vagas = Number(inputVagas.value) || 0;
+    btnSortear.disabled = n < 2 || vagas < 1 || vagas >= n;
+  } else {
+    btnSortear.disabled = n < 2;
+  }
 }
+
+// Troca entre "Sortear times" e "Sortear vagas". Some com qualquer
+// resultado/animação que estivesse na tela do modo anterior, pra não
+// ficar coisa de um modo aparecendo junto com o outro.
+modoBtns.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    if (btn.classList.contains("active")) return;
+
+    modoBtns.forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    modoSorteio = btn.dataset.modo;
+
+    vagaConfigEl.classList.toggle("hidden", modoSorteio !== "vaga");
+    teamsResultEl.classList.add("hidden");
+    vagaResultEl.classList.add("hidden");
+    liveEl.classList.add("hidden");
+    vagaLiveEl.classList.add("hidden");
+    msgEl.textContent = "";
+    btnSortear.textContent = modoSorteio === "vaga" ? "Sortear vagas" : "Sortear times";
+
+    atualizarContagem();
+  });
+});
+
+inputVagas.addEventListener("input", atualizarContagem);
 
 let debounceTimer;
 searchEl.addEventListener("input", () => {
@@ -306,7 +354,12 @@ searchEl.addEventListener("input", () => {
   }, 150);
 });
 
-btnSortear.addEventListener("click", async () => {
+btnSortear.addEventListener("click", () => {
+  if (modoSorteio === "vaga") sortearVagas();
+  else sortearTimes();
+});
+
+async function sortearTimes() {
   msgEl.textContent = "";
   btnSortear.disabled = true;
   btnSortear.textContent = "Sorteando…";
@@ -335,7 +388,38 @@ btnSortear.addEventListener("click", async () => {
     btnSortear.disabled = selecionados.size < 2;
     btnSortear.textContent = "Sortear times";
   }
-});
+}
+
+// Sorteio de vagas: mesma seleção de jogadores do sorteio de times, mas
+// em vez de dividir em dois times, sorteia quem fica com as N vagas
+// disponíveis (ex: 4 marcados, 2 vagas -> sorteia 2 deles).
+async function sortearVagas() {
+  msgEl.textContent = "";
+  btnSortear.disabled = true;
+  btnSortear.textContent = "Sorteando…";
+
+  try {
+    const ids = Array.from(selecionados.keys());
+    const nomes = {};
+    for (const id of ids) if (nomesTemp.has(id)) nomes[id] = nomesTemp.get(id);
+    const vagas = Number(inputVagas.value);
+
+    const res = await fetch("/api/draft-vaga", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids, nomes, vagas }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || "Erro ao sortear a vaga.");
+    }
+    // O resultado chega pelo socket ("vaga:resultado"), igual no sorteio de times.
+  } catch (err) {
+    msgEl.textContent = err.message;
+    atualizarContagem();
+    btnSortear.textContent = "Sortear vagas";
+  }
+}
 
 carregarJogadores();
 
@@ -422,6 +506,55 @@ socket.on("sorteio:iniciado", ({ jogadores }) => {
       i++;
     }, 90);
   }
+});
+
+// ---------- Sorteio de vagas ao vivo ----------
+
+let roletaVagaInterval = null;
+
+socket.on("vaga:iniciado", ({ jogadores }) => {
+  msgEl.textContent = "";
+  vagaResultEl.classList.add("hidden");
+  vagaLiveEl.classList.remove("hidden");
+  btnSortear.disabled = true;
+  btnSortear.textContent = "Sorteando…";
+
+  const nomes = (jogadores || []).map((j) => j.name).filter(Boolean);
+  if (nomes.length && roletaVagaNomeEl) {
+    let i = 0;
+    clearInterval(roletaVagaInterval);
+    roletaVagaInterval = setInterval(() => {
+      roletaVagaNomeEl.textContent = nomes[i % nomes.length];
+      i++;
+    }, 90);
+  }
+});
+
+socket.on("vaga:resultado", ({ sorteados, restantes }) => {
+  clearInterval(roletaVagaInterval);
+  vagaLiveEl.classList.add("hidden");
+  renderizarVagas(sorteados, restantes);
+  btnSortear.textContent = "Sortear vagas";
+  atualizarContagem();
+});
+
+function renderizarVagas(sorteados, restantes) {
+  vagaSorteadosListEl.innerHTML = sorteados
+    .map((j) => `<li>${avatarHtml(j)}<span class="team-player-name">${escapeHtml(j.name)}</span></li>`)
+    .join("");
+  vagaForaListEl.innerHTML = restantes
+    .map((j) => `<li>${avatarHtml(j)}<span class="team-player-name">${escapeHtml(j.name)}</span></li>`)
+    .join("");
+  vagaResultEl.classList.remove("hidden");
+}
+
+btnNovoSorteioVaga.addEventListener("click", () => {
+  vagaResultEl.classList.add("hidden");
+  selecionados.clear();
+  renderizarPicker();
+  atualizarContagem();
+  msgEl.textContent = "";
+  document.getElementById("player-picker").scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
 socket.on("sorteio:resultado", ({ timeA, timeB, somaA, somaB }) => {
