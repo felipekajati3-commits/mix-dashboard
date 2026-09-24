@@ -1005,58 +1005,54 @@ main {
 
 .admin-link:hover { opacity: 1; color: var(--text); }
 
-/* ---------- Aba Ranking: linhas e setas de subiu / desceu ---------- */
+/* ---------- Aba Ranking: leaderboard do K4-System (por pontos) ---------- */
 
-.rank-legend {
+.leaderboard {
   display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
-  margin: -12px 0 18px;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.legend-item {
-  display: inline-flex;
-  align-items: center;
+  flex-direction: column;
   gap: 6px;
 }
 
-.ranking-row {
-  display: flex;
+.rank-row {
+  display: grid;
+  grid-template-columns: 32px 28px 1fr auto;
   align-items: center;
-  gap: 8px;
-  padding: 6px 4px;
+  gap: 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--ct-dim);
+  padding: 12px 16px;
   border-radius: 6px;
-  border: 1px solid transparent;
 }
 
-.ranking-row:hover { background: var(--panel-2); }
+.rank-row.pos-1 { border-left-color: var(--gold); }
+.rank-row.pos-2 { border-left-color: #b8bec6; }
+.rank-row.pos-3 { border-left-color: #a0653a; }
 
-.ranking-row .player-name {
-  flex: 1;
-  min-width: 0;
-  font-size: 13px;
-  font-weight: 500;
+.rank-pos {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.rank-row.pos-1 .rank-pos { color: var(--gold); }
+
+.rank-name {
+  font-weight: 600;
+  font-size: 14px;
   color: var(--text);
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.rank-move {
-  flex-shrink: 0;
-  min-width: 20px;
-  text-align: center;
-  font-size: 14px;
+.rank-points {
+  font-family: var(--font-mono);
   font-weight: 700;
-  line-height: 1;
-  cursor: default;
+  text-align: right;
+  color: var(--text);
 }
-
-.rank-move.up { color: #3ecf6e; }
-.rank-move.down { color: #e5484d; }
-.rank-move.same { color: var(--muted); font-weight: 500; }
 
 /* ---------- Lápis: editar nome provisório no sorteio ---------- */
 

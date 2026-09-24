@@ -286,9 +286,34 @@ app.get("/api/admin/status", (req, res) => {
   });
 });
 
+// ---------------- RANKING DO K4-SYSTEM (por pontos) ----------------
+
+// Lista pública: é o que alimenta a aba Ranking. Vem direto da tabela
+// do plugin K4-System (rank_mix_k4ranks/rank_mix_k4stats), então reflete
+// os pontos que o próprio plugin calcula no servidor - não depende mais
+// de nada que a equipe cadastre manualmente aqui no site.
+app.get("/api/leaderboard", async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT steam_id, name, points
+       FROM rank_mix_k4ranks
+       ORDER BY points DESC
+       LIMIT ?`,
+      [config.leaderboardLimit]
+    );
+    const avatares = await buscarAvatares(rows.map((r) => r.steam_id));
+    const comAvatar = rows.map((r) => ({ ...r, avatar_url: avatares[r.steam_id] || null }));
+    res.json(comAvatar);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao buscar o ranking." });
+  }
+});
+
 // ---------------- RANKINGS MANUAIS (1 a 5) ----------------
 
-// Lista pública: é o que alimenta a tela de sorteio.
+// Lista usada pelo sorteio: níveis definidos manualmente pela equipe em
+// /admin.html, pra equilibrar os times. A aba Ranking NÃO usa mais isso.
 app.get("/api/rankings", async (req, res) => {
   try {
     const dados = await store.ler();

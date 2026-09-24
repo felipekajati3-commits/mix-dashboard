@@ -30,24 +30,23 @@ onde você rodou, se outras pessoas forem acessar pela rede).
 
 ## Como funciona
 
-- **Aba Ranking**: mostra os jogadores em 5 colunas, uma por nível
-  (Rank 1 é o mais forte, Rank 5 o mais fraco). Ao lado do nome aparece
-  uma seta: ▲ verde (subiu de nível), ▼ vermelha (desceu) ou – (manteve).
-  As vagas de preenchimento ("Complete 1", "Complete 2"…) não aparecem
-  aqui.
-- **Aba Sorteio**: você marca quem vai jogar e clica em "Sortear times".
-  Os dois times saem com a soma de níveis mais equilibrada possível (pesos
-  em `pesosPorTier`, no `config.js`). Nas vagas "Complete N" existe um
-  lápis para trocar o nome **só para os sorteios** (não altera o ranking).
+- **Aba Ranking**: leaderboard oficial do **K4-System**, o plugin de
+  pontos do servidor. Vem direto da tabela `rank_mix_k4ranks` (rota
+  `/api/leaderboard`), ordenado por pontos — ninguém precisa cadastrar
+  nada manualmente pra alguém aparecer aqui. Mostra posição, nome e
+  pontos. O tamanho da lista é controlado por `leaderboardLimit` em
+  `config.js` (padrão: 50).
+- **Aba Sorteio**: continua usando os níveis manuais (Rank 1 a 5)
+  definidos pela equipe em `/admin.html` — é isso que serve pra montar
+  times equilibrados (pesos em `pesosPorTier`, no `config.js`). Essa
+  lista é **independente** da aba Ranking agora. Nas vagas "Complete N"
+  existe um lápis para trocar o nome só para os sorteios.
 - **Aba Mapa**: sorteio de mapa ao vivo.
-- **/admin.html**: onde a equipe edita os níveis. Ao salvar, o servidor
-  compara cada jogador com o que estava salvo antes: quem mudou de nível
-  ganha a seta na aba Ranking, e ela fica até a próxima mudança ou até
-  clicar em "Zerar setas".
+- **/admin.html**: onde a equipe edita os níveis usados no Sorteio (e só
+  nele — não afeta mais a aba Ranking).
 
-O K4-System não é mais usado para o ranking nem para o sorteio. A única
-coisa que ainda lê a tabela antiga do K4 é a busca por nome do painel de
-admin (`/api/players`), para achar o Steam ID de quem já jogou no servidor.
+A busca por nome do painel de admin (`/api/players`) também lê a tabela
+do K4, pra achar o Steam ID de quem já jogou no servidor.
 
 ## Hospedar para todo mundo acessar (não só você)
 

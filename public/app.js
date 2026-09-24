@@ -7,10 +7,13 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
     btn.classList.add("active");
     document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
 
-    // Ranking e Sorteio usam a mesma lista. Ao voltar pra uma delas,
-    // busca de novo em silêncio, pra pegar mudanças que o admin salvou
-    // enquanto a página estava aberta (sem perder o que já foi marcado).
-    if (btn.dataset.tab === "ranking" || btn.dataset.tab === "sorteio") {
+    // Ranking (K4-System, por pontos) e Sorteio (níveis manuais) têm
+    // fontes diferentes agora. Ao voltar pra uma delas, busca de novo em
+    // silêncio, pra pegar o que mudou enquanto a página estava aberta
+    // (sem perder o que já foi marcado no sorteio).
+    if (btn.dataset.tab === "ranking") {
+      carregarLeaderboard({ silencioso: true });
+    } else if (btn.dataset.tab === "sorteio") {
       carregarJogadores({ silencioso: true });
     }
   });
@@ -45,9 +48,50 @@ function avatarHtml(jogador) {
   return `<div class="avatar-fallback">${inicial}</div>`;
 }
 
-// ---------- Lista de jogadores (base do Ranking e do Sorteio) ----------
-// Os dois vêm dos rankings manuais definidos em /admin.html (níveis 1 a 5).
-// O K4-System não é mais usado.
+// ---------- Ranking (K4-System, por pontos) ----------
+// Vem direto de /api/leaderboard (tabela do plugin K4 no servidor).
+// Independente da lista manual usada no Sorteio.
+
+const leaderboardEl = document.getElementById("leaderboard");
+
+async function carregarLeaderboard({ silencioso = false } = {}) {
+  if (!silencioso) {
+    leaderboardEl.innerHTML = `<div class="loading">Carregando ranking…</div>`;
+  }
+  try {
+    const res = await fetch("/api/leaderboard", { cache: "no-store" });
+    if (!res.ok) throw new Error("Falha ao carregar.");
+    const jogadores = await res.json();
+
+    if (!jogadores.length) {
+      leaderboardEl.innerHTML = `<div class="loading">Nenhum jogador registrado ainda.</div>`;
+      return;
+    }
+
+    leaderboardEl.innerHTML = jogadores
+      .map((j, i) => {
+        const pos = i + 1;
+        const nome = escapeHtml(j.name || "Jogador");
+        return `
+          <div class="rank-row pos-${pos}">
+            <div class="rank-pos">${String(pos).padStart(2, "0")}</div>
+            ${avatarHtml({ name: j.name, avatar_url: j.avatar_url })}
+            <div class="rank-name" title="${nome}">${nome}</div>
+            <div class="rank-points">${j.points ?? 0} pts</div>
+          </div>`;
+      })
+      .join("");
+  } catch (err) {
+    if (silencioso) return; // mantém o que já estava na tela
+    leaderboardEl.innerHTML = `<div class="loading">Erro ao carregar o ranking.</div>`;
+  }
+}
+
+carregarLeaderboard();
+
+// ---------- Lista de jogadores (base do Sorteio) ----------
+// Vem dos rankings manuais definidos em /admin.html (níveis 1 a 5). Só
+// alimenta a aba Sorteio agora — a aba Ranking usa o K4-System acima.
 
 const TIERS = [1, 2, 3, 4, 5];
 const ICONE_TIER = { 1: "🔥", 2: "⚡", 3: "🎯", 4: "🖌️", 5: "💀" };
@@ -63,7 +107,6 @@ let filtroNome = "";
 const selecionados = new Map(); // id -> jogador
 const nomesTemp = new Map(); // id -> nome provisório (só vale nos sorteios)
 
-const rankingGridEl = document.getElementById("ranking-grid");
 const btnSortear = document.getElementById("btn-sortear");
 const pickerEl = document.getElementById("player-picker");
 const searchEl = document.getElementById("player-search");
@@ -116,7 +159,6 @@ function colunasPorTier(jogadores, renderLinha, textoVazio) {
 async function carregarJogadores({ silencioso = false } = {}) {
   if (!silencioso) {
     pickerEl.innerHTML = `<div class="loading">Carregando jogadores…</div>`;
-    rankingGridEl.innerHTML = `<div class="loading">Carregando ranking…</div>`;
   }
   try {
     const res = await fetch("/api/rankings", { cache: "no-store" });
@@ -129,56 +171,12 @@ async function carregarJogadores({ silencioso = false } = {}) {
     for (const id of [...selecionados.keys()]) if (!idsAtuais.has(id)) selecionados.delete(id);
     for (const id of [...nomesTemp.keys()]) if (!idsAtuais.has(id)) nomesTemp.delete(id);
 
-    renderizarRanking();
     renderizarPicker();
     atualizarContagem();
   } catch (err) {
     if (silencioso) return; // mantém o que já estava na tela
     pickerEl.innerHTML = `<div class="loading">Erro ao carregar jogadores.</div>`;
-    rankingGridEl.innerHTML = `<div class="loading">Erro ao carregar o ranking.</div>`;
   }
-}
-
-// ---------- Ranking (com setas de subiu / desceu) ----------
-
-// Compara o nível atual com o que o jogador tinha antes da última mudança.
-// Nível MENOR = mais forte, então ir de 3 pra 2 é SUBIR.
-function movimentoDe(j) {
-  const antes = Number(j.tier_anterior);
-  if (!antes || antes === j.tier) {
-    return { classe: "same", simbolo: "–", titulo: "Manteve o nível" };
-  }
-  const data = j.movido_em
-    ? ` em ${new Date(j.movido_em).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}`
-    : "";
-  if (j.tier < antes) {
-    return { classe: "up", simbolo: "▲", titulo: `Subiu do Rank ${antes} para o Rank ${j.tier}${data}` };
-  }
-  return { classe: "down", simbolo: "▼", titulo: `Desceu do Rank ${antes} para o Rank ${j.tier}${data}` };
-}
-
-function linhaRanking(j) {
-  const mov = movimentoDe(j);
-  const nome = escapeHtml(j.name);
-  return `
-    <div class="ranking-row">
-      ${avatarHtml(j)}
-      <span class="player-name" title="${nome}">${nome}</span>
-      <span class="rank-move ${mov.classe}" title="${escapeHtml(mov.titulo)}" aria-label="${escapeHtml(mov.titulo)}">${mov.simbolo}</span>
-    </div>`;
-}
-
-function renderizarRanking() {
-  const reais = todosJogadores.filter(
-    (j) => j.name && j.name.trim() && !VAGA_PLACEHOLDER.test(j.name.trim())
-  );
-
-  if (!reais.length) {
-    rankingGridEl.innerHTML = `<div class="loading">Nenhum jogador cadastrado ainda.</div>`;
-    return;
-  }
-
-  rankingGridEl.innerHTML = colunasPorTier(reais, linhaRanking, "Ninguém nesse nível ainda.");
 }
 
 // ---------- Sorteio (seleção manual de jogadores) ----------
