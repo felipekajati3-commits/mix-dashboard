@@ -1,15 +1,6 @@
 {
   "jogadores": [
     {
-      "id": "h6zr4itlmubg2y4c",
-      "tipo": "steam",
-      "steam_id": "76561199532829551",
-      "nome": "Powerzin",
-      "tier": 2,
-      "tier_anterior": null,
-      "movido_em": null
-    },
-    {
       "id": "kfvn8gwbmubg5rw7",
       "tipo": "vaga",
       "steam_id": null,
@@ -341,7 +332,16 @@
       "tier": 2,
       "tier_anterior": null,
       "movido_em": null
+    },
+    {
+      "id": "e0lijv1vmuetzuas",
+      "tipo": "steam",
+      "steam_id": "76561199532829551",
+      "nome": "Powerzin",
+      "tier": 2,
+      "tier_anterior": null,
+      "movido_em": null
     }
   ],
-  "atualizado_em": "2026-09-24T01:05:14.656Z"
+  "atualizado_em": "2026-09-24T01:07:02.006Z"
 }
