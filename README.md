@@ -34,7 +34,12 @@ onde você rodou, se outras pessoas forem acessar pela rede).
   pontos do servidor. Vem direto da tabela `rank_mix_k4ranks` (rota
   `/api/leaderboard`), ordenado por pontos — ninguém precisa cadastrar
   nada manualmente pra alguém aparecer aqui. Mostra posição, nome e
-  pontos. O tamanho da lista é controlado por `leaderboardLimit` em
+  pontos, com cor mudando por faixa (igual ao Premier do CS2): cinza
+  até 4999, azul claro a partir de 5000, azul a partir de 10000, roxo
+  a partir de 15000, rosa a partir de 20000, vermelho a partir de
+  25000 e dourado a partir de 30000 (as faixas ficam em
+  `FAIXAS_PREMIER`, no topo de `public/app.js`, caso queira mudar os
+  valores). O tamanho da lista é controlado por `leaderboardLimit` em
   `config.js` (padrão: 50).
 - **Aba Sorteio**: continua usando os níveis manuais (Rank 1 a 5)
   definidos pela equipe em `/admin.html` — é isso que serve pra montar

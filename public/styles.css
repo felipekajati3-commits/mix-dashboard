@@ -1054,6 +1054,30 @@ main {
   color: var(--text);
 }
 
+/* ---------- Faixas de pontos estilo Premier (CS2) ---------- */
+
+.rank-row.premier-cinza { border-left-color: #9aa0a8; }
+.rank-row.premier-cinza .rank-points { color: #9aa0a8; }
+
+.rank-row.premier-azul-claro { border-left-color: #6ec1e4; }
+.rank-row.premier-azul-claro .rank-points { color: #6ec1e4; }
+
+.rank-row.premier-azul { border-left-color: #5b8def; }
+.rank-row.premier-azul .rank-points { color: #5b8def; }
+
+.rank-row.premier-roxo { border-left-color: #9b6bd4; }
+.rank-row.premier-roxo .rank-points { color: #9b6bd4; }
+
+.rank-row.premier-rosa { border-left-color: #e26bc7; }
+.rank-row.premier-rosa .rank-points { color: #e26bc7; }
+
+.rank-row.premier-vermelho { border-left-color: #e5484d; }
+.rank-row.premier-vermelho .rank-points { color: #e5484d; }
+
+.rank-row.premier-dourado { border-left-color: var(--gold); }
+.rank-row.premier-dourado .rank-points { color: var(--gold); }
+.rank-row.premier-dourado .rank-name { color: var(--gold); }
+
 /* ---------- Lápis: editar nome provisório no sorteio ---------- */
 
 .btn-lapis {

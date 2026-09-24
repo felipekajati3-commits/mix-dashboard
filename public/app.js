@@ -54,6 +54,23 @@ function avatarHtml(jogador) {
 
 const leaderboardEl = document.getElementById("leaderboard");
 
+// ---------- Cores por faixa de pontos (igual ao Premier da Valve) ----------
+// Faixas de 5000 em 5000, cada uma com uma cor — o nome/pontos do
+// jogador mudam de cor sozinhos ao cruzar cada faixa.
+const FAIXAS_PREMIER = [
+  { min: 30000, classe: "premier-dourado" },
+  { min: 25000, classe: "premier-vermelho" },
+  { min: 20000, classe: "premier-rosa" },
+  { min: 15000, classe: "premier-roxo" },
+  { min: 10000, classe: "premier-azul" },
+  { min: 5000, classe: "premier-azul-claro" },
+  { min: 0, classe: "premier-cinza" },
+];
+
+function faixaPremier(pontos) {
+  return (FAIXAS_PREMIER.find((f) => (pontos || 0) >= f.min) || FAIXAS_PREMIER[FAIXAS_PREMIER.length - 1]).classe;
+}
+
 async function carregarLeaderboard({ silencioso = false } = {}) {
   if (!silencioso) {
     leaderboardEl.innerHTML = `<div class="loading">Carregando ranking…</div>`;
@@ -72,12 +89,13 @@ async function carregarLeaderboard({ silencioso = false } = {}) {
       .map((j, i) => {
         const pos = i + 1;
         const nome = escapeHtml(j.name || "Jogador");
+        const faixa = faixaPremier(j.points);
         return `
-          <div class="rank-row pos-${pos}">
+          <div class="rank-row pos-${pos} ${faixa}">
             <div class="rank-pos">${String(pos).padStart(2, "0")}</div>
             ${avatarHtml({ name: j.name, avatar_url: j.avatar_url })}
             <div class="rank-name" title="${nome}">${nome}</div>
-            <div class="rank-points">${j.points ?? 0} pts</div>
+            <div class="rank-points">${(j.points ?? 0).toLocaleString("pt-BR")} pts</div>
           </div>`;
       })
       .join("");
@@ -88,6 +106,7 @@ async function carregarLeaderboard({ silencioso = false } = {}) {
 }
 
 carregarLeaderboard();
+
 
 // ---------- Lista de jogadores (base do Sorteio) ----------
 // Vem dos rankings manuais definidos em /admin.html (níveis 1 a 5). Só
