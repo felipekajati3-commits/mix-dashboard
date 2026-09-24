@@ -177,6 +177,14 @@ main {
   margin: 0 auto;
 }
 
+/* Ranking é uma lista de uma coluna só (posição, nome, pontos) — não
+   precisa da largura toda de 1360px, senão sobra um vão enorme entre
+   o nome e os pontos. */
+#tab-ranking {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 
@@ -1010,14 +1018,16 @@ main {
 .leaderboard {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 6px;
+  max-width: 480px;
+  margin: 0 auto;
 }
 
 .rank-row {
-  display: grid;
-  grid-template-columns: 32px 28px 1fr auto;
+  display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-left: 3px solid var(--ct-dim);
@@ -1033,21 +1043,25 @@ main {
   font-family: var(--font-mono);
   font-weight: 700;
   color: var(--muted);
+  flex-shrink: 0;
+  width: 22px;
 }
 
 .rank-row.pos-1 .rank-pos { color: var(--gold); }
 
 .rank-name {
+  flex: 0 1 auto;
+  max-width: 220px;
   font-weight: 600;
   font-size: 14px;
   color: var(--text);
-  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .rank-points {
+  flex-shrink: 0;
   font-family: var(--font-mono);
   font-weight: 700;
   text-align: right;
