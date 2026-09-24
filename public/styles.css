@@ -1018,7 +1018,6 @@ main {
 .leaderboard {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
   gap: 6px;
   max-width: 480px;
   margin: 0 auto;
@@ -1050,8 +1049,7 @@ main {
 .rank-row.pos-1 .rank-pos { color: var(--gold); }
 
 .rank-name {
-  flex: 0 1 auto;
-  max-width: 220px;
+  flex: 0 0 220px;
   font-weight: 600;
   font-size: 14px;
   color: var(--text);
@@ -1062,6 +1060,7 @@ main {
 
 .rank-points {
   flex-shrink: 0;
+  margin-left: auto;
   font-family: var(--font-mono);
   font-weight: 700;
   text-align: right;
@@ -1091,6 +1090,10 @@ main {
 .rank-row.premier-dourado { border-left-color: var(--gold); }
 .rank-row.premier-dourado .rank-points { color: var(--gold); }
 .rank-row.premier-dourado .rank-name { color: var(--gold); }
+
+@media (max-width: 480px) {
+  .rank-name { flex-basis: 40vw; }
+}
 
 /* ---------- Lápis: editar nome provisório no sorteio ---------- */
 
