@@ -332,7 +332,16 @@
       "tier": 3,
       "tier_anterior": null,
       "movido_em": null
+    },
+    {
+      "id": "rudcknlkmuetxiqa",
+      "tipo": "steam",
+      "steam_id": "76561198375454204",
+      "nome": "PedroSTREETS",
+      "tier": 2,
+      "tier_anterior": null,
+      "movido_em": null
     }
   ],
-  "atualizado_em": "2026-09-21T21:57:36.500Z"
+  "atualizado_em": "2026-09-24T01:05:14.656Z"
 }
