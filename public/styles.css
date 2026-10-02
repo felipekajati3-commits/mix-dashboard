@@ -1254,12 +1254,10 @@ main {
 }
 
 .rank-row.anima {
-  opacity: 0;
-  transform: translateX(-24px);
-  animation: rank-entra 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation: rank-entra 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
   animation-delay: calc(var(--i) * 60ms);
 }
-@keyframes rank-entra { to { opacity: 1; transform: none; } }
+@keyframes rank-entra { from { opacity: 0; transform: translateX(-24px); } }
 
 .rank-points { font-variant-numeric: tabular-nums; }
 
@@ -1359,4 +1357,149 @@ main {
 @media (prefers-reduced-motion: reduce) {
   .team-list li.entra-time { animation: none; opacity: 1; transform: none; }
   .map-result.revelar { animation: none; }
+}
+
+
+/* ---------- Aba Sorteio: seleção de jogadores, botões, roleta e resultados ---------- */
+
+/* Fundo: clarão + grade HUD atrás das 5 colunas (o layout lado a lado continua o mesmo). */
+.player-picker { position: relative; isolation: isolate; }
+.player-picker::before {
+  content: "";
+  position: absolute;
+  inset: -30px -20px;
+  z-index: -2;
+  pointer-events: none;
+  background: radial-gradient(60% 40% at 50% 0%, rgba(212, 175, 55, 0.18), transparent 70%);
+}
+.player-picker::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 32px 32px;
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 40%, transparent 95%);
+  mask-image: radial-gradient(ellipse at center, #000 40%, transparent 95%);
+}
+
+.picker-grupo { --c: var(--ct); background: rgba(20, 24, 29, 0.88); }
+.picker-grupo[data-tier="1"] { --c: #4caf6e; }
+.picker-grupo[data-tier="2"] { --c: var(--ct); }
+.picker-grupo[data-tier="3"] { --c: var(--gold); }
+.picker-grupo[data-tier="4"] { --c: #d9536e; }
+.picker-grupo[data-tier="5"] { --c: #9b6bd4; }
+
+.player-row {
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.player-row:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--c, var(--ct)) 55%, transparent);
+  box-shadow: 0 5px 16px -6px color-mix(in srgb, var(--c, var(--ct)) 60%, transparent);
+}
+.player-row.selected {
+  border-color: var(--c, var(--ct));
+  background: color-mix(in srgb, var(--c, var(--ct)) 14%, var(--panel-2));
+  box-shadow: 0 0 14px -4px var(--c, var(--ct));
+}
+.player-row input[type="checkbox"] { accent-color: var(--c, var(--ct)); }
+.player-row.selected input[type="checkbox"] { animation: check-pula 0.3s ease; }
+@keyframes check-pula { 50% { transform: scale(1.4); } }
+
+.player-picker.anima .player-row {
+  animation: jogador-sobe 0.4s ease backwards;
+  animation-delay: calc(var(--i, 0) * 30ms);
+}
+@keyframes jogador-sobe { from { opacity: 0; transform: translateY(8px); } }
+
+/* Contador e botão */
+.selected-count-big .valor { transition: color 0.2s ease; display: inline-block; }
+.selected-count-big.pronto .valor { color: #5fd38d; }
+.selected-count-big.bump .valor { animation: check-pula 0.25s ease; }
+
+.sorteio-controls .btn-primary:not(:disabled) { animation: botao-pulso 1.8s ease-in-out infinite; }
+@keyframes botao-pulso { 50% { box-shadow: 0 0 18px 2px rgba(232, 130, 60, 0.55); } }
+
+/* Botões Times / Vagas */
+.modo-btn { transition: all 0.2s ease; }
+.modo-btn.active {
+  background: rgba(212, 175, 55, 0.1);
+  color: var(--text);
+  border-color: var(--gold);
+  box-shadow: 0 0 16px -4px var(--gold);
+}
+
+/* Campo de vagas com − e + */
+.vagas-stepper {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--panel);
+}
+.vagas-stepper button {
+  background: none;
+  border: 0;
+  color: var(--text);
+  width: 36px;
+  height: 38px;
+  font-size: 18px;
+  cursor: pointer;
+}
+.vagas-stepper button:hover { background: var(--panel-2); color: var(--gold); }
+.vagas-stepper .vagas-input {
+  width: 56px;
+  border: 0;
+  border-radius: 0;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  -moz-appearance: textfield;
+}
+.vagas-stepper .vagas-input::-webkit-outer-spin-button,
+.vagas-stepper .vagas-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* Roleta de nomes */
+.sorteio-roleta {
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--gold);
+  border-radius: 6px;
+  padding: 22px 18px;
+  background: radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.18), transparent 70%), var(--panel);
+}
+.sorteio-roleta .roleta-label { color: var(--muted); letter-spacing: 0.16em; font-size: 11px; }
+.sorteio-roleta .roleta-nome {
+  font-size: 36px;
+  min-height: 44px;
+  color: var(--gold);
+  text-shadow: 0 0 18px rgba(212, 175, 55, 0.5);
+}
+
+/* Resultado das vagas */
+.vaga-result-col { background: rgba(20, 24, 29, 0.9); border-top: 3px solid var(--muted); }
+.vaga-result-col:nth-child(2) { border-top-color: #3ecf6e; box-shadow: 0 0 24px -12px #3ecf6e; }
+.vaga-result-col:nth-child(3) { opacity: 0.8; }
+.vaga-result-col .team-list li.entra-time { transform: translateX(-24px); }
+
+/* Histórico */
+.history-item {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  animation: jogador-sobe 0.4s ease backwards;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+.history-item:hover {
+  transform: translateY(-2px);
+  border-left-color: var(--t);
+  box-shadow: 0 5px 16px -6px rgba(232, 130, 60, 0.5);
+}
+.history-item-team:first-child .history-team-label { color: var(--ct); }
+
+@media (prefers-reduced-motion: reduce) {
+  .player-picker.anima .player-row, .history-item { animation: none; }
+  .sorteio-controls .btn-primary:not(:disabled) { animation: none; }
+  .player-row.selected input[type="checkbox"], .selected-count-big.bump .valor { animation: none; }
 }

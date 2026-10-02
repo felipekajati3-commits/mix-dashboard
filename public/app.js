@@ -256,6 +256,8 @@ function linhaPicker(j) {
     </label>`;
 }
 
+let pickerJaAnimou = false;
+
 function renderizarPicker() {
   if (todosJogadores.length === 0) {
     pickerEl.innerHTML = `<div class="loading">Nenhum jogador cadastrado ainda. Cadastre os rankings em <a href="/admin.html">/admin.html</a>.</div>`;
@@ -275,6 +277,14 @@ function renderizarPicker() {
   }
 
   pickerEl.innerHTML = colunasPorTier(visiveis, linhaPicker, "Ninguém nesse nível ainda.");
+
+  // Entrada em cascata só na primeira vez que a lista aparece.
+  const animarPicker = !pickerJaAnimou;
+  pickerJaAnimou = true;
+  pickerEl.classList.toggle("anima", animarPicker);
+  if (animarPicker) {
+    pickerEl.querySelectorAll(".player-row").forEach((row, i) => row.style.setProperty("--i", Math.min(i, 30)));
+  }
 
   pickerEl.querySelectorAll(".player-row").forEach((row) => {
     const checkbox = row.querySelector("input[type=checkbox]");
@@ -363,6 +373,17 @@ function atualizarContagem() {
   } else {
     btnSortear.disabled = n < 2;
   }
+
+  const caixa = selectedCountEl.closest(".selected-count-big");
+  if (caixa) {
+    caixa.classList.toggle("pronto", !btnSortear.disabled);
+    if (selectedCountEl.dataset.ultimo !== String(n)) {
+      selectedCountEl.dataset.ultimo = String(n);
+      caixa.classList.remove("bump");
+      void caixa.offsetWidth;
+      caixa.classList.add("bump");
+    }
+  }
 }
 
 // Troca entre "Sortear times" e "Sortear vagas". Some com qualquer
@@ -389,6 +410,13 @@ modoBtns.forEach((btn) => {
 });
 
 inputVagas.addEventListener("input", atualizarContagem);
+
+function ajustarVagas(delta) {
+  inputVagas.value = Math.max(1, (Number(inputVagas.value) || 1) + delta);
+  atualizarContagem();
+}
+document.getElementById("vagas-menos").addEventListener("click", () => ajustarVagas(-1));
+document.getElementById("vagas-mais").addEventListener("click", () => ajustarVagas(1));
 
 let debounceTimer;
 searchEl.addEventListener("input", () => {
@@ -505,6 +533,27 @@ socket.on("online:count", (n) => {
 });
 
 let roletaInterval = null;
+
+// Troca o nome rapidamente e vai desacelerando até a hora do resultado.
+// Só efeito visual: não influencia o sorteio, que é decidido no servidor.
+const giroNomesTimers = new WeakMap();
+
+function pararGiroNomes(el) {
+  if (el) clearTimeout(giroNomesTimers.get(el));
+}
+
+function girarNomes(el, nomes, duracao = 2800) {
+  pararGiroNomes(el);
+  const passos = 26;
+  const pesos = Array.from({ length: passos }, (_, k) => Math.pow(1.13, k));
+  const escala = duracao / pesos.reduce((x, y) => x + y, 0);
+  let k = 0;
+  const passo = () => {
+    el.textContent = nomes[Math.floor(Math.random() * nomes.length)];
+    if (++k < passos) giroNomesTimers.set(el, setTimeout(passo, pesos[k - 1] * escala));
+  };
+  passo();
+}
 const resultadoPartidaEl = document.getElementById("resultado-partida");
 
 // Chega quando o MatchZy avisa que a partida terminou (webhook configurado
@@ -543,14 +592,7 @@ socket.on("sorteio:iniciado", ({ jogadores }) => {
   // Fica trocando o nome exibido rapidamente, tipo caça-níquel, enquanto
   // o servidor calcula o resultado — só efeito visual, não influencia o sorteio.
   const nomes = (jogadores || []).map((j) => j.name).filter(Boolean);
-  if (nomes.length && roletaNomeEl) {
-    let i = 0;
-    clearInterval(roletaInterval);
-    roletaInterval = setInterval(() => {
-      roletaNomeEl.textContent = nomes[i % nomes.length];
-      i++;
-    }, 90);
-  }
+  if (nomes.length && roletaNomeEl) girarNomes(roletaNomeEl, nomes, 2800);
 });
 
 // ---------- Sorteio de vagas ao vivo ----------
@@ -565,18 +607,12 @@ socket.on("vaga:iniciado", ({ jogadores }) => {
   btnSortear.textContent = "Sorteando…";
 
   const nomes = (jogadores || []).map((j) => j.name).filter(Boolean);
-  if (nomes.length && roletaVagaNomeEl) {
-    let i = 0;
-    clearInterval(roletaVagaInterval);
-    roletaVagaInterval = setInterval(() => {
-      roletaVagaNomeEl.textContent = nomes[i % nomes.length];
-      i++;
-    }, 90);
-  }
+  if (nomes.length && roletaVagaNomeEl) girarNomes(roletaVagaNomeEl, nomes, 2800);
 });
 
 socket.on("vaga:resultado", ({ sorteados, restantes }) => {
   clearInterval(roletaVagaInterval);
+  pararGiroNomes(roletaVagaNomeEl);
   vagaLiveEl.classList.add("hidden");
   renderizarVagas(sorteados, restantes);
   btnSortear.textContent = "Sortear vagas";
@@ -585,10 +621,10 @@ socket.on("vaga:resultado", ({ sorteados, restantes }) => {
 
 function renderizarVagas(sorteados, restantes) {
   vagaSorteadosListEl.innerHTML = sorteados
-    .map((j) => `<li>${avatarHtml(j)}<span class="team-player-name">${escapeHtml(j.name)}</span></li>`)
+    .map((j, i) => `<li class="entra-time" style="--i:${i}">${avatarHtml(j)}<span class="team-player-name">${escapeHtml(j.name)}</span></li>`)
     .join("");
   vagaForaListEl.innerHTML = restantes
-    .map((j) => `<li>${avatarHtml(j)}<span class="team-player-name">${escapeHtml(j.name)}</span></li>`)
+    .map((j, i) => `<li class="entra-time" style="--i:${i}">${avatarHtml(j)}<span class="team-player-name">${escapeHtml(j.name)}</span></li>`)
     .join("");
   vagaResultEl.classList.remove("hidden");
 }
@@ -604,6 +640,7 @@ btnNovoSorteioVaga.addEventListener("click", () => {
 
 socket.on("sorteio:resultado", ({ timeA, timeB, somaA, somaB }) => {
   clearInterval(roletaInterval);
+  pararGiroNomes(roletaNomeEl);
   liveEl.classList.add("hidden");
   renderizarTimes(timeA, timeB, somaA, somaB);
   btnSortear.textContent = "Sortear times";
@@ -885,13 +922,13 @@ async function carregarHistoricoSorteios() {
     }
 
     historyEl.innerHTML = historico
-      .map((h) => {
+      .map((h, idx) => {
         const data = new Date(h.criado_em);
         const dataFmt = data.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
         const nomesA = h.timeA.map((j) => escapeHtml(j.name)).join(", ");
         const nomesB = h.timeB.map((j) => escapeHtml(j.name)).join(", ");
         return `
-          <div class="history-item">
+          <div class="history-item" style="--i:${Math.min(idx, 8)}">
             <div class="history-item-date">${dataFmt}</div>
             <div class="history-item-teams">
               <div class="history-item-team"><span class="history-team-label">Time A (${h.somaA} pts):</span> ${nomesA}</div>

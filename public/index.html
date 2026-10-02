@@ -63,7 +63,11 @@
 
     <div id="vaga-config" class="vaga-config hidden">
       <label for="input-vagas">Quantas vagas serão sorteadas?</label>
-      <input id="input-vagas" class="vagas-input" type="number" min="1" value="1" />
+      <div class="vagas-stepper">
+        <button id="vagas-menos" type="button" aria-label="Menos vagas">−</button>
+        <input id="input-vagas" class="vagas-input" type="number" min="1" value="1" />
+        <button id="vagas-mais" type="button" aria-label="Mais vagas">+</button>
+      </div>
     </div>
 
     <div id="player-picker" class="player-picker">
