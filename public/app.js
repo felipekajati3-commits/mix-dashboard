@@ -12,7 +12,7 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
     // silêncio, pra pegar o que mudou enquanto a página estava aberta
     // (sem perder o que já foi marcado no sorteio).
     if (btn.dataset.tab === "ranking") {
-      carregarLeaderboard({ silencioso: true });
+      carregarLeaderboard({ silencioso: true, animar: true });
     } else if (btn.dataset.tab === "sorteio") {
       carregarJogadores({ silencioso: true });
     }
@@ -71,7 +71,25 @@ function faixaPremier(pontos) {
   return (FAIXAS_PREMIER.find((f) => (pontos || 0) >= f.min) || FAIXAS_PREMIER[FAIXAS_PREMIER.length - 1]).classe;
 }
 
-async function carregarLeaderboard({ silencioso = false } = {}) {
+// Conta o número de 0 até o valor final (some se o sistema pede "reduzir movimento").
+const reduzirMovimento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function contarPontos(el, alvo) {
+  if (reduzirMovimento) {
+    el.textContent = `${alvo.toLocaleString("pt-BR")} pts`;
+    return;
+  }
+  const duracao = 1100;
+  const inicio = performance.now();
+  (function passo(agora) {
+    const k = Math.min((agora - inicio) / duracao, 1);
+    const suave = 1 - Math.pow(1 - k, 3);
+    el.textContent = `${Math.round(alvo * suave).toLocaleString("pt-BR")} pts`;
+    if (k < 1) requestAnimationFrame(passo);
+  })(inicio);
+}
+
+async function carregarLeaderboard({ silencioso = false, animar = !silencioso } = {}) {
   if (!silencioso) {
     leaderboardEl.innerHTML = `<div class="loading">Carregando ranking…</div>`;
   }
@@ -85,20 +103,30 @@ async function carregarLeaderboard({ silencioso = false } = {}) {
       return;
     }
 
+    // Cor do clarão de fundo = faixa do líder.
+    leaderboardEl.className = `leaderboard glow-${faixaPremier(jogadores[0].points)}`;
+
     leaderboardEl.innerHTML = jogadores
       .map((j, i) => {
         const pos = i + 1;
         const nome = escapeHtml(j.name || "Jogador");
         const faixa = faixaPremier(j.points);
+        const pontos = j.points ?? 0;
         return `
-          <div class="rank-row pos-${pos} ${faixa}">
+          <div class="rank-row pos-${pos} ${faixa} ${animar ? "anima" : ""}" style="--i:${i}">
             <div class="rank-pos">${String(pos).padStart(2, "0")}</div>
             ${avatarHtml({ name: j.name, avatar_url: j.avatar_url })}
             <div class="rank-name" title="${nome}">${nome}</div>
-            <div class="rank-points">${(j.points ?? 0).toLocaleString("pt-BR")} pts</div>
+            <div class="rank-points" data-p="${pontos}">${animar ? "0" : pontos.toLocaleString("pt-BR")} pts</div>
           </div>`;
       })
       .join("");
+
+    if (animar) {
+      leaderboardEl.querySelectorAll(".rank-points").forEach((el, i) => {
+        setTimeout(() => contarPontos(el, Number(el.dataset.p)), i * 60);
+      });
+    }
   } catch (err) {
     if (silencioso) return; // mantém o que já estava na tela
     leaderboardEl.innerHTML = `<div class="loading">Erro ao carregar o ranking.</div>`;
