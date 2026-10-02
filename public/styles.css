@@ -1503,3 +1503,176 @@ main {
   .sorteio-controls .btn-primary:not(:disabled) { animation: none; }
   .player-row.selected input[type="checkbox"], .selected-count-big.bump .valor { animation: none; }
 }
+
+
+/* ---------- Cabeçalho: fixo, fundo com clarão e grade, nome com brilho, abas e botão ---------- */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  isolation: isolate;
+  border-bottom: 0;
+  padding: calc(18px + env(safe-area-inset-top, 0px)) 32px 18px;
+  background: rgba(8, 10, 13, 0.72);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  transition: padding 0.25s ease, background 0.25s ease;
+}
+.topbar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(45% 140% at 18% 0%, rgba(232, 130, 60, 0.2), transparent 70%),
+    radial-gradient(35% 140% at 85% 0%, rgba(91, 141, 239, 0.14), transparent 70%);
+}
+.topbar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 28px 28px;
+  -webkit-mask-image: linear-gradient(to bottom, #000, transparent);
+  mask-image: linear-gradient(to bottom, #000, transparent);
+}
+.topbar.compacta {
+  padding-top: calc(8px + env(safe-area-inset-top, 0px));
+  padding-bottom: 8px;
+  background: rgba(8, 10, 13, 0.88);
+}
+
+/* Barra de luz laranja → azul embaixo, com um brilho que percorre */
+.topbar-luz {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--t), var(--ct));
+  overflow: hidden;
+}
+.topbar-luz::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 22%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
+  animation: topbar-corre 6s linear infinite;
+}
+@keyframes topbar-corre { from { left: -25%; } to { left: 105%; } }
+
+/* Logo com aura e nome com brilho */
+.brand { gap: 12px; }
+.logo-wrap { position: relative; display: grid; place-items: center; }
+.logo-wrap::before {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(232, 130, 60, 0.45), transparent 68%);
+  animation: logo-aura 3.6s ease-in-out infinite alternate;
+}
+@keyframes logo-aura { from { opacity: 0.5; transform: scale(0.92); } to { opacity: 1; transform: scale(1.08); } }
+.brand-logo { position: relative; transition: height 0.25s ease, transform 0.25s ease; }
+.brand:hover .brand-logo { transform: scale(1.08); }
+.topbar.compacta .brand-logo { height: 34px; }
+
+.titulo { position: relative; overflow: hidden; line-height: 1; }
+.brand h1 { font-size: 24px; text-shadow: 0 0 18px rgba(232, 130, 60, 0.35); transition: font-size 0.25s ease; }
+.brand h1 span { text-shadow: 0 0 18px rgba(232, 130, 60, 0.7); }
+.titulo small {
+  display: block;
+  margin-top: 3px;
+  max-height: 14px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  color: var(--muted);
+  transition: opacity 0.2s ease, max-height 0.25s ease, margin 0.25s ease;
+}
+.topbar.compacta .titulo small { opacity: 0; max-height: 0; margin: 0; }
+.topbar.compacta .brand h1 { font-size: 20px; }
+.titulo::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 36px;
+  left: -60px;
+  transform: skewX(-20deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  animation: titulo-reflexo 8s ease-in-out infinite;
+}
+@keyframes titulo-reflexo { 0%, 70% { left: -60px; } 100% { left: 110%; } }
+
+/* Abas: ativa em dourado + sublinhado que desliza */
+.tab-btn:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--gold) 60%, transparent); }
+.tab-btn.active,
+.tab-btn.active:hover {
+  background: rgba(212, 175, 55, 0.12);
+  color: var(--text);
+  border-color: var(--gold);
+}
+.tab-slider {
+  position: absolute;
+  bottom: -6px;
+  height: 2px;
+  background: var(--gold);
+  box-shadow: 0 0 12px 1px var(--gold);
+  border-radius: 2px;
+  transition: left 0.3s cubic-bezier(0.3, 0.8, 0.3, 1), width 0.3s cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+@media (max-width: 700px) { .tabs { position: relative; } }
+@media (min-width: 701px) and (max-width: 900px) {
+  .tabs { position: relative; left: auto; top: auto; transform: none; }
+}
+@media (max-width: 900px) {
+  .topbar { padding-left: 14px; padding-right: 14px; }
+  .tabs { order: 3; width: 100%; justify-content: center; }
+}
+
+/* Lado direito */
+.online-dot { animation: online-ping 1.8s ease-out infinite; }
+@keyframes online-ping { 0% { box-shadow: 0 0 0 0 rgba(62, 207, 110, 0.6); } 100% { box-shadow: 0 0 0 8px rgba(62, 207, 110, 0); } }
+.online-indicator #online-count { display: inline-block; }
+.online-indicator #online-count.bump { animation: online-pula 0.3s ease; }
+@keyframes online-pula { 50% { transform: scale(1.5); color: #3ecf6e; } }
+
+.admin-link { display: inline-block; transition: transform 0.5s ease, color 0.2s ease, opacity 0.2s ease; }
+.admin-link:hover { transform: rotate(120deg); color: var(--gold); }
+
+/* O brilho fica no wrapper porque o botão tem clip-path (cortaria o brilho) */
+.connect-wrap { position: relative; animation: conectar-brilho 2s ease-in-out infinite; }
+@keyframes conectar-brilho { 50% { filter: drop-shadow(0 0 10px rgba(232, 130, 60, 0.7)); } }
+.connect-ip {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  white-space: nowrap;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 5px 9px;
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.connect-wrap:hover .connect-ip { opacity: 1; transform: none; }
+
+@media (max-width: 900px) { .online-indicator { font-size: 12px; } }
+@media (prefers-reduced-motion: reduce) {
+  .topbar-luz::after, .logo-wrap::before, .titulo::after, .connect-wrap, .online-dot { animation: none; }
+  .tab-slider { transition: none; }
+}

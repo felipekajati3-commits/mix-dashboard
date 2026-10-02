@@ -529,7 +529,15 @@ const roletaNomeEl = document.getElementById("roleta-nome");
 const socket = io();
 
 socket.on("online:count", (n) => {
-  if (onlineCountEl) onlineCountEl.textContent = n;
+  if (onlineCountEl) {
+    const mudou = onlineCountEl.textContent !== String(n);
+    onlineCountEl.textContent = n;
+    if (mudou) {
+      onlineCountEl.classList.remove("bump");
+      void onlineCountEl.offsetWidth;
+      onlineCountEl.classList.add("bump");
+    }
+  }
 });
 
 let roletaInterval = null;
@@ -957,3 +965,29 @@ async function carregarHistoricoSorteios() {
 
 carregarHistoricoSorteios();
 
+
+
+// ---------- Cabeçalho: sublinhado que desliza entre as abas + modo compacto ao rolar ----------
+(function cabecalho() {
+  const slider = document.getElementById("tab-slider");
+  const topbar = document.querySelector(".topbar");
+
+  function moverSlider() {
+    const ativa = document.querySelector(".tab-btn.active");
+    if (!slider || !ativa) return;
+    slider.style.left = ativa.offsetLeft + "px";
+    slider.style.width = ativa.offsetWidth + "px";
+  }
+
+  document.querySelectorAll(".tab-btn").forEach((b) => b.addEventListener("click", moverSlider));
+  window.addEventListener("resize", moverSlider);
+  window.addEventListener("load", moverSlider);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(moverSlider);
+  moverSlider();
+
+  function compactar() {
+    if (topbar) topbar.classList.toggle("compacta", window.scrollY > 30);
+  }
+  window.addEventListener("scroll", compactar, { passive: true });
+  compactar();
+})();
