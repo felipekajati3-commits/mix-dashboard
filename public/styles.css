@@ -1905,3 +1905,22 @@ main {
 
 @media (max-width: 520px) { .rank-st { font-size: 10px; } .rank-row { gap: 9px; padding-right: 10px; } }
 @media (prefers-reduced-motion: reduce) { .perfil-ov.on, .perfil-card, .perfil-s { animation: none; } }
+
+/* ---------- Colunas de rank: degradê dourado (Rank 1 forte → Rank 5 apagado) ---------- */
+
+.picker-grupo[data-tier="1"] { --c: #e8c547; --g: 34; --t: 70; border-top-color: #e8c547; }
+.picker-grupo[data-tier="2"] { --c: #d4af37; --g: 28; --t: 55; border-top-color: #d4af37; }
+.picker-grupo[data-tier="3"] { --c: #b89a35; --g: 22; --t: 42; border-top-color: #b89a35; }
+.picker-grupo[data-tier="4"] { --c: #92803a; --g: 16; --t: 28; border-top-color: #92803a; }
+.picker-grupo[data-tier="5"] { --c: #6f6544; --g: 10; --t: 14; border-top-color: #6f6544; }
+
+/* intensidade do clarão e do brilho do título acompanha o degradê */
+.picker-grupo::before {
+  background: radial-gradient(80% 100% at 50% 0%, color-mix(in srgb, var(--c) calc(var(--g) * 1%), transparent), transparent 75%);
+}
+.picker-grupo-head {
+  text-shadow: 0 0 16px color-mix(in srgb, var(--c) calc(var(--t) * 1%), transparent);
+}
+
+/* jogador marcado acende em dourado vivo, mesmo nas colunas mais apagadas */
+.player-row.selected { --c: #f0cf58; }
