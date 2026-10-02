@@ -46,15 +46,6 @@
       "movido_em": null
     },
     {
-      "id": "gr3z5pwsmubg7fd0",
-      "tipo": "steam",
-      "steam_id": "76561198731489987",
-      "nome": "kkkkkjkjjkjkkkkk",
-      "tier": 1,
-      "tier_anterior": null,
-      "movido_em": null
-    },
-    {
       "id": "byntv41qmubg7qb9",
       "tipo": "steam",
       "steam_id": "76561199652109305",
@@ -95,15 +86,6 @@
       "tipo": "steam",
       "steam_id": "76561199078637158",
       "nome": "JAMMMMMMMMMMMMMMMMMMMMMMMMMMMMER",
-      "tier": 1,
-      "tier_anterior": null,
-      "movido_em": null
-    },
-    {
-      "id": "x7v35njwmubg8641",
-      "tipo": "steam",
-      "steam_id": "76561198814173442",
-      "nome": "GUSMA1",
       "tier": 1,
       "tier_anterior": null,
       "movido_em": null
@@ -343,5 +325,5 @@
       "movido_em": null
     }
   ],
-  "atualizado_em": "2026-09-24T01:07:02.006Z"
+  "atualizado_em": "2026-10-02T19:07:46.333Z"
 }
