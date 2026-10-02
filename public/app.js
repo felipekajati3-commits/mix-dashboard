@@ -89,6 +89,134 @@ function contarPontos(el, alvo) {
   })(inicio);
 }
 
+// ---------- Ranking: setas de subiu/desceu, estatísticas ao lado do nome e perfil ----------
+
+const FAIXA_INFO = {
+  "premier-dourado": { cor: "#d4af37", nome: "Dourado" },
+  "premier-vermelho": { cor: "#e5484d", nome: "Vermelho" },
+  "premier-rosa": { cor: "#e26bc7", nome: "Rosa" },
+  "premier-roxo": { cor: "#9b6bd4", nome: "Roxo" },
+  "premier-azul": { cor: "#5b8def", nome: "Azul" },
+  "premier-azul-claro": { cor: "#6ec1e4", nome: "Azul claro" },
+  "premier-cinza": { cor: "#9aa0a8", nome: "Cinza" },
+};
+
+let jogadoresRanking = [];
+let movimentosRanking = {}; // steam_id -> diferença de posições (null = sem comparação)
+
+const fixo = (n, casas) => Number(n).toFixed(casas); // ponto como separador decimal (2.52)
+const temNum = (v) => v !== null && v !== undefined;
+
+// Guarda no navegador as posições de cada visita pra comparar com a próxima.
+// Uma "visita" nova = mais de 30 min desde a última vez que a pessoa abriu o site.
+function calcularMovimentos(jogadores) {
+  const atual = {};
+  jogadores.forEach((j, i) => { atual[j.steam_id] = i + 1; });
+  const movs = {};
+  let base = null;
+  try {
+    const salvo = JSON.parse(localStorage.getItem("mix_rank_posicoes") || "null");
+    const agora = Date.now();
+    if (salvo && salvo.cur) {
+      base = agora - salvo.ts > 30 * 60 * 1000 ? salvo.cur : salvo.base || null;
+    }
+    localStorage.setItem("mix_rank_posicoes", JSON.stringify({ base, cur: atual, ts: agora }));
+  } catch {
+    base = null; // navegador sem armazenamento: simplesmente sem setas
+  }
+  jogadores.forEach((j, i) => {
+    if (!base) movs[j.steam_id] = null;
+    else if (base[j.steam_id] === undefined) movs[j.steam_id] = "novo";
+    else movs[j.steam_id] = base[j.steam_id] - (i + 1);
+  });
+  return movs;
+}
+
+function movHtml(mov) {
+  if (mov === null || mov === undefined) return "";
+  if (mov === "novo") return `<span class="rank-mov novo">NOVO</span>`;
+  if (mov > 0) return `<span class="rank-mov up">▲ ${mov}</span>`;
+  if (mov < 0) return `<span class="rank-mov down">▼ ${-mov}</span>`;
+  return `<span class="rank-mov eq">–</span>`;
+}
+
+function kdaDe(r) {
+  if (!r || !temNum(r.k) || !temNum(r.m)) return null;
+  return (r.k + (r.a || 0)) / Math.max(r.m, 1);
+}
+function hsPercDe(r) {
+  if (!r || !temNum(r.hs) || !temNum(r.k) || r.k <= 0) return null;
+  return Math.min((r.hs / r.k) * 100, 100);
+}
+
+function statsLinhaHtml(r) {
+  if (!r) return "";
+  const partes = [];
+  if (temNum(r.v)) partes.push(`<span><i>V</i><b>${r.v}</b></span>`);
+  if (temNum(r.d)) partes.push(`<span><i>D</i><b>${r.d}</b></span>`);
+  const kda = kdaDe(r);
+  if (kda !== null) partes.push(`<span><i>KDA</i><b>${fixo(kda, 2)}</b></span>`);
+  const hs = hsPercDe(r);
+  if (hs !== null) partes.push(`<span><i>HS</i><b>${fixo(hs, 0)}%</b></span>`);
+  return partes.length ? `<div class="rank-st">${partes.join("")}</div>` : "";
+}
+
+const perfilOv = document.getElementById("perfil-ov");
+const perfilCard = document.getElementById("perfil-card");
+
+function abrirPerfil(idx) {
+  const j = jogadoresRanking[idx];
+  if (!j) return;
+  const classe = faixaPremier(j.points);
+  const info = FAIXA_INFO[classe];
+  const r = j.resumo;
+  const stats = [];
+  if (r) {
+    if (temNum(r.k)) stats.push(["Kills", r.k]);
+    if (temNum(r.m)) stats.push(["Mortes", r.m]);
+    if (temNum(r.a)) stats.push(["Assistências", r.a]);
+    const kda = kdaDe(r);
+    if (kda !== null) stats.push(["KDA", fixo(kda, 2)]);
+    if (temNum(r.k) && temNum(r.m)) stats.push(["K/D", fixo(r.k / Math.max(r.m, 1), 2)]);
+    const hs = hsPercDe(r);
+    if (hs !== null) stats.push(["% HS", fixo(hs, 1) + "%"]);
+    if (temNum(r.v)) stats.push(["Vitórias", r.v]);
+    if (temNum(r.d)) stats.push(["Derrotas", r.d]);
+    if (temNum(r.v) && temNum(r.d) && r.v + r.d > 0) stats.push(["% Vitórias", fixo((r.v / (r.v + r.d)) * 100, 0) + "%"]);
+  }
+  const mov = movimentosRanking[j.steam_id];
+  let nota = "";
+  if (mov === "novo") nota = "Novo no ranking desde a última visita";
+  else if (mov > 0) nota = `Subiu ${mov} posição(ões) desde a última visita`;
+  else if (mov < 0) nota = `Desceu ${-mov} posição(ões) desde a última visita`;
+  else if (mov === 0) nota = "Manteve a posição desde a última visita";
+
+  perfilCard.style.setProperty("--c", info.cor);
+  perfilCard.innerHTML = `
+    <button class="perfil-x" id="perfil-x" aria-label="Fechar">×</button>
+    <div class="perfil-top">
+      <div class="perfil-avatar">${avatarHtml({ name: j.name, avatar_url: j.avatar_url })}</div>
+      <h2>${escapeHtml(j.name || "Jogador")}</h2>
+      <div class="perfil-tags"><span class="perfil-tag">#${idx + 1} no ranking</span><span class="perfil-tag">${info.nome}</span></div>
+    </div>
+    <div class="perfil-pontos"><b>${(j.points ?? 0).toLocaleString("pt-BR")}</b><small>PONTOS</small></div>
+    ${stats.length
+      ? `<div class="perfil-grid">${stats.map(([rot, val], k) => `<div class="perfil-s" style="--i:${k}"><b>${val}</b><small>${rot}</small></div>`).join("")}</div>`
+      : `<div class="perfil-nota">Sem estatísticas detalhadas para este jogador.</div>`}
+    ${nota ? `<div class="perfil-nota">${nota}</div>` : ""}`;
+  perfilOv.classList.add("on");
+  document.getElementById("perfil-x").addEventListener("click", fecharPerfil);
+}
+
+function fecharPerfil() { perfilOv.classList.remove("on"); }
+
+leaderboardEl.addEventListener("click", (e) => {
+  const nome = e.target.closest(".rank-name");
+  if (nome) abrirPerfil(Number(nome.dataset.idx));
+});
+perfilOv.addEventListener("click", (e) => { if (e.target === perfilOv) fecharPerfil(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") fecharPerfil(); });
+
 async function carregarLeaderboard({ silencioso = false, animar = !silencioso } = {}) {
   if (!silencioso) {
     leaderboardEl.innerHTML = `<div class="loading">Carregando ranking…</div>`;
@@ -103,6 +231,9 @@ async function carregarLeaderboard({ silencioso = false, animar = !silencioso } 
       return;
     }
 
+    jogadoresRanking = jogadores;
+    movimentosRanking = calcularMovimentos(jogadores);
+
     // Cor do clarão de fundo = faixa do líder.
     leaderboardEl.className = `leaderboard glow-${faixaPremier(jogadores[0].points)}`;
 
@@ -114,9 +245,15 @@ async function carregarLeaderboard({ silencioso = false, animar = !silencioso } 
         const pontos = j.points ?? 0;
         return `
           <div class="rank-row pos-${pos} ${faixa} ${animar ? "anima" : ""}" style="--i:${i}">
-            <div class="rank-pos">${String(pos).padStart(2, "0")}</div>
+            <div class="rank-posbox">
+              <div class="rank-pos">${String(pos).padStart(2, "0")}</div>
+              ${movHtml(movimentosRanking[j.steam_id])}
+            </div>
             ${avatarHtml({ name: j.name, avatar_url: j.avatar_url })}
-            <div class="rank-name" title="${nome}">${nome}</div>
+            <div class="rank-info">
+              <span class="rank-name" data-idx="${i}" title="Ver perfil de ${nome}">${nome}</span>
+              ${statsLinhaHtml(j.resumo)}
+            </div>
             <div class="rank-points" data-p="${pontos}">${animar ? "0" : pontos.toLocaleString("pt-BR")} pts</div>
           </div>`;
       })

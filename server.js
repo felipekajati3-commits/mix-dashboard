@@ -292,6 +292,46 @@ app.get("/api/admin/status", (req, res) => {
 // do plugin K4-System (rank_mix_k4ranks/rank_mix_k4stats), então reflete
 // os pontos que o próprio plugin calcula no servidor - não depende mais
 // de nada que a equipe cadastre manualmente aqui no site.
+// Estatísticas do K4-System (tabela rank_mix_k4stats). Como os nomes das colunas
+// podem variar entre versões do plugin, tentamos alguns nomes comuns pra cada
+// estatística. O que não existir fica null e o site simplesmente não mostra.
+const COLUNAS_STATS = {
+  v: ["game_win", "wins", "win", "victories"],
+  d: ["game_lose", "losses", "loses", "lose", "defeats"],
+  k: ["kills"],
+  m: ["deaths"],
+  a: ["assists"],
+  hs: ["headshots", "headshot", "hs", "headshot_kills"],
+};
+
+function pegarStat(linha, candidatos) {
+  for (const nome of candidatos) {
+    if (linha[nome] !== undefined && linha[nome] !== null && !isNaN(Number(linha[nome]))) {
+      return Number(linha[nome]);
+    }
+  }
+  return null;
+}
+
+async function buscarResumoStats(steamIds) {
+  if (!steamIds.length) return {};
+  try {
+    const [rows] = await pool.query("SELECT * FROM rank_mix_k4stats WHERE steam_id IN (?)", [steamIds]);
+    const porSteam = {};
+    for (const r of rows) {
+      const resumo = {};
+      for (const [chave, candidatos] of Object.entries(COLUNAS_STATS)) {
+        resumo[chave] = pegarStat(r, candidatos);
+      }
+      porSteam[r.steam_id] = resumo;
+    }
+    return porSteam;
+  } catch (err) {
+    console.warn("[leaderboard] Não consegui ler rank_mix_k4stats:", err.message);
+    return {};
+  }
+}
+
 app.get("/api/leaderboard", async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -301,8 +341,13 @@ app.get("/api/leaderboard", async (req, res) => {
        LIMIT ?`,
       [config.leaderboardLimit]
     );
-    const avatares = await buscarAvatares(rows.map((r) => r.steam_id));
-    const comAvatar = rows.map((r) => ({ ...r, avatar_url: avatares[r.steam_id] || null }));
+    const ids = rows.map((r) => r.steam_id);
+    const [avatares, stats] = await Promise.all([buscarAvatares(ids), buscarResumoStats(ids)]);
+    const comAvatar = rows.map((r) => ({
+      ...r,
+      avatar_url: avatares[r.steam_id] || null,
+      resumo: stats[r.steam_id] || null,
+    }));
     res.json(comAvatar);
   } catch (err) {
     console.error(err);
