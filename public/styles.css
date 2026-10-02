@@ -9,6 +9,10 @@
   --ct-dim: #2e3f5c;
   --t: #e8823c;
   --t-dim: #5c422e;
+  /* cor de destaque única da interface (botões, abas, seleção). O laranja (--t) fica só pro Time B / T. */
+  --accent: #d4af37;
+  --accent-hover: #e8c547;
+  --accent-dim: #5a4d1c;
   --gold: #d4af37;
 
   --font-display: "Rajdhani", sans-serif;
@@ -75,7 +79,7 @@ body {
 }
 
 .brand h1 span {
-  color: var(--t);
+  color: var(--accent);
   margin-left: 6px;
 }
 
@@ -109,18 +113,18 @@ body {
 
 .tab-btn:hover {
   color: var(--text);
-  border-color: var(--t);
+  border-color: var(--accent);
 }
 
 .tab-btn.active {
-  background: var(--t);
+  background: var(--accent);
   color: #14181d;
-  border-color: var(--t);
+  border-color: var(--accent);
 }
 
 .tab-btn.active:hover {
-  background: #f5934f;
-  border-color: #f5934f;
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 /* ---------- Botão conectar ao servidor ---------- */
@@ -129,7 +133,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--t);
+  background: var(--accent);
   color: #14181d;
   font-family: var(--font-display);
   font-weight: 700;
@@ -138,14 +142,14 @@ body {
   text-transform: uppercase;
   text-decoration: none;
   padding: 11px 20px;
-  border: 1px solid var(--t);
+  border: 1px solid var(--accent);
   clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
   transition: all 0.15s ease;
   white-space: nowrap;
 }
 
 .btn-connect:hover {
-  background: #f5934f;
+  background: var(--accent-hover);
 }
 
 .btn-connect:active {
@@ -216,7 +220,7 @@ main {
 
 .season-select:focus {
   outline: none;
-  border-color: var(--t);
+  border-color: var(--accent);
 }
 
 .loading { color: var(--muted); padding: 20px 0; }
@@ -308,14 +312,14 @@ main {
   background: transparent;
   color: var(--text);
 }
-.btn-outline:hover { border-color: var(--ct); color: var(--ct); }
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
 
 .btn-primary {
-  background: var(--t);
+  background: var(--accent);
   color: #14181d;
-  border-color: var(--t);
+  border-color: var(--accent);
 }
-.btn-primary:hover:not(:disabled) { background: #f5934f; }
+.btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
 .btn-primary:disabled {
   background: var(--panel-2);
   color: var(--muted);
@@ -581,7 +585,7 @@ main {
 .msg {
   margin-top: 16px;
   font-size: 13px;
-  color: var(--t);
+  color: var(--accent);
 }
 
 /* ---------- Sorteio ao vivo ---------- */
@@ -591,7 +595,7 @@ main {
   align-items: center;
   gap: 10px;
   background: var(--panel);
-  border: 1px solid var(--t);
+  border: 1px solid var(--accent);
   padding: 14px 18px;
   margin-top: 4px;
   margin-bottom: 12px;
@@ -600,7 +604,7 @@ main {
   letter-spacing: 0.5px;
   text-transform: uppercase;
   font-size: 14px;
-  color: var(--t);
+  color: var(--accent);
 }
 
 .sorteio-live.hidden { display: none; }
@@ -609,7 +613,7 @@ main {
 
 .sorteio-roleta {
   background: var(--panel);
-  border: 1px solid var(--t);
+  border: 1px solid var(--accent);
   padding: 16px 18px;
   margin-top: 4px;
   margin-bottom: 12px;
@@ -625,7 +629,7 @@ main {
   letter-spacing: 0.5px;
   text-transform: uppercase;
   font-size: 12px;
-  color: var(--t);
+  color: var(--accent);
   margin-bottom: 8px;
 }
 
@@ -642,7 +646,7 @@ main {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: var(--t);
+  background: var(--accent);
   animation: pulse 1s ease-in-out infinite;
   flex-shrink: 0;
 }
@@ -681,7 +685,7 @@ main {
 }
 
 .map-tile.selected {
-  border-color: var(--t);
+  border-color: var(--accent);
   filter: none;
 }
 
@@ -702,7 +706,7 @@ main {
   right: 6px;
   width: 20px;
   height: 20px;
-  background: var(--t);
+  background: var(--accent);
   color: #14181d;
   display: flex;
   align-items: center;
@@ -819,7 +823,7 @@ main {
 .history-item {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-left: 3px solid var(--t-dim);
+  border-left: 3px solid var(--accent-dim);
   padding: 12px 16px;
 }
 
@@ -983,7 +987,7 @@ main {
   font-family: var(--font-display);
   font-size: 22px;
   font-weight: 700;
-  color: var(--t);
+  color: var(--accent);
 }
 
 /* Etiqueta do nível (R1 a R5), usada no resultado dos times. */
@@ -1116,20 +1120,20 @@ main {
 
 .btn-lapis:hover,
 .btn-lapis:focus-visible {
-  color: var(--t);
-  border-color: var(--t);
+  color: var(--accent);
+  border-color: var(--accent);
   opacity: 1;
   outline: none;
 }
 
 /* Vaga que já recebeu um nome provisório fica com o lápis destacado. */
-.btn-lapis.ativo { color: var(--t); opacity: 1; }
+.btn-lapis.ativo { color: var(--accent); opacity: 1; }
 
 .nome-temp-input {
   flex: 1;
   min-width: 0;
   background: var(--bg);
-  border: 1px solid var(--t);
+  border: 1px solid var(--accent);
   border-radius: 4px;
   color: var(--text);
   font-family: var(--font-body);
@@ -1187,7 +1191,7 @@ main {
   /* o tile inteiro está acinzentado; o botão precisa continuar nítido */
   filter: none;
 }
-.map-tile-voltar:hover { border-color: var(--t); color: var(--t); }
+.map-tile-voltar:hover { border-color: var(--accent); color: var(--accent); }
 
 
 /* ---------- Ranking: fundo com clarão + grade HUD, entrada em cascata, hover ---------- */
@@ -1422,7 +1426,7 @@ main {
 .selected-count-big.bump .valor { animation: check-pula 0.25s ease; }
 
 .sorteio-controls .btn-primary:not(:disabled) { animation: botao-pulso 1.8s ease-in-out infinite; }
-@keyframes botao-pulso { 50% { box-shadow: 0 0 18px 2px rgba(232, 130, 60, 0.55); } }
+@keyframes botao-pulso { 50% { box-shadow: 0 0 18px 2px rgba(212, 175, 55, 0.55); } }
 
 /* Botões Times / Vagas */
 .modo-btn { transition: all 0.2s ease; }
@@ -1493,8 +1497,8 @@ main {
 }
 .history-item:hover {
   transform: translateY(-2px);
-  border-left-color: var(--t);
-  box-shadow: 0 5px 16px -6px rgba(232, 130, 60, 0.5);
+  border-left-color: var(--accent);
+  box-shadow: 0 5px 16px -6px rgba(212, 175, 55, 0.5);
 }
 .history-item-team:first-child .history-team-label { color: var(--ct); }
 
@@ -1526,7 +1530,7 @@ main {
   z-index: -2;
   pointer-events: none;
   background:
-    radial-gradient(45% 140% at 18% 0%, rgba(232, 130, 60, 0.2), transparent 70%),
+    radial-gradient(45% 140% at 18% 0%, rgba(212, 175, 55, 0.2), transparent 70%),
     radial-gradient(35% 140% at 85% 0%, rgba(91, 141, 239, 0.14), transparent 70%);
 }
 .topbar::after {
@@ -1548,14 +1552,14 @@ main {
   background: rgba(8, 10, 13, 0.88);
 }
 
-/* Barra de luz laranja → azul embaixo, com um brilho que percorre */
+/* Barra de luz dourada embaixo, com um brilho que percorre */
 .topbar-luz {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
   height: 2px;
-  background: linear-gradient(90deg, var(--t), var(--ct));
+  background: linear-gradient(90deg, var(--accent-dim), var(--accent), var(--accent-dim));
   overflow: hidden;
 }
 .topbar-luz::after {
@@ -1577,7 +1581,7 @@ main {
   position: absolute;
   inset: -10px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(232, 130, 60, 0.45), transparent 68%);
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.45), transparent 68%);
   animation: logo-aura 3.6s ease-in-out infinite alternate;
 }
 @keyframes logo-aura { from { opacity: 0.5; transform: scale(0.92); } to { opacity: 1; transform: scale(1.08); } }
@@ -1586,8 +1590,8 @@ main {
 .topbar.compacta .brand-logo { height: 34px; }
 
 .titulo { position: relative; overflow: hidden; line-height: 1; }
-.brand h1 { font-size: 24px; text-shadow: 0 0 18px rgba(232, 130, 60, 0.35); transition: font-size 0.25s ease; }
-.brand h1 span { text-shadow: 0 0 18px rgba(232, 130, 60, 0.7); }
+.brand h1 { font-size: 24px; text-shadow: 0 0 18px rgba(212, 175, 55, 0.35); transition: font-size 0.25s ease; }
+.brand h1 span { text-shadow: 0 0 18px rgba(212, 175, 55, 0.7); }
 .titulo small {
   display: block;
   margin-top: 3px;
@@ -1652,7 +1656,7 @@ main {
 
 /* O brilho fica no wrapper porque o botão tem clip-path (cortaria o brilho) */
 .connect-wrap { position: relative; animation: conectar-brilho 2s ease-in-out infinite; }
-@keyframes conectar-brilho { 50% { filter: drop-shadow(0 0 10px rgba(232, 130, 60, 0.7)); } }
+@keyframes conectar-brilho { 50% { filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.7)); } }
 .connect-ip {
   position: absolute;
   top: calc(100% + 8px);
@@ -1908,18 +1912,18 @@ main {
 
 /* ---------- Colunas de rank: degradê dourado (Rank 1 forte → Rank 5 apagado) ---------- */
 
-.picker-grupo[data-tier="1"] { --c: #e8c547; --g: 34; --t: 70; border-top-color: #e8c547; }
-.picker-grupo[data-tier="2"] { --c: #d4af37; --g: 28; --t: 55; border-top-color: #d4af37; }
-.picker-grupo[data-tier="3"] { --c: #b89a35; --g: 22; --t: 42; border-top-color: #b89a35; }
-.picker-grupo[data-tier="4"] { --c: #92803a; --g: 16; --t: 28; border-top-color: #92803a; }
-.picker-grupo[data-tier="5"] { --c: #6f6544; --g: 10; --t: 14; border-top-color: #6f6544; }
+.picker-grupo[data-tier="1"] { --c: #e8c547; --g: 34; --brilho: 70; border-top-color: #e8c547; }
+.picker-grupo[data-tier="2"] { --c: #d4af37; --g: 28; --brilho: 55; border-top-color: #d4af37; }
+.picker-grupo[data-tier="3"] { --c: #b89a35; --g: 22; --brilho: 42; border-top-color: #b89a35; }
+.picker-grupo[data-tier="4"] { --c: #92803a; --g: 16; --brilho: 28; border-top-color: #92803a; }
+.picker-grupo[data-tier="5"] { --c: #6f6544; --g: 10; --brilho: 14; border-top-color: #6f6544; }
 
 /* intensidade do clarão e do brilho do título acompanha o degradê */
 .picker-grupo::before {
   background: radial-gradient(80% 100% at 50% 0%, color-mix(in srgb, var(--c) calc(var(--g) * 1%), transparent), transparent 75%);
 }
 .picker-grupo-head {
-  text-shadow: 0 0 16px color-mix(in srgb, var(--c) calc(var(--t) * 1%), transparent);
+  text-shadow: 0 0 16px color-mix(in srgb, var(--c) calc(var(--brilho) * 1%), transparent);
 }
 
 /* jogador marcado acende em dourado vivo, mesmo nas colunas mais apagadas */
