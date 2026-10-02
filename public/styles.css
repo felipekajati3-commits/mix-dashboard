@@ -1676,3 +1676,94 @@ main {
   .topbar-luz::after, .logo-wrap::before, .titulo::after, .connect-wrap, .online-dot { animation: none; }
   .tab-slider { transition: none; }
 }
+
+/* ---------- Colunas de rank (seleção de jogadores): título com brilho, barra lateral, avatar com anel, check redondo ---------- */
+
+.picker-grupo { position: relative; overflow: hidden; padding-top: 0; }
+/* clarão atrás do título, na cor do nível */
+.picker-grupo::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 90px;
+  pointer-events: none;
+  background: radial-gradient(80% 100% at 50% 0%, color-mix(in srgb, var(--c) 32%, transparent), transparent 75%);
+}
+
+.picker-grupo-head {
+  position: relative;
+  z-index: 1;
+  gap: 8px;
+  padding: 14px 4px 12px;
+  font-size: 20px;
+  letter-spacing: 0.08em;
+  color: var(--c);
+  text-shadow: 0 0 16px color-mix(in srgb, var(--c) 70%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--c) 25%, var(--line));
+}
+.picker-grupo-icon { font-size: 18px; text-shadow: none; }
+.picker-grupo-qtd {
+  min-width: 26px;
+  text-align: center;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c);
+  text-shadow: none;
+  background: color-mix(in srgb, var(--c) 16%, #0d1014);
+  border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
+}
+
+/* Cartão do jogador: barra lateral na cor do nível */
+.player-row {
+  padding: 7px 10px 7px 8px;
+  background: #0d1014;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--c, var(--ct));
+  border-radius: 5px;
+}
+.player-row:hover { background: color-mix(in srgb, var(--c, var(--ct)) 8%, #0d1014); }
+.player-row.selected {
+  background: color-mix(in srgb, var(--c, var(--ct)) 14%, #0d1014);
+  border-color: var(--c, var(--ct));
+}
+
+/* Avatar (foto da Steam) com anel que acende quando o jogador é marcado */
+.player-row .avatar-img,
+.player-row .avatar-fallback {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--c, var(--ct)) 28%, transparent);
+  transition: box-shadow 0.2s ease;
+}
+.player-row.selected .avatar-img,
+.player-row.selected .avatar-fallback {
+  box-shadow: 0 0 0 2px var(--c, var(--ct)), 0 0 12px 1px var(--c, var(--ct));
+}
+
+/* Check redondo no lugar do checkbox nativo (vai pro fim da linha) */
+.player-row .btn-lapis { order: 2; }
+.player-row input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  order: 3;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  background: transparent center / 11px no-repeat;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.player-row:hover input[type="checkbox"] { border-color: color-mix(in srgb, var(--c, var(--ct)) 70%, transparent); }
+.player-row input[type="checkbox"]:checked {
+  background-color: var(--c, var(--ct));
+  border-color: var(--c, var(--ct));
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.3l2.4 2.4 4.6-5' fill='none' stroke='%2314181d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+.player-row input[type="checkbox"]:disabled { opacity: 0.35; cursor: default; }
