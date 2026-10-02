@@ -140,9 +140,9 @@ function movHtml(mov) {
   return `<span class="rank-mov eq">–</span>`;
 }
 
-function kdaDe(r) {
+function kdDe(r) {
   if (!r || !temNum(r.k) || !temNum(r.m)) return null;
-  return (r.k + (r.a || 0)) / Math.max(r.m, 1);
+  return r.k / Math.max(r.m, 1);
 }
 function hsPercDe(r) {
   if (!r || !temNum(r.hs) || !temNum(r.k) || r.k <= 0) return null;
@@ -154,8 +154,8 @@ function statsLinhaHtml(r) {
   const partes = [];
   if (temNum(r.v)) partes.push(`<span><i>V</i><b>${r.v}</b></span>`);
   if (temNum(r.d)) partes.push(`<span><i>D</i><b>${r.d}</b></span>`);
-  const kda = kdaDe(r);
-  if (kda !== null) partes.push(`<span><i>KDA</i><b>${fixo(kda, 2)}</b></span>`);
+  const kd = kdDe(r);
+  if (kd !== null) partes.push(`<span><i>K/D</i><b>${fixo(kd, 2)}</b></span>`);
   const hs = hsPercDe(r);
   if (hs !== null) partes.push(`<span><i>HS</i><b>${fixo(hs, 0)}%</b></span>`);
   return partes.length ? `<div class="rank-st">${partes.join("")}</div>` : "";
@@ -174,12 +174,12 @@ function abrirPerfil(idx) {
   if (r) {
     if (temNum(r.k)) stats.push(["Kills", r.k]);
     if (temNum(r.m)) stats.push(["Mortes", r.m]);
-    if (temNum(r.a)) stats.push(["Assistências", r.a]);
-    const kda = kdaDe(r);
-    if (kda !== null) stats.push(["KDA", fixo(kda, 2)]);
-    if (temNum(r.k) && temNum(r.m)) stats.push(["K/D", fixo(r.k / Math.max(r.m, 1), 2)]);
+    const kd = kdDe(r);
+    if (kd !== null) stats.push(["K/D", fixo(kd, 2)]);
     const hs = hsPercDe(r);
     if (hs !== null) stats.push(["% HS", fixo(hs, 1) + "%"]);
+    // Partidas jogadas = vitórias + derrotas (dados do K4).
+    if (temNum(r.v) && temNum(r.d)) stats.push(["Partidas", r.v + r.d]);
     if (temNum(r.v)) stats.push(["Vitórias", r.v]);
     if (temNum(r.d)) stats.push(["Derrotas", r.d]);
     if (temNum(r.v) && temNum(r.d) && r.v + r.d > 0) stats.push(["% Vitórias", fixo((r.v / (r.v + r.d)) * 100, 0) + "%"]);
