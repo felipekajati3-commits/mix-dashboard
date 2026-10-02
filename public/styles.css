@@ -1267,3 +1267,96 @@ main {
   .leaderboard::before { animation: none; }
   .rank-row.anima { animation: none; opacity: 1; transform: none; }
 }
+
+
+/* ---------- Sorteio: fundo, entrada dos times, barra de equilíbrio, roleta de mapas ---------- */
+
+.teams-result:not(.hidden),
+.map-picker {
+  position: relative;
+  isolation: isolate;
+}
+.teams-result:not(.hidden)::before {
+  content: "";
+  position: absolute;
+  inset: -30px -20px;
+  z-index: -2;
+  pointer-events: none;
+  background: radial-gradient(60% 45% at 50% 0%, rgba(91, 141, 239, 0.22), transparent 70%);
+}
+.teams-result:not(.hidden)::after,
+.map-picker::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 32px 32px;
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 40%, transparent 95%);
+  mask-image: radial-gradient(ellipse at center, #000 40%, transparent 95%);
+}
+
+.team-ct { box-shadow: 0 0 24px -12px var(--ct); }
+.team-t { box-shadow: 0 0 24px -12px var(--t); }
+
+.team-list li.entra-time {
+  opacity: 0;
+  animation: time-entra 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation-delay: calc(var(--i) * 110ms);
+}
+.team-ct .team-list li.entra-time { transform: translateX(-26px); }
+.team-t .team-list li.entra-time { transform: translateX(26px); }
+@keyframes time-entra { to { opacity: 1; transform: none; } }
+
+.team-balance { grid-column: 1 / -1; margin-top: 16px; }
+.balance-bar {
+  height: 10px;
+  display: flex;
+  overflow: hidden;
+  border-radius: 5px;
+  background: #0d1014;
+  border: 1px solid var(--line);
+}
+.balance-bar i { display: block; height: 100%; width: 50%; transition: width 0.7s ease; }
+.balance-bar #bal-a { background: var(--ct); }
+.balance-bar #bal-b { background: var(--t); }
+.balance-text {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--muted);
+}
+.balance-text .ok { color: #5fd38d; }
+
+.map-tile.roda {
+  border-color: var(--gold);
+  filter: none;
+  transform: scale(1.06);
+  box-shadow: 0 0 18px -2px var(--gold);
+  z-index: 4;
+}
+
+.map-result.revelar { animation: mapa-revela 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: 0 0 30px -6px var(--gold); }
+@keyframes mapa-revela { from { opacity: 0; transform: scale(0.88); } }
+
+.map-history { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 14px; }
+.map-chip {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 3px 11px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.map-chip b { color: var(--gold); font-family: var(--font-mono); margin-right: 5px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .team-list li.entra-time { animation: none; opacity: 1; transform: none; }
+  .map-result.revelar { animation: none; }
+}

@@ -734,13 +734,61 @@ btnSortearMapa.addEventListener("click", async () => {
   }
 });
 
+// Faixa com a ordem em que os mapas saíram (1º, 2º, 3º...).
+const mapHistoryEl = document.getElementById("map-history");
+
+function renderizarHistoricoMapas(lista) {
+  mapHistoryEl.innerHTML = lista
+    .map((id, i) => {
+      const m = MAPAS.find((x) => x.id === id);
+      return `<span class="map-chip"><b>${i + 1}º</b>${escapeHtml(m ? m.name : id)}</span>`;
+    })
+    .join("");
+}
+
 socket.on("mapa:sorteados", (lista) => {
   mapasSorteados = new Set(lista);
   renderizarMapPicker();
   atualizarContagemMapa();
+  renderizarHistoricoMapas(lista);
 });
 
-socket.on("mapa:iniciado", () => {
+// Roleta: o destaque passa pelos mapas e vai desacelerando até o sorteado.
+let roletaMapaTimer = null;
+
+function marcarRoda(id) {
+  mapPickerEl.querySelectorAll(".map-tile.roda").forEach((t) => t.classList.remove("roda"));
+  const tile = mapPickerEl.querySelector(`.map-tile[data-id="${id}"]`);
+  if (tile) tile.classList.add("roda");
+}
+
+function pararRoletaMapa() {
+  clearTimeout(roletaMapaTimer);
+  mapPickerEl.querySelectorAll(".map-tile.roda").forEach((t) => t.classList.remove("roda"));
+}
+
+function girarMapas(candidatos, alvo, duracao) {
+  pararRoletaMapa();
+  const n = candidatos.length;
+  const passos = Math.max(n * 2, 16);
+  const idxAlvo = Math.max(candidatos.indexOf(alvo), 0);
+  const seq = [];
+  for (let k = 0; k < passos; k++) {
+    seq.push(candidatos[(((idxAlvo - (passos - 1 - k)) % n) + n) % n]);
+  }
+  // Intervalos crescentes (cada um 10% maior), escalados pra somar "duracao".
+  const pesos = seq.map((_, k) => Math.pow(1.1, k));
+  const escala = duracao / pesos.reduce((x, y) => x + y, 0);
+  let k = 0;
+  const passo = () => {
+    marcarRoda(seq[k]);
+    if (++k < seq.length) roletaMapaTimer = setTimeout(passo, pesos[k - 1] * escala);
+  };
+  passo();
+}
+
+socket.on("mapa:iniciado", ({ mapas, mapaId, duracao }) => {
+  if (Array.isArray(mapas) && mapaId) girarMapas(mapas, mapaId, duracao || 4200);
   mapaMsgEl.textContent = "";
   mapResultEl.classList.add("hidden");
   mapaLiveEl.classList.remove("hidden");
@@ -749,11 +797,15 @@ socket.on("mapa:iniciado", () => {
 });
 
 socket.on("mapa:resultado", ({ mapaId }) => {
+  pararRoletaMapa();
   const mapa = MAPAS.find((m) => m.id === mapaId);
   mapaLiveEl.classList.add("hidden");
   mapResultNameEl.textContent = mapa ? mapa.name : mapaId;
   mapResultEl.style.backgroundImage = mapa ? `url('${mapa.img}')` : "none";
   mapResultEl.classList.remove("hidden");
+  mapResultEl.classList.remove("revelar");
+  void mapResultEl.offsetWidth; // reinicia a animação de revelação
+  mapResultEl.classList.add("revelar");
   btnSortearMapa.textContent = "Sortear mapa";
   btnSortearMapa.disabled = mapasDisponiveis().length < 1;
 });
@@ -763,14 +815,34 @@ function renderizarTimes(timeA, timeB, somaA, somaB) {
   document.getElementById("team-b-total").textContent = `força ${somaB}`;
 
   document.getElementById("team-a-list").innerHTML = timeA
-    .map((j) => `<li>${avatarHtml(j)}<span class="team-player-name">${escapeHtml(j.name)}</span> <span class="pts tier-badge tier-${j.tier}">R${j.tier}</span></li>`)
+    .map((j, i) => `<li class="entra-time" style="--i:${i}">${avatarHtml(j)}<span class="team-player-name">${escapeHtml(j.name)}</span> <span class="pts tier-badge tier-${j.tier}">R${j.tier}</span></li>`)
     .join("");
 
   document.getElementById("team-b-list").innerHTML = timeB
-    .map((j) => `<li>${avatarHtml(j)}<span class="team-player-name">${escapeHtml(j.name)}</span> <span class="pts tier-badge tier-${j.tier}">R${j.tier}</span></li>`)
+    .map((j, i) => `<li class="entra-time" style="--i:${i}">${avatarHtml(j)}<span class="team-player-name">${escapeHtml(j.name)}</span> <span class="pts tier-badge tier-${j.tier}">R${j.tier}</span></li>`)
     .join("");
 
+  atualizarBarraEquilibrio(somaA, somaB);
   teamsResultEl.classList.remove("hidden");
+}
+
+// Barra mostrando a força de cada lado e se o sorteio ficou justo.
+function atualizarBarraEquilibrio(somaA, somaB) {
+  const barA = document.getElementById("bal-a");
+  const barB = document.getElementById("bal-b");
+  const total = (somaA + somaB) || 1;
+  barA.style.width = "50%";
+  barB.style.width = "50%";
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    barA.style.width = `${(somaA / total) * 100}%`;
+    barB.style.width = `${(somaB / total) * 100}%`;
+  }));
+  document.getElementById("bal-fa").textContent = `A · ${somaA}`;
+  document.getElementById("bal-fb").textContent = `B · ${somaB}`;
+  const dif = Math.abs(somaA - somaB);
+  const diffEl = document.getElementById("bal-diff");
+  diffEl.textContent = dif === 0 ? "Perfeitamente equilibrado" : `Diferença: ${dif}`;
+  diffEl.classList.toggle("ok", dif <= 1);
 }
 
 // ---------- Contador de online (fixo no header) ----------
