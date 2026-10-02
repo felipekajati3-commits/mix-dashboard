@@ -323,7 +323,16 @@
       "tier": 2,
       "tier_anterior": null,
       "movido_em": null
+    },
+    {
+      "id": "h05tcelamurk2vin",
+      "tipo": "steam",
+      "steam_id": "76561197965451537",
+      "nome": "NINGUEM TA PURO!!!",
+      "tier": 3,
+      "tier_anterior": null,
+      "movido_em": null
     }
   ],
-  "atualizado_em": "2026-10-02T19:07:46.333Z"
+  "atualizado_em": "2026-10-02T22:49:57.051Z"
 }
