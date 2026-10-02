@@ -1704,18 +1704,8 @@ main {
   border-bottom: 1px solid color-mix(in srgb, var(--c) 25%, var(--line));
 }
 .picker-grupo-icon { font-size: 18px; text-shadow: none; }
-.picker-grupo-qtd {
-  min-width: 26px;
-  text-align: center;
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--c);
-  text-shadow: none;
-  background: color-mix(in srgb, var(--c) 16%, #0d1014);
-  border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
-}
+/* contador de jogadores ao lado do título removido */
+.picker-grupo-qtd { display: none; }
 
 /* Cartão do jogador: barra lateral na cor do nível */
 .player-row {
