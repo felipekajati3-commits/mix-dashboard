@@ -770,14 +770,15 @@ function pararRoletaMapa() {
 function girarMapas(candidatos, alvo, duracao) {
   pararRoletaMapa();
   const n = candidatos.length;
-  const passos = Math.max(n * 2, 16);
+  const passos = 24; // mais passos = roleta mais rápida e com mais voltas
   const idxAlvo = Math.max(candidatos.indexOf(alvo), 0);
   const seq = [];
   for (let k = 0; k < passos; k++) {
     seq.push(candidatos[(((idxAlvo - (passos - 1 - k)) % n) + n) % n]);
   }
-  // Intervalos crescentes (cada um 10% maior), escalados pra somar "duracao".
-  const pesos = seq.map((_, k) => Math.pow(1.1, k));
+  // Começa quase num borrão e desacelera no fim: cada intervalo é 14% maior
+  // que o anterior, e todos são escalados pra somar exatamente "duracao".
+  const pesos = seq.map((_, k) => Math.pow(1.14, k));
   const escala = duracao / pesos.reduce((x, y) => x + y, 0);
   let k = 0;
   const passo = () => {
@@ -788,7 +789,7 @@ function girarMapas(candidatos, alvo, duracao) {
 }
 
 socket.on("mapa:iniciado", ({ mapas, mapaId, duracao }) => {
-  if (Array.isArray(mapas) && mapaId) girarMapas(mapas, mapaId, duracao || 4200);
+  if (Array.isArray(mapas) && mapaId) girarMapas(mapas, mapaId, duracao || 4000);
   mapaMsgEl.textContent = "";
   mapResultEl.classList.add("hidden");
   mapaLiveEl.classList.remove("hidden");

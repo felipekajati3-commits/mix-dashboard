@@ -643,14 +643,14 @@ app.post("/api/draft-mapa", async (req, res) => {
     // Calculado uma única vez no servidor, pra todo mundo ver o mesmo mapa.
     const mapaId = sortearMapa(mapas);
 
-    io.emit("mapa:iniciado", { mapas, mapaId, duracao: 4200 });
+    io.emit("mapa:iniciado", { mapas, mapaId, duracao: 4000 });
 
     setTimeout(() => {
       mapasSorteados.add(mapaId);
       io.emit("mapa:resultado", { mapaId });
       io.emit("mapa:sorteados", Array.from(mapasSorteados));
       mapaSorteioEmAndamento = false;
-    }, 4500);
+    }, 4200);
 
     res.json({ ok: true });
   } catch (err) {
