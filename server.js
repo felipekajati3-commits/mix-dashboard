@@ -292,6 +292,33 @@ app.get("/api/admin/status", (req, res) => {
 // do plugin K4-System (rank_mix_k4ranks/rank_mix_k4stats), então reflete
 // os pontos que o próprio plugin calcula no servidor - não depende mais
 // de nada que a equipe cadastre manualmente aqui no site.
+// Busca TODAS as estatísticas que o K4-System guarda por jogador
+// (tabela rank_mix_k4stats). Não depende de nomes de colunas fixos: o que
+// existir na tabela (kills, deaths, assists, headshots, rounds, etc.) vai
+// pro site e aparece no cartão que abre ao passar o mouse no nome.
+const COLUNAS_IGNORADAS = new Set(["steam_id", "name", "id"]);
+
+async function buscarStats(steamIds) {
+  if (!steamIds.length) return {};
+  try {
+    const [rows] = await pool.query("SELECT * FROM rank_mix_k4stats WHERE steam_id IN (?)", [steamIds]);
+    const porSteam = {};
+    for (const r of rows) {
+      const stats = {};
+      for (const [chave, valor] of Object.entries(r)) {
+        if (COLUNAS_IGNORADAS.has(chave) || valor === null || valor === undefined) continue;
+        if (Buffer.isBuffer(valor)) continue;
+        stats[chave] = valor instanceof Date ? valor.toISOString() : valor;
+      }
+      porSteam[r.steam_id] = stats;
+    }
+    return porSteam;
+  } catch (err) {
+    console.warn("[leaderboard] Não consegui ler rank_mix_k4stats:", err.message);
+    return {};
+  }
+}
+
 app.get("/api/leaderboard", async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -301,8 +328,13 @@ app.get("/api/leaderboard", async (req, res) => {
        LIMIT ?`,
       [config.leaderboardLimit]
     );
-    const avatares = await buscarAvatares(rows.map((r) => r.steam_id));
-    const comAvatar = rows.map((r) => ({ ...r, avatar_url: avatares[r.steam_id] || null }));
+    const ids = rows.map((r) => r.steam_id);
+    const [avatares, stats] = await Promise.all([buscarAvatares(ids), buscarStats(ids)]);
+    const comAvatar = rows.map((r) => ({
+      ...r,
+      avatar_url: avatares[r.steam_id] || null,
+      stats: stats[r.steam_id] || {},
+    }));
     res.json(comAvatar);
   } catch (err) {
     console.error(err);
@@ -607,6 +639,14 @@ function sortearMapa(mapas) {
   return mapas[indice];
 }
 
+// Mapas que já saíram. Fica na memória do servidor, então todo mundo que
+// está no site vê os mesmos mapas em cinza. (Zera se o servidor reiniciar.)
+const mapasSorteados = new Set();
+
+io.on("connection", (socket) => {
+  socket.emit("mapa:sorteados", Array.from(mapasSorteados));
+});
+
 // Impede que dois sorteios de mapa rodem ao mesmo tempo.
 let mapaSorteioEmAndamento = false;
 
@@ -616,10 +656,18 @@ app.post("/api/draft-mapa", async (req, res) => {
       return res.status(409).json({ error: "Já tem um sorteio de mapa em andamento. Aguarde terminar." });
     }
 
-    const mapas = req.body.mapas;
+    const pedidos = req.body.mapas;
 
-    if (!Array.isArray(mapas) || mapas.length < 1) {
+    if (!Array.isArray(pedidos) || pedidos.length < 1) {
       return res.status(400).json({ error: "Selecione pelo menos 1 mapa para sortear." });
+    }
+
+    // Mapas que já foram sorteados ficam de fora até serem devolvidos.
+    const mapas = pedidos.filter((id) => !mapasSorteados.has(id));
+    if (mapas.length < 1) {
+      return res.status(400).json({
+        error: "Todos os mapas selecionados já foram sorteados. Devolva algum mapa à rodada para sortear de novo.",
+      });
     }
 
     mapaSorteioEmAndamento = true;
@@ -630,7 +678,9 @@ app.post("/api/draft-mapa", async (req, res) => {
     io.emit("mapa:iniciado", { mapas });
 
     setTimeout(() => {
+      mapasSorteados.add(mapaId);
       io.emit("mapa:resultado", { mapaId });
+      io.emit("mapa:sorteados", Array.from(mapasSorteados));
       mapaSorteioEmAndamento = false;
     }, 3000);
 
@@ -640,6 +690,17 @@ app.post("/api/draft-mapa", async (req, res) => {
     mapaSorteioEmAndamento = false;
     res.status(500).json({ error: "Erro ao sortear o mapa." });
   }
+});
+
+// Devolve um mapa já sorteado para a rodada de sorteio.
+app.post("/api/mapa/devolver", (req, res) => {
+  const { mapaId } = req.body;
+  if (typeof mapaId !== "string") {
+    return res.status(400).json({ error: "Mapa inválido." });
+  }
+  mapasSorteados.delete(mapaId);
+  io.emit("mapa:sorteados", Array.from(mapasSorteados));
+  res.json({ ok: true });
 });
 
 // Retorna os sorteios de hoje, mais recente primeiro.
