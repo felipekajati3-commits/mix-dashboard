@@ -1019,7 +1019,7 @@ main {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-width: 720px;
+  max-width: 480px;
   margin: 0 auto;
 }
 
@@ -1049,9 +1049,7 @@ main {
 .rank-row.pos-1 .rank-pos { color: var(--gold); }
 
 .rank-name {
-  flex: 1 1 0;
-  min-width: 0;
-  cursor: help;
+  flex: 0 0 220px;
   font-weight: 600;
   font-size: 14px;
   color: var(--text);
@@ -1141,63 +1139,6 @@ main {
 
 .nome-temp-input:focus { outline: none; }
 
-
-/* ---------- Ranking: colunas K / M / KDA e cartão de estatísticas ---------- */
-
-.rank-head {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 0 16px 4px;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.rank-head .rank-head-nome { flex: 1 1 0; padding-left: 52px; }
-.rank-head .rank-points { font-family: inherit; font-weight: 600; color: var(--muted); }
-
-.rank-stat {
-  flex: 0 0 46px;
-  text-align: right;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--text);
-}
-.rank-kda { font-weight: 700; }
-.rank-row .rank-points,
-.rank-head .rank-points { flex: 0 0 96px; margin-left: 0; }
-
-@media (max-width: 560px) {
-  .rank-row, .rank-head { gap: 8px; padding-left: 10px; padding-right: 10px; }
-  .rank-stat { flex-basis: 34px; font-size: 12px; }
-  .rank-row .rank-points, .rank-head .rank-points { flex-basis: 74px; font-size: 12px; }
-  .rank-head .rank-head-nome { padding-left: 0; }
-}
-
-.rank-tooltip {
-  position: fixed;
-  z-index: 1000;
-  width: 270px;
-  max-height: 80vh;
-  overflow-y: auto;
-  background: var(--panel-2, #1c2128);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 12px 14px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  pointer-events: none;
-  font-size: 13px;
-}
-.rank-tooltip.hidden { display: none; }
-.tt-titulo { font-weight: 700; font-size: 15px; margin-bottom: 8px; color: var(--text); }
-.tt-sub { margin: 10px 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
-.tt-bloco { display: flex; flex-direction: column; gap: 3px; }
-.tt-destaque { padding-bottom: 8px; border-bottom: 1px solid var(--line); }
-.tt-linha { display: flex; justify-content: space-between; gap: 12px; }
-.tt-linha span { color: var(--muted); }
-.tt-linha b { font-family: var(--font-mono); font-weight: 600; color: var(--text); }
-.tt-vazio { margin-top: 8px; color: var(--muted); }
 
 /* ---------- Mapa já sorteado ---------- */
 

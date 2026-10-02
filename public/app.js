@@ -71,127 +71,6 @@ function faixaPremier(pontos) {
   return (FAIXAS_PREMIER.find((f) => (pontos || 0) >= f.min) || FAIXAS_PREMIER[FAIXAS_PREMIER.length - 1]).classe;
 }
 
-// Nomes em português para as estatísticas mais comuns do K4-System.
-// Qualquer coluna que não estiver aqui aparece mesmo assim, com o nome
-// "embelezado" automaticamente.
-const ROTULOS_STATS = {
-  kills: "Kills",
-  deaths: "Mortes",
-  assists: "Assistências",
-  headshots: "Headshots",
-  firstblood: "First blood",
-  mvp: "MVPs",
-  round_win: "Rounds ganhos",
-  round_lose: "Rounds perdidos",
-  game_win: "Partidas ganhas",
-  game_lose: "Partidas perdidas",
-  shoots: "Disparos",
-  hits: "Acertos",
-  hits_given: "Acertos dados",
-  hits_taken: "Acertos recebidos",
-  damage: "Dano causado",
-  playtime: "Tempo de jogo",
-  lastseen: "Última vez online",
-  lastconnect: "Última conexão",
-};
-
-const num = (v) => Number(v) || 0;
-const fmt = (n, casas = 0) =>
-  Number(n).toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
-
-function kdaDe(st) {
-  const k = num(st.kills), d = num(st.deaths), a = num(st.assists);
-  return d > 0 ? (k + a) / d : k + a;
-}
-
-function formatarStat(chave, valor) {
-  if (/(lastseen|lastconnect|last_seen|last_connect)/i.test(chave)) {
-    const d = new Date(valor);
-    if (!isNaN(d)) return d.toLocaleString("pt-BR");
-  }
-  if (/playtime/i.test(chave) && !isNaN(Number(valor))) {
-    const seg = Number(valor);
-    const h = Math.floor(seg / 3600), m = Math.floor((seg % 3600) / 60);
-    return `${h}h ${String(m).padStart(2, "0")}min`;
-  }
-  if (typeof valor === "number") return fmt(valor, Number.isInteger(valor) ? 0 : 2);
-  return escapeHtml(String(valor));
-}
-
-function rotuloStat(chave) {
-  if (ROTULOS_STATS[chave]) return ROTULOS_STATS[chave];
-  const t = chave.replace(/_/g, " ");
-  return t.charAt(0).toUpperCase() + t.slice(1);
-}
-
-// Monta o cartão com tudo que o servidor sabe do jogador.
-function tooltipHtml(j) {
-  const st = j.stats || {};
-  const k = num(st.kills), d = num(st.deaths), hs = num(st.headshots);
-  const rw = num(st.round_win), rl = num(st.round_lose);
-  const gw = num(st.game_win), gl = num(st.game_lose);
-
-  const destaque = [
-    ["Pontos", fmt(num(j.points))],
-    ["K/D", fmt(d > 0 ? k / d : k, 2)],
-    ["KDA", fmt(kdaDe(st), 2)],
-  ];
-  if (k > 0 && "headshots" in st) destaque.push(["% HS", fmt((hs / k) * 100, 1) + "%"]);
-  if (rw + rl > 0) destaque.push(["% rounds ganhos", fmt((rw / (rw + rl)) * 100, 1) + "%"]);
-  if (gw + gl > 0) destaque.push(["% vitórias", fmt((gw / (gw + gl)) * 100, 1) + "%"]);
-  if (num(st.shoots) > 0 && "hits" in st) destaque.push(["Precisão", fmt((num(st.hits) / num(st.shoots)) * 100, 1) + "%"]);
-
-  const linhas = (pares) =>
-    pares.map(([r, v]) => `<div class="tt-linha"><span>${r}</span><b>${v}</b></div>`).join("");
-
-  const todas = Object.entries(st).map(([c, v]) => [escapeHtml(rotuloStat(c)), formatarStat(c, v)]);
-
-  return `
-    <div class="tt-titulo">${escapeHtml(j.name || "Jogador")}</div>
-    <div class="tt-bloco tt-destaque">${linhas(destaque)}</div>
-    ${todas.length
-      ? `<div class="tt-sub">Todas as estatísticas</div><div class="tt-bloco">${linhas(todas)}</div>`
-      : `<div class="tt-vazio">Sem estatísticas detalhadas para este jogador.</div>`}
-  `;
-}
-
-let jogadoresRanking = [];
-
-const tooltipEl = document.createElement("div");
-tooltipEl.className = "rank-tooltip hidden";
-document.body.appendChild(tooltipEl);
-
-function mostrarTooltip(idx, x, y) {
-  const j = jogadoresRanking[idx];
-  if (!j) return;
-  tooltipEl.innerHTML = tooltipHtml(j);
-  tooltipEl.classList.remove("hidden");
-  const w = tooltipEl.offsetWidth, h = tooltipEl.offsetHeight;
-  const left = Math.min(x + 16, window.innerWidth - w - 8);
-  const top = Math.max(8, Math.min(y + 16, window.innerHeight - h - 8));
-  tooltipEl.style.left = Math.max(8, left) + "px";
-  tooltipEl.style.top = top + "px";
-}
-
-function esconderTooltip() {
-  tooltipEl.classList.add("hidden");
-}
-
-leaderboardEl.addEventListener("mousemove", (e) => {
-  const nome = e.target.closest(".rank-name");
-  if (!nome) return esconderTooltip();
-  mostrarTooltip(Number(nome.dataset.idx), e.clientX, e.clientY);
-});
-leaderboardEl.addEventListener("mouseleave", esconderTooltip);
-// No celular não existe "passar o mouse": um toque no nome abre o cartão.
-leaderboardEl.addEventListener("click", (e) => {
-  const nome = e.target.closest(".rank-name");
-  if (!nome) return esconderTooltip();
-  const r = nome.getBoundingClientRect();
-  mostrarTooltip(Number(nome.dataset.idx), r.left, r.bottom - 12);
-});
-document.addEventListener("scroll", esconderTooltip, true);
-
 async function carregarLeaderboard({ silencioso = false } = {}) {
   if (!silencioso) {
     leaderboardEl.innerHTML = `<div class="loading">Carregando ranking…</div>`;
@@ -200,37 +79,22 @@ async function carregarLeaderboard({ silencioso = false } = {}) {
     const res = await fetch("/api/leaderboard", { cache: "no-store" });
     if (!res.ok) throw new Error("Falha ao carregar.");
     const jogadores = await res.json();
-    jogadoresRanking = jogadores;
 
     if (!jogadores.length) {
       leaderboardEl.innerHTML = `<div class="loading">Nenhum jogador registrado ainda.</div>`;
       return;
     }
 
-    const cabecalho = `
-      <div class="rank-head">
-        <span class="rank-pos">#</span>
-        <span class="rank-head-nome">Jogador</span>
-        <span class="rank-stat">K</span>
-        <span class="rank-stat">M</span>
-        <span class="rank-stat">KDA</span>
-        <span class="rank-points">Pontos</span>
-      </div>`;
-
-    leaderboardEl.innerHTML = cabecalho + jogadores
+    leaderboardEl.innerHTML = jogadores
       .map((j, i) => {
         const pos = i + 1;
         const nome = escapeHtml(j.name || "Jogador");
         const faixa = faixaPremier(j.points);
-        const st = j.stats || {};
         return `
           <div class="rank-row pos-${pos} ${faixa}">
             <div class="rank-pos">${String(pos).padStart(2, "0")}</div>
             ${avatarHtml({ name: j.name, avatar_url: j.avatar_url })}
-            <div class="rank-name" data-idx="${i}">${nome}</div>
-            <div class="rank-stat">${fmt(num(st.kills))}</div>
-            <div class="rank-stat">${fmt(num(st.deaths))}</div>
-            <div class="rank-stat rank-kda">${fmt(kdaDe(st), 2)}</div>
+            <div class="rank-name" title="${nome}">${nome}</div>
             <div class="rank-points">${(j.points ?? 0).toLocaleString("pt-BR")} pts</div>
           </div>`;
       })

@@ -292,33 +292,6 @@ app.get("/api/admin/status", (req, res) => {
 // do plugin K4-System (rank_mix_k4ranks/rank_mix_k4stats), então reflete
 // os pontos que o próprio plugin calcula no servidor - não depende mais
 // de nada que a equipe cadastre manualmente aqui no site.
-// Busca TODAS as estatísticas que o K4-System guarda por jogador
-// (tabela rank_mix_k4stats). Não depende de nomes de colunas fixos: o que
-// existir na tabela (kills, deaths, assists, headshots, rounds, etc.) vai
-// pro site e aparece no cartão que abre ao passar o mouse no nome.
-const COLUNAS_IGNORADAS = new Set(["steam_id", "name", "id"]);
-
-async function buscarStats(steamIds) {
-  if (!steamIds.length) return {};
-  try {
-    const [rows] = await pool.query("SELECT * FROM rank_mix_k4stats WHERE steam_id IN (?)", [steamIds]);
-    const porSteam = {};
-    for (const r of rows) {
-      const stats = {};
-      for (const [chave, valor] of Object.entries(r)) {
-        if (COLUNAS_IGNORADAS.has(chave) || valor === null || valor === undefined) continue;
-        if (Buffer.isBuffer(valor)) continue;
-        stats[chave] = valor instanceof Date ? valor.toISOString() : valor;
-      }
-      porSteam[r.steam_id] = stats;
-    }
-    return porSteam;
-  } catch (err) {
-    console.warn("[leaderboard] Não consegui ler rank_mix_k4stats:", err.message);
-    return {};
-  }
-}
-
 app.get("/api/leaderboard", async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -328,13 +301,8 @@ app.get("/api/leaderboard", async (req, res) => {
        LIMIT ?`,
       [config.leaderboardLimit]
     );
-    const ids = rows.map((r) => r.steam_id);
-    const [avatares, stats] = await Promise.all([buscarAvatares(ids), buscarStats(ids)]);
-    const comAvatar = rows.map((r) => ({
-      ...r,
-      avatar_url: avatares[r.steam_id] || null,
-      stats: stats[r.steam_id] || {},
-    }));
+    const avatares = await buscarAvatares(rows.map((r) => r.steam_id));
+    const comAvatar = rows.map((r) => ({ ...r, avatar_url: avatares[r.steam_id] || null }));
     res.json(comAvatar);
   } catch (err) {
     console.error(err);
