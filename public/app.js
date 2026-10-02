@@ -808,11 +808,22 @@ function girarMapas(candidatos, alvo, duracao) {
   pararRoletaMapa();
   const n = candidatos.length;
   const passos = 24; // mais passos = roleta mais rápida e com mais voltas
-  const idxAlvo = Math.max(candidatos.indexOf(alvo), 0);
+  // Sequência embaralhada: cada passo salta pra um mapa aleatório (sem repetir
+  // o anterior) e o último passo é sempre o mapa sorteado pelo servidor.
   const seq = [];
-  for (let k = 0; k < passos; k++) {
-    seq.push(candidatos[(((idxAlvo - (passos - 1 - k)) % n) + n) % n]);
+  if (n === 2) {
+    // Com só 2 mapas não tem como embaralhar: eles se alternam até o sorteado.
+    const outro = candidatos.find((id) => id !== alvo);
+    for (let k = 0; k < passos; k++) seq.push((passos - 1 - k) % 2 === 0 ? alvo : outro);
   }
+  for (let k = 0; n !== 2 && k < passos - 1; k++) {
+    const evitar = new Set([seq[k - 1], k === passos - 2 ? alvo : null]);
+    if (n > 3) evitar.add(seq[k - 2]);
+    let opcoes = candidatos.filter((id) => !evitar.has(id));
+    if (!opcoes.length) opcoes = candidatos;
+    seq.push(opcoes[Math.floor(Math.random() * opcoes.length)]);
+  }
+  if (n !== 2) seq.push(alvo);
   // Começa quase num borrão e desacelera no fim: cada intervalo é 14% maior
   // que o anterior, e todos são escalados pra somar exatamente "duracao".
   const pesos = seq.map((_, k) => Math.pow(1.14, k));
