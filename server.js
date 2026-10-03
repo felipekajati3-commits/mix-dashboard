@@ -5,6 +5,7 @@ const { Server } = require("socket.io");
 const crypto = require("crypto");
 const config = require("./config");
 const store = require("./store");
+const historico = require("./historico");
 
 const app = express();
 app.use(express.json());
@@ -292,46 +293,6 @@ app.get("/api/admin/status", (req, res) => {
 // do plugin K4-System (rank_mix_k4ranks/rank_mix_k4stats), então reflete
 // os pontos que o próprio plugin calcula no servidor - não depende mais
 // de nada que a equipe cadastre manualmente aqui no site.
-// Estatísticas do K4-System (tabela rank_mix_k4stats). Como os nomes das colunas
-// podem variar entre versões do plugin, tentamos alguns nomes comuns pra cada
-// estatística. O que não existir fica null e o site simplesmente não mostra.
-const COLUNAS_STATS = {
-  v: ["game_win", "wins", "win", "victories"],
-  d: ["game_lose", "losses", "loses", "lose", "defeats"],
-  k: ["kills"],
-  m: ["deaths"],
-  a: ["assists"],
-  hs: ["headshots", "headshot", "hs", "headshot_kills"],
-};
-
-function pegarStat(linha, candidatos) {
-  for (const nome of candidatos) {
-    if (linha[nome] !== undefined && linha[nome] !== null && !isNaN(Number(linha[nome]))) {
-      return Number(linha[nome]);
-    }
-  }
-  return null;
-}
-
-async function buscarResumoStats(steamIds) {
-  if (!steamIds.length) return {};
-  try {
-    const [rows] = await pool.query("SELECT * FROM rank_mix_k4stats WHERE steam_id IN (?)", [steamIds]);
-    const porSteam = {};
-    for (const r of rows) {
-      const resumo = {};
-      for (const [chave, candidatos] of Object.entries(COLUNAS_STATS)) {
-        resumo[chave] = pegarStat(r, candidatos);
-      }
-      porSteam[r.steam_id] = resumo;
-    }
-    return porSteam;
-  } catch (err) {
-    console.warn("[leaderboard] Não consegui ler rank_mix_k4stats:", err.message);
-    return {};
-  }
-}
-
 app.get("/api/leaderboard", async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -341,13 +302,8 @@ app.get("/api/leaderboard", async (req, res) => {
        LIMIT ?`,
       [config.leaderboardLimit]
     );
-    const ids = rows.map((r) => r.steam_id);
-    const [avatares, stats] = await Promise.all([buscarAvatares(ids), buscarResumoStats(ids)]);
-    const comAvatar = rows.map((r) => ({
-      ...r,
-      avatar_url: avatares[r.steam_id] || null,
-      resumo: stats[r.steam_id] || null,
-    }));
+    const avatares = await buscarAvatares(rows.map((r) => r.steam_id));
+    const comAvatar = rows.map((r) => ({ ...r, avatar_url: avatares[r.steam_id] || null }));
     res.json(comAvatar);
   } catch (err) {
     console.error(err);
@@ -803,7 +759,53 @@ app.post("/api/matchzy/evento", (req, res) => {
 
   io.emit("partida:resultado", ultimoResultadoPartida);
 
+  // Guarda também no histórico persistido de auditoria (painel de admin),
+  // pra dar pra comparar depois com o que o K4-System contabilizou. Não
+  // espera terminar pra responder o webhook - se o GitHub demorar ou
+  // falhar, só loga o erro, sem fazer o MatchZy re-tentar à toa.
+  const chaveDedup =
+    evento.matchid != null ? `${evento.matchid}:${evento.map_number ?? ""}` : null;
+  historico
+    .registrar(
+      {
+        criado_em: ultimoResultadoPartida.criado_em.toISOString(),
+        vencedor, // "A" | "B" | null
+        placarA: ultimoResultadoPartida.placarA,
+        placarB: ultimoResultadoPartida.placarB,
+        mapa: evento.map || evento.map_name || null,
+        matchid: evento.matchid ?? null,
+      },
+      { chaveDedup }
+    )
+    .catch((err) => console.error("[Histórico] Não consegui salvar a partida:", err.message));
+
   res.json({ ok: true });
+});
+
+// ---------------- HISTÓRICO DE PARTIDAS (auditoria, admin) ----------------
+// Lista bruta de "quem ganhou cada partida", alimentada pelo webhook do
+// MatchZy acima - é uma fonte independente do K4-System, útil pra achar
+// partida que sumiu ou que foi contabilizada errado nos pontos.
+app.get("/api/admin/historico-partidas", exigirAdmin, async (req, res) => {
+  try {
+    const dados = await historico.ler({ forcar: true });
+    res.json(dados);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao carregar o histórico." });
+  }
+});
+
+// Apaga tudo, pra começar a próxima conferência do zero. Não mexe em
+// pontos nem em rankings - só limpa esse registro de auditoria.
+app.post("/api/admin/historico-partidas/limpar", exigirAdmin, async (req, res) => {
+  try {
+    const dados = await historico.limpar();
+    res.json(dados);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao limpar o histórico." });
+  }
 });
 
 const PORT = process.env.PORT || 3000;

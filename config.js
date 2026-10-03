@@ -46,6 +46,10 @@ module.exports = {
     repo: process.env.GITHUB_REPO || "felipekajati3-commits/mix-dashboard",
     branch: process.env.GITHUB_BRANCH || "data",
     arquivo: process.env.GITHUB_ARQUIVO || "rankings.json",
+
+    // Arquivo separado (mesma branch) onde fica o histórico de partidas
+    // de auditoria (ver historico.js) - não mistura com os rankings.
+    arquivoHistorico: process.env.GITHUB_ARQUIVO_HISTORICO || "historico-partidas.json",
   },
 
   // ---------------- Pesos do sorteio ----------------

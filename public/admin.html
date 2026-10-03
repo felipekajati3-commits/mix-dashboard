@@ -76,6 +76,23 @@
     </div>
 
     <div id="admin-msg" class="msg"></div>
+
+    <div class="section-head historico-head">
+      <h2>Histórico de partidas (auditoria)</h2>
+      <p class="muted">
+        Cada linha aqui é uma partida que o MatchZy avisou que terminou (direto do servidor de jogo,
+        sem passar pelo K4-System). Use pra comparar com o que o K4-System contabilizou e achar
+        partida que sumiu ou foi contada errado. Depois de conferir, limpe pra começar a próxima
+        checagem do zero — isso não mexe em pontos nem em rankings.
+      </p>
+    </div>
+
+    <div id="historico-partidas" class="historico-lista"></div>
+
+    <div class="sorteio-controls admin-save-bar">
+      <span id="historico-contagem" class="selected-count">0 partidas</span>
+      <button id="btn-limpar-historico" class="btn btn-outline" type="button">Limpar histórico</button>
+    </div>
   </section>
 
 </main>

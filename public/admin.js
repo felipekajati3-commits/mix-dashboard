@@ -56,6 +56,7 @@ async function verificarLogin() {
         "Atenção: o GITHUB_TOKEN não está configurado, então as alterações ficam só neste servidor e somem no próximo deploy.";
     }
     carregarRankings();
+    carregarHistorico();
   } else {
     telaLogin.classList.remove("hidden");
     telaPainel.classList.add("hidden");
@@ -333,6 +334,81 @@ btnZerarSetas.addEventListener("click", async () => {
     adminMsg.textContent = err.message;
   } finally {
     btnZerarSetas.disabled = false;
+  }
+});
+
+// ---------------- Histórico de partidas (auditoria) ----------------
+// Lista o que o MatchZy avisou que aconteceu (quem ganhou, placar),
+// independente do K4-System - serve pra comparar os dois e achar
+// divergência. Ver historico.js e os endpoints /api/admin/historico-partidas.
+
+const historicoEl = document.getElementById("historico-partidas");
+const historicoContagemEl = document.getElementById("historico-contagem");
+const btnLimparHistorico = document.getElementById("btn-limpar-historico");
+
+function nomeVencedor(v) {
+  if (v === "A") return "Time A";
+  if (v === "B") return "Time B";
+  return "Empate / sem vencedor";
+}
+
+async function carregarHistorico() {
+  historicoEl.innerHTML = `<div class="loading">Carregando…</div>`;
+  try {
+    const res = await fetch("/api/admin/historico-partidas");
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erro ao carregar.");
+
+    const partidas = data.partidas || [];
+    historicoContagemEl.textContent = `${partidas.length} ${partidas.length === 1 ? "partida" : "partidas"}`;
+
+    if (!partidas.length) {
+      historicoEl.innerHTML = `<div class="loading">Nenhuma partida registrada ainda desde a última limpeza.</div>`;
+      return;
+    }
+
+    historicoEl.innerHTML = `
+      <table class="historico-tabela">
+        <thead>
+          <tr><th>Quando</th><th>Vencedor</th><th>Placar</th><th>Mapa</th></tr>
+        </thead>
+        <tbody>
+          ${partidas
+            .map(
+              (p) => `
+            <tr>
+              <td>${new Date(p.criado_em).toLocaleString("pt-BR")}</td>
+              <td>${escapeHtml(nomeVencedor(p.vencedor))}</td>
+              <td>${p.placarA ?? "?"} x ${p.placarB ?? "?"}</td>
+              <td>${escapeHtml(p.mapa || "—")}</td>
+            </tr>`
+            )
+            .join("")}
+        </tbody>
+      </table>`;
+  } catch (err) {
+    historicoEl.innerHTML = `<div class="loading">${escapeHtml(err.message || "Erro ao carregar o histórico.")}</div>`;
+  }
+}
+
+btnLimparHistorico.addEventListener("click", async () => {
+  if (
+    !confirm(
+      "Limpar TODO o histórico de partidas? Isso não mexe em pontos nem em rankings, só apaga esse registro de auditoria."
+    )
+  )
+    return;
+
+  btnLimparHistorico.disabled = true;
+  try {
+    const res = await fetch("/api/admin/historico-partidas/limpar", { method: "POST" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erro ao limpar.");
+    carregarHistorico();
+  } catch (err) {
+    adminMsg.textContent = err.message;
+  } finally {
+    btnLimparHistorico.disabled = false;
   }
 });
 
