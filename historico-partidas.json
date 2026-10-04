@@ -1,0 +1,15 @@
+{
+  "partidas": [
+    {
+      "id": "wf4laa35mut9pnd2",
+      "criado_em": "2026-10-04T03:35:12.279Z",
+      "vencedor": "A",
+      "placarA": 13,
+      "placarB": 11,
+      "mapa": null,
+      "matchid": 1504,
+      "_chaveDedup": "1504:"
+    }
+  ],
+  "atualizado_em": "2026-10-04T03:35:12.518Z"
+}
