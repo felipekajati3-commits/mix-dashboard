@@ -1,6 +1,16 @@
 {
   "partidas": [
     {
+      "id": "2qi40t63muthyu31",
+      "criado_em": "2026-10-04T07:26:17.784Z",
+      "vencedor": "B",
+      "placarA": 9,
+      "placarB": 13,
+      "mapa": null,
+      "matchid": 1509,
+      "_chaveDedup": "1509:"
+    },
+    {
       "id": "gsjq48q4mutggcp9",
       "criado_em": "2026-10-04T06:43:55.929Z",
       "vencedor": "A",
@@ -51,5 +61,5 @@
       "_chaveDedup": "1504:"
     }
   ],
-  "atualizado_em": "2026-10-04T06:43:56.109Z"
+  "atualizado_em": "2026-10-04T07:26:18.061Z"
 }
