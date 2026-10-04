@@ -57,6 +57,7 @@ async function verificarLogin() {
     }
     carregarRankings();
     carregarHistorico();
+    carregarSnapshot();
   } else {
     telaLogin.classList.remove("hidden");
     telaPainel.classList.add("hidden");
@@ -370,7 +371,7 @@ async function carregarHistorico() {
     historicoEl.innerHTML = `
       <table class="historico-tabela">
         <thead>
-          <tr><th>Quando</th><th>Vencedor</th><th>Placar</th><th>Mapa</th></tr>
+          <tr><th>Quando</th><th>Vencedor</th><th>Placar</th><th>Mapa</th><th>Jogadores</th></tr>
         </thead>
         <tbody>
           ${partidas
@@ -381,6 +382,7 @@ async function carregarHistorico() {
               <td>${escapeHtml(nomeVencedor(p.vencedor))}</td>
               <td>${p.placarA ?? "?"} x ${p.placarB ?? "?"}</td>
               <td>${escapeHtml(p.mapa || "—")}</td>
+              <td>${jogadoresHtml(p)}</td>
             </tr>`
             )
             .join("")}
@@ -389,6 +391,21 @@ async function carregarHistorico() {
   } catch (err) {
     historicoEl.innerHTML = `<div class="loading">${escapeHtml(err.message || "Erro ao carregar o histórico.")}</div>`;
   }
+}
+
+// Lista de jogadores de uma partida. Usa o sorteio (o que o site montou);
+// partidas antigas (antes desse recurso) nao tem a lista.
+function jogadoresHtml(p) {
+  const nomes = (lista) =>
+    Array.isArray(lista) && lista.length
+      ? lista.map((j) => escapeHtml(j.name || j.steam_id || "?")).join(", ")
+      : "—";
+  if (!p.jogadoresA && !p.jogadoresB) return "—";
+  return `<details class="historico-jogadores">
+    <summary>Ver times</summary>
+    <div><b>Time A:</b> ${nomes(p.jogadoresA)}</div>
+    <div><b>Time B:</b> ${nomes(p.jogadoresB)}</div>
+  </details>`;
 }
 
 btnLimparHistorico.addEventListener("click", async () => {
@@ -409,6 +426,92 @@ btnLimparHistorico.addEventListener("click", async () => {
     adminMsg.textContent = err.message;
   } finally {
     btnLimparHistorico.disabled = false;
+  }
+});
+
+// ---------------- SNAPSHOT DO RANKING (auditoria) ----------------
+// Foto diária (7h de Brasília) do ranking. Ver snapshot.js e os endpoints
+// /api/admin/snapshot-ranking.
+const snapshotInfoEl = document.getElementById("snapshot-info");
+const snapshotTabelaEl = document.getElementById("snapshot-tabela");
+const snapshotContagemEl = document.getElementById("snapshot-contagem");
+const btnSnapshotAgora = document.getElementById("btn-snapshot-agora");
+
+function motivoSnapshot(m) {
+  if (m === "cron") return "agendada (7h)";
+  if (m === "manual") return "manual (botão do admin)";
+  if (m === "ao iniciar" || m === "verificação periódica") return "recuperação (o site estava dormindo às 7h)";
+  return m || "—";
+}
+
+function valorOuTraco(v) {
+  return v === null || v === undefined ? "—" : v;
+}
+
+function renderizarSnapshot(dados) {
+  const jogadores = Array.isArray(dados.jogadores) ? dados.jogadores : [];
+  snapshotContagemEl.textContent = `${jogadores.length} ${jogadores.length === 1 ? "jogador" : "jogadores"}`;
+
+  if (!dados.tirado_em) {
+    snapshotInfoEl.textContent = "Nenhum snapshot tirado ainda.";
+    snapshotTabelaEl.innerHTML = "";
+    return;
+  }
+
+  const quando = new Date(dados.tirado_em).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+  snapshotInfoEl.textContent = `Tirado em ${quando} (horário de Brasília) — ${motivoSnapshot(dados.motivo)}.`;
+
+  snapshotTabelaEl.innerHTML = `
+    <table class="historico-tabela">
+      <thead>
+        <tr><th>#</th><th>Jogador</th><th>Pontos</th><th>V</th><th>D</th><th>K</th><th>M</th><th>A</th><th>HS</th></tr>
+      </thead>
+      <tbody>
+        ${jogadores
+          .map(
+            (p) => `
+          <tr>
+            <td>${p.pos}</td>
+            <td title="${escapeHtml(p.steam_id || "")}">${escapeHtml(p.name || p.steam_id || "?")}</td>
+            <td>${valorOuTraco(p.points)}</td>
+            <td>${valorOuTraco(p.v)}</td>
+            <td>${valorOuTraco(p.d)}</td>
+            <td>${valorOuTraco(p.k)}</td>
+            <td>${valorOuTraco(p.m)}</td>
+            <td>${valorOuTraco(p.a)}</td>
+            <td>${valorOuTraco(p.hs)}</td>
+          </tr>`
+          )
+          .join("")}
+      </tbody>
+    </table>`;
+}
+
+async function carregarSnapshot() {
+  snapshotInfoEl.textContent = "Carregando…";
+  try {
+    const res = await fetch("/api/admin/snapshot-ranking");
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erro ao carregar o snapshot.");
+    renderizarSnapshot(data);
+  } catch (err) {
+    snapshotInfoEl.textContent = err.message || "Erro ao carregar o snapshot.";
+  }
+}
+
+btnSnapshotAgora.addEventListener("click", async () => {
+  if (!confirm("Tirar um snapshot agora? Ele substitui o atual.")) return;
+  btnSnapshotAgora.disabled = true;
+  snapshotInfoEl.textContent = "Tirando snapshot…";
+  try {
+    const res = await fetch("/api/admin/snapshot-ranking/agora", { method: "POST" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erro ao tirar o snapshot.");
+    renderizarSnapshot(data);
+  } catch (err) {
+    snapshotInfoEl.textContent = err.message;
+  } finally {
+    btnSnapshotAgora.disabled = false;
   }
 });
 

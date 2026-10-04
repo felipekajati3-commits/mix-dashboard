@@ -1,3 +1,5 @@
 node_modules/
 .env
 rankings.local.json
+snapshot-ranking.local.json
+historico-partidas.local.json

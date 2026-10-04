@@ -6,6 +6,7 @@ const crypto = require("crypto");
 const config = require("./config");
 const store = require("./store");
 const historico = require("./historico");
+const snapshot = require("./snapshot");
 
 const app = express();
 app.use(express.json());
@@ -746,6 +747,21 @@ function extrairPlacarDeRounds(timeObj) {
   return null;
 }
 
+// Tenta ler a lista de jogadores de um time no evento do MatchZy. O
+// formato exato nao e garantido, entao e tolerante: se nao achar, devolve
+// null e o historico usa so a lista do sorteio.
+function extrairJogadoresMatchZy(timeObj) {
+  const lista = timeObj?.players;
+  if (!Array.isArray(lista)) return null;
+  const jogadores = lista
+    .map((p) => ({
+      steam_id: String(p?.steamid ?? p?.steam_id ?? p?.steamId ?? "") || null,
+      name: p?.name ?? p?.nickname ?? null,
+    }))
+    .filter((p) => p.steam_id || p.name);
+  return jogadores.length ? jogadores : null;
+}
+
 // Chamado pelo MatchZy (configurado via matchzy_remote_log_url) toda vez
 // que qualquer evento de partida acontece. A gente usa dois eventos:
 // "map_result" (placar de rounds do mapa) e "series_end" (quem ganhou a
@@ -764,7 +780,12 @@ app.post("/api/matchzy/evento", (req, res) => {
     const placarB = extrairPlacarDeRounds(evento.team2);
 
     if (placarA !== null && placarB !== null) {
-      ultimoPlacarDeRounds = { placarA, placarB };
+      ultimoPlacarDeRounds = {
+        placarA,
+        placarB,
+        jogadoresA: extrairJogadoresMatchZy(evento.team1),
+        jogadoresB: extrairJogadoresMatchZy(evento.team2),
+      };
     } else {
       // Não achamos o campo esperado — loga o evento inteiro pra ajustar
       // o nome do campo certo depois, sem quebrar nada nesse meio tempo.
@@ -794,6 +815,18 @@ app.post("/api/matchzy/evento", (req, res) => {
     placarB: ultimoPlacarDeRounds?.placarB ?? evento.team2_series_score ?? null,
   };
 
+  // Jogadores: (1) da lista do sorteio mais recente do dia (o que o site
+  // sorteou) e (2) do evento do MatchZy, quando ele mandar. Guarda os dois
+  // pra poder conferir se alguem saiu/entrou depois do sorteio.
+  const jogadoresMatchZy = ultimoPlacarDeRounds
+    ? { A: ultimoPlacarDeRounds.jogadoresA, B: ultimoPlacarDeRounds.jogadoresB }
+    : { A: null, B: null };
+  const sorteioDaPartida = historicoSorteios.length
+    ? historicoSorteios[historicoSorteios.length - 1]
+    : null;
+  const enxugar = (lista) =>
+    Array.isArray(lista) ? lista.map((j) => ({ steam_id: j.steam_id ?? null, name: j.name ?? null })) : null;
+
   ultimoPlacarDeRounds = null; // limpa pra não vazar pra próxima partida
 
   // Se ainda tiver o sorteio dessa rodada no histórico do dia, anexa o
@@ -819,6 +852,11 @@ app.post("/api/matchzy/evento", (req, res) => {
         placarB: ultimoResultadoPartida.placarB,
         mapa: evento.map || evento.map_name || null,
         matchid: evento.matchid ?? null,
+        jogadoresA: enxugar(sorteioDaPartida?.timeA),
+        jogadoresB: enxugar(sorteioDaPartida?.timeB),
+        sorteio_em: sorteioDaPartida ? sorteioDaPartida.criado_em.toISOString() : null,
+        jogadoresMatchZyA: jogadoresMatchZy.A,
+        jogadoresMatchZyB: jogadoresMatchZy.B,
       },
       { chaveDedup }
     )
@@ -853,7 +891,151 @@ app.post("/api/admin/historico-partidas/limpar", exigirAdmin, async (req, res) =
   }
 });
 
+// ---------------- SNAPSHOT DIÁRIO DO RANKING (auditoria, admin) ----------------
+// Todo dia as 7h (Brasilia) guarda uma foto do ranking (pontos + stats do
+// K4-System), SUBSTITUINDO a anterior. No plano gratuito do Render o site
+// dorme, entao ha dois caminhos pra isso acontecer:
+//   1) Um cron externo chama /api/cron/snapshot-ranking as 7h (acorda o site).
+//   2) Reserva: sempre que o site estiver acordado (ao iniciar e a cada 10
+//      min), se o ultimo snapshot for anterior a ultima marca das 7h, tira
+//      um na hora (com o horario real em que foi tirado).
+
+// Brasil nao tem horario de verao desde 2019, entao Brasilia = UTC-3 fixo.
+const OFFSET_BRASILIA_MS = 3 * 60 * 60 * 1000;
+const DIA_MS = 24 * 60 * 60 * 1000;
+
+// Instante (ms) da ultima "7h de Brasilia" que ja passou.
+function ultimaMarcaDas7hBrasilia(agora = Date.now()) {
+  const brt = new Date(agora - OFFSET_BRASILIA_MS);
+  let marca =
+    Date.UTC(brt.getUTCFullYear(), brt.getUTCMonth(), brt.getUTCDate(), 7) + OFFSET_BRASILIA_MS;
+  if (agora < marca) marca -= DIA_MS;
+  return marca;
+}
+
+let snapshotEmAndamento = false;
+let ultimoSnapshotConhecidoEm = 0; // ms - evita ler o GitHub toda hora
+
+async function tirarSnapshotDoRanking(motivo) {
+  const [rows] = await pool.query(
+    `SELECT steam_id, name, points
+     FROM rank_mix_k4ranks
+     ORDER BY points DESC
+     LIMIT 2000`
+  );
+  const stats = await buscarResumoStats(rows.map((r) => r.steam_id));
+
+  const jogadores = rows.map((r, i) => {
+    const s = stats[r.steam_id] || {};
+    return {
+      pos: i + 1,
+      steam_id: r.steam_id,
+      name: r.name,
+      points: Number(r.points),
+      v: s.v ?? null,
+      d: s.d ?? null,
+      k: s.k ?? null,
+      m: s.m ?? null,
+      a: s.a ?? null,
+      hs: s.hs ?? null,
+    };
+  });
+
+  const salvo = await snapshot.salvar({
+    tirado_em: new Date().toISOString(),
+    motivo,
+    jogadores,
+  });
+  ultimoSnapshotConhecidoEm = Date.parse(salvo.tirado_em);
+  return salvo;
+}
+
+// Tira o snapshot se precisar. Sem "forcar", so tira quando o atual e
+// anterior a ultima marca das 7h (ou nao existe).
+async function garantirSnapshot({ forcar = false, motivo }) {
+  if (snapshotEmAndamento) return { pulado: "em_andamento" };
+
+  if (!forcar && ultimoSnapshotConhecidoEm >= ultimaMarcaDas7hBrasilia()) {
+    return { pulado: "ja_atualizado" };
+  }
+
+  snapshotEmAndamento = true;
+  try {
+    if (!forcar) {
+      const atual = await snapshot.ler({ forcar: true });
+      if (atual.tirado_em) {
+        ultimoSnapshotConhecidoEm = Date.parse(atual.tirado_em);
+        if (ultimoSnapshotConhecidoEm >= ultimaMarcaDas7hBrasilia()) {
+          return { pulado: "ja_atualizado", snapshot: atual };
+        }
+      }
+    }
+    const novo = await tirarSnapshotDoRanking(motivo);
+    return { criado: true, snapshot: novo };
+  } finally {
+    snapshotEmAndamento = false;
+  }
+}
+
+function chaveCronConfere(recebida) {
+  const esperada = config.cronSecret;
+  if (!esperada || !recebida) return false;
+  const a = Buffer.from(String(recebida), "utf8");
+  const b = Buffer.from(esperada, "utf8");
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+// Chamado pelo cron externo as 7h. Aceita GET ou POST. A chave pode vir no
+// cabecalho "x-cron-secret" (preferido) ou na URL (?chave=...).
+app.all("/api/cron/snapshot-ranking", async (req, res) => {
+  if (!config.cronSecret) {
+    return res.status(503).json({ error: "CRON_SECRET não configurado no servidor." });
+  }
+  if (!chaveCronConfere(req.header("x-cron-secret") || req.query.chave)) {
+    return res.status(401).json({ error: "Não autorizado." });
+  }
+  try {
+    const r = await garantirSnapshot({ motivo: "cron" });
+    res.json({ ok: true, resultado: r.criado ? "criado" : r.pulado });
+  } catch (err) {
+    console.error("[Snapshot] Falha no cron:", err.message);
+    res.status(500).json({ error: "Erro ao tirar o snapshot." });
+  }
+});
+
+app.get("/api/admin/snapshot-ranking", exigirAdmin, async (req, res) => {
+  try {
+    res.json(await snapshot.ler({ forcar: true }));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao carregar o snapshot." });
+  }
+});
+
+// Botao "Tirar snapshot agora" do admin (substitui o atual).
+app.post("/api/admin/snapshot-ranking/agora", exigirAdmin, async (req, res) => {
+  try {
+    const r = await garantirSnapshot({ forcar: true, motivo: "manual" });
+    if (r.pulado === "em_andamento") {
+      return res.status(409).json({ error: "Já tem um snapshot sendo tirado. Tente de novo em instantes." });
+    }
+    res.json(r.snapshot);
+  } catch (err) {
+    console.error("[Snapshot] Falha manual:", err.message);
+    res.status(500).json({ error: "Erro ao tirar o snapshot." });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Mix Dashboard rodando em http://localhost:${PORT}`);
+
+  // Reserva do snapshot das 7h: se o site acordou depois das 7h e ainda nao
+  // existe snapshot do dia, tira agora. Depois confere a cada 10 minutos.
+  const verificarSnapshot = (motivo) =>
+    garantirSnapshot({ motivo }).catch((err) =>
+      console.error("[Snapshot] Falha na verificação:", err.message)
+    );
+  setTimeout(() => verificarSnapshot("ao iniciar"), 10 * 1000);
+  setInterval(() => verificarSnapshot("verificação periódica"), 10 * 60 * 1000);
 });

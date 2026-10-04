@@ -200,3 +200,19 @@ main { max-width: 920px; }
 .historico-tabela tbody tr:not(:last-child) td {
   border-bottom: 1px solid var(--line);
 }
+
+.historico-jogadores summary { cursor: pointer; color: var(--muted); }
+.historico-jogadores div { white-space: normal; max-width: 420px; margin-top: 4px; }
+
+.snapshot-info { margin-bottom: 10px; }
+.snapshot-scroll {
+  max-height: 480px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.snapshot-scroll .historico-tabela th {
+  position: sticky;
+  top: 0;
+  background: var(--panel, #15171c);
+}

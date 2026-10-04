@@ -25,6 +25,13 @@ module.exports = {
 
   leaderboardLimit: 50,
 
+  // Chave que o serviço de cron externo usa pra acordar o site as 7h e
+  // disparar o snapshot do ranking. SEM valor padrão de propósito: se a
+  // variável CRON_SECRET não estiver definida no Render, a rota fica
+  // desligada (o snapshot ainda é tirado quando o site acordar por conta
+  // própria ou pelo botão do admin).
+  cronSecret: process.env.CRON_SECRET || "",
+
   // ---------------- Painel de admin ----------------
   // Senha pra entrar em /admin.html e editar os rankings manuais.
   // Defina ADMIN_PASSWORD no painel do Render - o valor abaixo e so
@@ -50,6 +57,10 @@ module.exports = {
     // Arquivo separado (mesma branch) onde fica o histórico de partidas
     // de auditoria (ver historico.js) - não mistura com os rankings.
     arquivoHistorico: process.env.GITHUB_ARQUIVO_HISTORICO || "historico-partidas.json",
+
+    // Arquivo separado (mesma branch) com o snapshot diário do ranking
+    // (ver snapshot.js) - sempre só o mais recente.
+    arquivoSnapshot: process.env.GITHUB_ARQUIVO_SNAPSHOT || "snapshot-ranking.json",
   },
 
   // ---------------- Pesos do sorteio ----------------
