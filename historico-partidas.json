@@ -61,9 +61,9 @@
     {
       "id": "9a5jc7kjmuumeviz",
       "criado_em": "2026-10-05T02:18:30.733Z",
-      "vencedor": "B",
-      "placarA": 9,
-      "placarB": 13,
+      "vencedor": "A",
+      "placarA": 13,
+      "placarB": 9,
       "mapa": null,
       "matchid": 1511,
       "jogadoresA": [
@@ -113,8 +113,9 @@
       "sorteio_em": "2026-10-05T01:42:39.743Z",
       "jogadoresMatchZyA": null,
       "jogadoresMatchZyB": null,
-      "_chaveDedup": "1511:"
+      "_chaveDedup": "1511:",
+      "corrigido_manual": true
     }
   ],
-  "atualizado_em": "2026-10-05T03:32:32.173Z"
+  "atualizado_em": "2026-10-05T03:33:15.339Z"
 }
