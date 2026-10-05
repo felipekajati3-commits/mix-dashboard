@@ -762,6 +762,42 @@ function extrairJogadoresMatchZy(timeObj) {
   return jogadores.length ? jogadores : null;
 }
 
+// A lista de jogadores pode vir em lugares diferentes do evento
+// (team1.players, stats_team1.players ou team1.stats.players).
+function lerJogadoresDoEvento(evento, n) {
+  const time = evento?.[`team${n}`];
+  const stats = evento?.[`stats_team${n}`];
+  return (
+    extrairJogadoresMatchZy(time) ||
+    extrairJogadoresMatchZy(stats) ||
+    extrairJogadoresMatchZy(time?.stats) ||
+    null
+  );
+}
+
+function contarJogadoresEmComum(jogadoresMZ, timeSite) {
+  if (!Array.isArray(jogadoresMZ) || !Array.isArray(timeSite)) return 0;
+  const ids = new Set(timeSite.map((j) => String(j.steam_id ?? "").trim()).filter(Boolean));
+  const nomes = new Set(timeSite.map((j) => String(j.name ?? "").trim().toLowerCase()).filter(Boolean));
+  return jogadoresMZ.filter((p) =>
+    p.steam_id ? ids.has(String(p.steam_id).trim()) : p.name && nomes.has(String(p.name).trim().toLowerCase())
+  ).length;
+}
+
+// O MatchZy numera os times (team1/team2) do jeito dele, e isso NAO e
+// garantido de bater com o Time A/B do sorteio (faca, troca de lado etc.).
+// Entao descobre pelos jogadores: quem do team1 esta no Time A do sorteio?
+//   metodo "jogadores" = identificado com certeza;
+//   metodo "padrao"    = nao deu pra saber, assumiu team1 = Time A.
+function decidirMapeamento({ jogadoresTeam1, jogadoresTeam2, timeA, timeB }) {
+  const normal =
+    contarJogadoresEmComum(jogadoresTeam1, timeA) + contarJogadoresEmComum(jogadoresTeam2, timeB);
+  const invertido =
+    contarJogadoresEmComum(jogadoresTeam1, timeB) + contarJogadoresEmComum(jogadoresTeam2, timeA);
+  if (normal === invertido) return { invertido: false, metodo: "padrao" };
+  return { invertido: invertido > normal, metodo: "jogadores" };
+}
+
 // Chamado pelo MatchZy (configurado via matchzy_remote_log_url) toda vez
 // que qualquer evento de partida acontece. A gente usa dois eventos:
 // "map_result" (placar de rounds do mapa) e "series_end" (quem ganhou a
@@ -776,16 +812,29 @@ app.post("/api/matchzy/evento", (req, res) => {
   const evento = req.body;
 
   if (evento.event === "map_result") {
-    const placarA = extrairPlacarDeRounds(evento.team1);
-    const placarB = extrairPlacarDeRounds(evento.team2);
+    const placarTeam1 = extrairPlacarDeRounds(evento.team1);
+    const placarTeam2 = extrairPlacarDeRounds(evento.team2);
 
-    if (placarA !== null && placarB !== null) {
+    if (placarTeam1 !== null && placarTeam2 !== null) {
+      const jogadoresTeam1 = lerJogadoresDoEvento(evento, 1);
+      const jogadoresTeam2 = lerJogadoresDoEvento(evento, 2);
+      // OBS: "team1/team2" aqui sao os numeros do MatchZy, nao o Time A/B.
       ultimoPlacarDeRounds = {
-        placarA,
-        placarB,
-        jogadoresA: extrairJogadoresMatchZy(evento.team1),
-        jogadoresB: extrairJogadoresMatchZy(evento.team2),
+        placarTeam1,
+        placarTeam2,
+        jogadoresTeam1,
+        jogadoresTeam2,
+        team1Nome: evento.team1?.name ?? null,
+        team2Nome: evento.team2?.name ?? null,
       };
+      if (!jogadoresTeam1 || !jogadoresTeam2) {
+        console.warn(
+          "[MatchZy] map_result sem lista de jogadores - nao da pra identificar os times por ela. Chaves do evento:",
+          Object.keys(evento),
+          "| chaves de team1:",
+          Object.keys(evento.team1 || {})
+        );
+      }
     } else {
       // Não achamos o campo esperado — loga o evento inteiro pra ajustar
       // o nome do campo certo depois, sem quebrar nada nesse meio tempo.
@@ -798,32 +847,60 @@ app.post("/api/matchzy/evento", (req, res) => {
     return res.json({ ok: true });
   }
 
-  // O MatchZy chama de "team1" o time que começou do lado CT e "team2" o
-  // que começou do lado T (o nosso plugin já coloca Time A na CT e Time B
-  // na T ao entrar). Então: team1 = Time A, team2 = Time B.
+  // Qual sorteio corresponde a essa partida (o mais recente do dia).
+  const sorteioDaPartida = historicoSorteios.length
+    ? historicoSorteios[historicoSorteios.length - 1]
+    : null;
+
+  // Jogadores que o MatchZy diz ter em cada time (do map_result guardado ou,
+  // se nao tiver, do proprio series_end).
+  const jogadoresTeam1 = ultimoPlacarDeRounds?.jogadoresTeam1 ?? lerJogadoresDoEvento(evento, 1);
+  const jogadoresTeam2 = ultimoPlacarDeRounds?.jogadoresTeam2 ?? lerJogadoresDoEvento(evento, 2);
+
+  // O team1/team2 do MatchZy NAO e necessariamente Time A/Time B (a faca e a
+  // troca de lado podem inverter). Descobre pelos jogadores; se nao der,
+  // cai no padrao antigo (team1 = Time A) e marca "padrao" no registro.
+  const { invertido, metodo } = decidirMapeamento({
+    jogadoresTeam1,
+    jogadoresTeam2,
+    timeA: sorteioDaPartida?.timeA,
+    timeB: sorteioDaPartida?.timeB,
+  });
+  const timeDoTeam1 = invertido ? "B" : "A";
+  const timeDoTeam2 = invertido ? "A" : "B";
+
   let vencedor = null;
-  if (evento.winner?.team === "team1") vencedor = "A";
-  else if (evento.winner?.team === "team2") vencedor = "B";
+  if (evento.winner?.team === "team1") vencedor = timeDoTeam1;
+  else if (evento.winner?.team === "team2") vencedor = timeDoTeam2;
+
+  // Placar de rounds real (do map_result); se nao chegou, cai pro placar de
+  // mapas da serie (em BO1 e sempre 1x0, mas e melhor que nada).
+  const placarTeam1 = ultimoPlacarDeRounds?.placarTeam1 ?? evento.team1_series_score ?? null;
+  const placarTeam2 = ultimoPlacarDeRounds?.placarTeam2 ?? evento.team2_series_score ?? null;
+
+  console.log(
+    `[MatchZy] series_end: vencedor=${vencedor ?? "nenhum"} | identificação=${metodo}${invertido ? " (team1 = Time B)" : ""}`
+  );
+  if (metodo === "padrao") {
+    console.warn(
+      "[MatchZy] Não consegui identificar os times pelos jogadores; assumi team1 = Time A. Chaves do series_end:",
+      Object.keys(evento)
+    );
+  }
 
   ultimoResultadoPartida = {
     criado_em: new Date(),
     vencedor, // "A" | "B" | null (null = empate ou sem vencedor)
-    // Preferimos o placar de rounds real (do map_result); se por algum
-    // motivo ele não chegou, caímos pro placar de mapas ganhos na série
-    // (que em BO1 é sempre 1x0, mas é melhor que nada).
-    placarA: ultimoPlacarDeRounds?.placarA ?? evento.team1_series_score ?? null,
-    placarB: ultimoPlacarDeRounds?.placarB ?? evento.team2_series_score ?? null,
+    placarA: invertido ? placarTeam2 : placarTeam1,
+    placarB: invertido ? placarTeam1 : placarTeam2,
   };
 
-  // Jogadores: (1) da lista do sorteio mais recente do dia (o que o site
-  // sorteou) e (2) do evento do MatchZy, quando ele mandar. Guarda os dois
-  // pra poder conferir se alguem saiu/entrou depois do sorteio.
-  const jogadoresMatchZy = ultimoPlacarDeRounds
-    ? { A: ultimoPlacarDeRounds.jogadoresA, B: ultimoPlacarDeRounds.jogadoresB }
-    : { A: null, B: null };
-  const sorteioDaPartida = historicoSorteios.length
-    ? historicoSorteios[historicoSorteios.length - 1]
-    : null;
+  const jogadoresMatchZy = {
+    A: invertido ? jogadoresTeam2 : jogadoresTeam1,
+    B: invertido ? jogadoresTeam1 : jogadoresTeam2,
+  };
+  const team1Nome = ultimoPlacarDeRounds?.team1Nome ?? null;
+  const team2Nome = ultimoPlacarDeRounds?.team2Nome ?? null;
   const enxugar = (lista) =>
     Array.isArray(lista) ? lista.map((j) => ({ steam_id: j.steam_id ?? null, name: j.name ?? null })) : null;
 
@@ -857,6 +934,11 @@ app.post("/api/matchzy/evento", (req, res) => {
         sorteio_em: sorteioDaPartida ? sorteioDaPartida.criado_em.toISOString() : null,
         jogadoresMatchZyA: jogadoresMatchZy.A,
         jogadoresMatchZyB: jogadoresMatchZy.B,
+        // Como o vencedor foi atribuido: "jogadores" (confirmado) ou "padrao"
+        // (assumiu team1 = Time A, pode estar invertido).
+        mapeamento: metodo,
+        team1_nome: team1Nome,
+        team2_nome: team2Nome,
       },
       { chaveDedup }
     )
@@ -888,6 +970,19 @@ app.post("/api/admin/historico-partidas/limpar", exigirAdmin, async (req, res) =
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erro ao limpar o histórico." });
+  }
+});
+
+// Corrige uma partida em que o vencedor/placar saiu invertido: troca
+// Time A <-> Time B no vencedor e no placar. Chamar de novo desfaz.
+app.post("/api/admin/historico-partidas/:id/inverter", exigirAdmin, async (req, res) => {
+  try {
+    const dados = await historico.inverter(String(req.params.id));
+    if (!dados) return res.status(404).json({ error: "Partida não encontrada." });
+    res.json(dados);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao corrigir a partida." });
   }
 });
 

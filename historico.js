@@ -175,4 +175,25 @@ async function limpar() {
   return persistir({ partidas: [], atualizado_em: new Date().toISOString() });
 }
 
-module.exports = { ler, registrar, limpar, usandoGitHub };
+// Inverte Time A <-> Time B no vencedor e no placar de uma partida (correcao
+// manual quando o MatchZy numerou os times ao contrario). Chamar de novo desfaz.
+async function inverter(id) {
+  const atuais = await ler({ forcar: true });
+  const idx = atuais.partidas.findIndex((p) => p.id === id);
+  if (idx === -1) return null;
+
+  const p = atuais.partidas[idx];
+  const trocaTime = (v) => (v === "A" ? "B" : v === "B" ? "A" : v);
+  const corrigido = {
+    ...p,
+    vencedor: trocaTime(p.vencedor),
+    placarA: p.placarB,
+    placarB: p.placarA,
+    corrigido_manual: !p.corrigido_manual,
+  };
+  const partidas = atuais.partidas.slice();
+  partidas[idx] = corrigido;
+  return persistir({ partidas, atualizado_em: new Date().toISOString() });
+}
+
+module.exports = { ler, registrar, limpar, inverter, usandoGitHub };

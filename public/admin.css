@@ -216,3 +216,7 @@ main { max-width: 920px; }
   top: 0;
   background: var(--panel, #15171c);
 }
+
+.historico-aviso { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.historico-aviso.aviso-atencao { color: #f0b429; }
+.btn-inverter { padding: 4px 10px; font-size: 12px; }

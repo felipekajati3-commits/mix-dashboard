@@ -371,7 +371,7 @@ async function carregarHistorico() {
     historicoEl.innerHTML = `
       <table class="historico-tabela">
         <thead>
-          <tr><th>Quando</th><th>Vencedor</th><th>Placar</th><th>Mapa</th><th>Jogadores</th></tr>
+          <tr><th>Quando</th><th>Vencedor</th><th>Placar</th><th>Mapa</th><th>Jogadores</th><th></th></tr>
         </thead>
         <tbody>
           ${partidas
@@ -379,10 +379,11 @@ async function carregarHistorico() {
               (p) => `
             <tr>
               <td>${new Date(p.criado_em).toLocaleString("pt-BR")}</td>
-              <td>${escapeHtml(nomeVencedor(p.vencedor))}</td>
+              <td>${escapeHtml(nomeVencedor(p.vencedor))}${avisoVencedorHtml(p)}</td>
               <td>${p.placarA ?? "?"} x ${p.placarB ?? "?"}</td>
               <td>${escapeHtml(p.mapa || "—")}</td>
               <td>${jogadoresHtml(p)}</td>
+              <td><button class="btn btn-outline btn-inverter" type="button" data-id="${escapeHtml(p.id)}" title="Troca Time A e Time B no vencedor e no placar">Inverter</button></td>
             </tr>`
             )
             .join("")}
@@ -407,6 +408,34 @@ function jogadoresHtml(p) {
     <div><b>Time B:</b> ${nomes(p.jogadoresB)}</div>
   </details>`;
 }
+
+// Aviso embaixo do vencedor: diz se a identificacao dos times foi confirmada.
+function avisoVencedorHtml(p) {
+  if (p.corrigido_manual) return `<div class="historico-aviso">corrigido manualmente</div>`;
+  if (p.mapeamento === "padrao") {
+    return `<div class="historico-aviso aviso-atencao">⚠ times não confirmados — confira</div>`;
+  }
+  return "";
+}
+
+// Corrige uma partida com vencedor/placar invertido (delegacao de evento).
+historicoEl.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".btn-inverter");
+  if (!btn) return;
+  if (!confirm("Inverter Time A e Time B nesta partida (vencedor e placar)?")) return;
+  btn.disabled = true;
+  try {
+    const res = await fetch(`/api/admin/historico-partidas/${encodeURIComponent(btn.dataset.id)}/inverter`, {
+      method: "POST",
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erro ao corrigir.");
+    carregarHistorico();
+  } catch (err) {
+    adminMsg.textContent = err.message;
+    btn.disabled = false;
+  }
+});
 
 btnLimparHistorico.addEventListener("click", async () => {
   if (
