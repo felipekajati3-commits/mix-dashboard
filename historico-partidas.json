@@ -1,6 +1,63 @@
 {
   "partidas": [
     {
+      "id": "fs09m67qmuuo06r0",
+      "criado_em": "2026-10-05T03:03:04.636Z",
+      "vencedor": "B",
+      "placarA": 10,
+      "placarB": 13,
+      "mapa": null,
+      "matchid": 1512,
+      "jogadoresA": [
+        {
+          "steam_id": "76561198107484163",
+          "name": "Apk"
+        },
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        },
+        {
+          "steam_id": "76561199532829551",
+          "name": "Powerzin"
+        },
+        {
+          "steam_id": "76561198960179051",
+          "name": "O Jonas"
+        },
+        {
+          "steam_id": "76561199030261015",
+          "name": "MatheuRO"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561198349784013",
+          "name": "guiiizera"
+        },
+        {
+          "steam_id": "76561199056467023",
+          "name": "♕ Twitch.tv/Baiano_Nk ♕"
+        },
+        {
+          "steam_id": "76561199103146494",
+          "name": "GRIMM"
+        },
+        {
+          "steam_id": "76561197965451537",
+          "name": "NINGUEM TA PURO!!!"
+        },
+        {
+          "steam_id": "76561199483341173",
+          "name": "Caijaixx..."
+        }
+      ],
+      "sorteio_em": "2026-10-05T02:19:57.822Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "_chaveDedup": "1512:"
+    },
+    {
       "id": "9a5jc7kjmuumeviz",
       "criado_em": "2026-10-05T02:18:30.733Z",
       "vencedor": "B",
@@ -58,5 +115,5 @@
       "_chaveDedup": "1511:"
     }
   ],
-  "atualizado_em": "2026-10-05T02:18:31.067Z"
+  "atualizado_em": "2026-10-05T03:03:05.004Z"
 }
