@@ -332,7 +332,16 @@
       "tier": 3,
       "tier_anterior": null,
       "movido_em": null
+    },
+    {
+      "id": "fm5bkbovmuul3j78",
+      "tipo": "steam",
+      "steam_id": "76561199483341173",
+      "nome": "Caijaixx...",
+      "tier": 3,
+      "tier_anterior": null,
+      "movido_em": null
     }
   ],
-  "atualizado_em": "2026-10-02T22:49:57.051Z"
+  "atualizado_em": "2026-10-05T01:41:57.727Z"
 }
