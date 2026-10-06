@@ -63,9 +63,9 @@
     {
       "id": "70qbi7ctmuw2il1z",
       "criado_em": "2026-10-06T02:37:03.818Z",
-      "vencedor": "B",
-      "placarA": 14,
-      "placarB": 16,
+      "vencedor": "A",
+      "placarA": 16,
+      "placarB": 14,
       "mapa": null,
       "matchid": 1514,
       "jogadoresA": [
@@ -118,7 +118,8 @@
       "mapeamento": "padrao",
       "team1_nome": "team_SCHAUSS",
       "team2_nome": "team_Apk",
-      "_chaveDedup": "1514:"
+      "_chaveDedup": "1514:",
+      "corrigido_manual": true
     },
     {
       "id": "rjqmvgs8muw0hyh3",
@@ -182,5 +183,5 @@
       "corrigido_manual": true
     }
   ],
-  "atualizado_em": "2026-10-06T03:15:07.935Z"
+  "atualizado_em": "2026-10-06T20:01:14.010Z"
 }
