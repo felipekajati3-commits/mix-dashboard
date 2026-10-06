@@ -341,7 +341,16 @@
       "tier": 3,
       "tier_anterior": null,
       "movido_em": null
+    },
+    {
+      "id": "thj2jx3nmuvyyrk9",
+      "tipo": "steam",
+      "steam_id": "76561198814173442",
+      "nome": "GUSMA1",
+      "tier": 1,
+      "tier_anterior": null,
+      "movido_em": null
     }
   ],
-  "atualizado_em": "2026-10-05T01:41:57.727Z"
+  "atualizado_em": "2026-10-06T00:57:45.579Z"
 }
