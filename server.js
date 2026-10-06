@@ -784,18 +784,64 @@ function contarJogadoresEmComum(jogadoresMZ, timeSite) {
   ).length;
 }
 
+// Normaliza um nome pra comparar "team_JV_putifero" com "JV putifero":
+// minusculo, sem acento e qualquer sequencia de simbolos/espacos vira "_".
+function normalizarNome(nome) {
+  return String(nome ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+// O MatchZy chama os times de "team_<nome do capitao>". Tira o prefixo
+// "team_" e normaliza, pra comparar com os nomes dos jogadores do sorteio.
+function nomeDoCapitaoDoTime(nomeTime) {
+  const n = normalizarNome(nomeTime);
+  return n.startsWith("team_") ? n.slice(5) : n;
+}
+
+// Em qual time do sorteio (A ou B) esta o capitao que da nome ao time do
+// MatchZy? Devolve "A", "B" ou null (nao achou, ou achou nos dois).
+function timeSitePeloNome(nomeTimeMatchZy, timeA, timeB) {
+  const capitao = nomeDoCapitaoDoTime(nomeTimeMatchZy);
+  if (!capitao) return null;
+  const esta = (lista) =>
+    Array.isArray(lista) && lista.some((j) => normalizarNome(j?.name) === capitao);
+  const emA = esta(timeA);
+  const emB = esta(timeB);
+  if (emA && !emB) return "A";
+  if (emB && !emA) return "B";
+  return null;
+}
+
 // O MatchZy numera os times (team1/team2) do jeito dele, e isso NAO e
-// garantido de bater com o Time A/B do sorteio (faca, troca de lado etc.).
-// Entao descobre pelos jogadores: quem do team1 esta no Time A do sorteio?
-//   metodo "jogadores" = identificado com certeza;
-//   metodo "padrao"    = nao deu pra saber, assumiu team1 = Time A.
-function decidirMapeamento({ jogadoresTeam1, jogadoresTeam2, timeA, timeB }) {
+// garantido de bater com o Time A/B do sorteio: as pessoas escolhem o lado
+// ao entrar no servidor, entao team1 pode ser o Time A ou o Time B. Por isso
+// descobre quem e quem, nesta ordem:
+//   1. metodo "nome"     = pelo nome do time (team_<capitao>) - acompanha o
+//                          grupo a partida toda, mesmo com faca e troca de lado;
+//   2. metodo "jogadores" = pela lista de jogadores do evento, se vier;
+//   3. metodo "padrao"    = nao deu pra saber, assume team1 = Time A (pode
+//                          estar invertido - o painel avisa pra conferir).
+function decidirMapeamento({ jogadoresTeam1, jogadoresTeam2, timeA, timeB, nomeTeam1, nomeTeam2 }) {
+  // 1) Pelo nome do time
+  const t1 = timeSitePeloNome(nomeTeam1, timeA, timeB);
+  const t2 = timeSitePeloNome(nomeTeam2, timeA, timeB);
+  if (t1 && t2 && t1 !== t2) return { invertido: t1 === "B", metodo: "nome" };
+  if (t1 && !t2) return { invertido: t1 === "B", metodo: "nome" };
+  if (t2 && !t1) return { invertido: t2 === "A", metodo: "nome" };
+
+  // 2) Pelos jogadores
   const normal =
     contarJogadoresEmComum(jogadoresTeam1, timeA) + contarJogadoresEmComum(jogadoresTeam2, timeB);
   const invertido =
     contarJogadoresEmComum(jogadoresTeam1, timeB) + contarJogadoresEmComum(jogadoresTeam2, timeA);
-  if (normal === invertido) return { invertido: false, metodo: "padrao" };
-  return { invertido: invertido > normal, metodo: "jogadores" };
+  if (normal !== invertido) return { invertido: invertido > normal, metodo: "jogadores" };
+
+  // 3) Sem informacao
+  return { invertido: false, metodo: "padrao" };
 }
 
 // Chamado pelo MatchZy (configurado via matchzy_remote_log_url) toda vez
@@ -810,6 +856,12 @@ app.post("/api/matchzy/evento", (req, res) => {
   }
 
   const evento = req.body;
+
+  // Diagnostico: loga o payload bruto dos 2 eventos que usamos, pra descobrir
+  // os nomes reais dos campos (lista de jogadores, mapa). Nao tem segredo aqui.
+  if (evento?.event === "map_result" || evento?.event === "series_end") {
+    console.log(`[MatchZy] payload ${evento.event}:`, JSON.stringify(evento).slice(0, 6000));
+  }
 
   if (evento.event === "map_result") {
     const placarTeam1 = extrairPlacarDeRounds(evento.team1);
@@ -826,6 +878,7 @@ app.post("/api/matchzy/evento", (req, res) => {
         jogadoresTeam2,
         team1Nome: evento.team1?.name ?? null,
         team2Nome: evento.team2?.name ?? null,
+        mapa: evento.map_name ?? evento.mapname ?? evento.map ?? null,
       };
       if (!jogadoresTeam1 || !jogadoresTeam2) {
         console.warn(
@@ -860,11 +913,15 @@ app.post("/api/matchzy/evento", (req, res) => {
   // O team1/team2 do MatchZy NAO e necessariamente Time A/Time B (a faca e a
   // troca de lado podem inverter). Descobre pelos jogadores; se nao der,
   // cai no padrao antigo (team1 = Time A) e marca "padrao" no registro.
+  const nomeTeam1 = ultimoPlacarDeRounds?.team1Nome ?? evento.team1?.name ?? null;
+  const nomeTeam2 = ultimoPlacarDeRounds?.team2Nome ?? evento.team2?.name ?? null;
   const { invertido, metodo } = decidirMapeamento({
     jogadoresTeam1,
     jogadoresTeam2,
     timeA: sorteioDaPartida?.timeA,
     timeB: sorteioDaPartida?.timeB,
+    nomeTeam1,
+    nomeTeam2,
   });
   const timeDoTeam1 = invertido ? "B" : "A";
   const timeDoTeam2 = invertido ? "A" : "B";
@@ -899,8 +956,9 @@ app.post("/api/matchzy/evento", (req, res) => {
     A: invertido ? jogadoresTeam2 : jogadoresTeam1,
     B: invertido ? jogadoresTeam1 : jogadoresTeam2,
   };
-  const team1Nome = ultimoPlacarDeRounds?.team1Nome ?? null;
-  const team2Nome = ultimoPlacarDeRounds?.team2Nome ?? null;
+  const team1Nome = nomeTeam1;
+  const team2Nome = nomeTeam2;
+  const mapaDoEvento = ultimoPlacarDeRounds?.mapa ?? null;
   const enxugar = (lista) =>
     Array.isArray(lista) ? lista.map((j) => ({ steam_id: j.steam_id ?? null, name: j.name ?? null })) : null;
 
@@ -927,7 +985,7 @@ app.post("/api/matchzy/evento", (req, res) => {
         vencedor, // "A" | "B" | null
         placarA: ultimoResultadoPartida.placarA,
         placarB: ultimoResultadoPartida.placarB,
-        mapa: evento.map || evento.map_name || null,
+        mapa: mapaDoEvento || evento.map || evento.map_name || evento.mapname || null,
         matchid: evento.matchid ?? null,
         jogadoresA: enxugar(sorteioDaPartida?.timeA),
         jogadoresB: enxugar(sorteioDaPartida?.timeB),
