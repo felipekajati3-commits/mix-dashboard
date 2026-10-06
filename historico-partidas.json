@@ -1,4 +1,65 @@
 {
-  "partidas": [],
-  "atualizado_em": "2026-10-05T23:41:41.852Z"
+  "partidas": [
+    {
+      "id": "rjqmvgs8muw0hyh3",
+      "criado_em": "2026-10-06T01:40:35.307Z",
+      "vencedor": "A",
+      "placarA": 13,
+      "placarB": 11,
+      "mapa": null,
+      "matchid": 1513,
+      "jogadoresA": [
+        {
+          "steam_id": "76561199030261015",
+          "name": "MatheuRO"
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        },
+        {
+          "steam_id": "76561199056467023",
+          "name": "♕ Twitch.tv/Baiano_Nk ♕"
+        },
+        {
+          "steam_id": "76561199532829551",
+          "name": "Powerzin"
+        },
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561199029199212",
+          "name": "🇫🇲🇱🇬🇨♕ KABALL"
+        },
+        {
+          "steam_id": "76561199652148873",
+          "name": "JV putifero"
+        },
+        {
+          "steam_id": "76561199062714228",
+          "name": "Avestruz"
+        },
+        {
+          "steam_id": "76561199488437569",
+          "name": "PDznl"
+        },
+        {
+          "steam_id": null,
+          "name": "GUGU"
+        }
+      ],
+      "sorteio_em": "2026-10-06T00:57:30.865Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "padrao",
+      "team1_nome": "team_JV_putifero",
+      "team2_nome": "team_max_The_Wizard",
+      "_chaveDedup": "1513:"
+    }
+  ],
+  "atualizado_em": "2026-10-06T01:40:35.655Z"
 }
