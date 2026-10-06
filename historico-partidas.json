@@ -3,9 +3,9 @@
     {
       "id": "rjqmvgs8muw0hyh3",
       "criado_em": "2026-10-06T01:40:35.307Z",
-      "vencedor": "A",
-      "placarA": 13,
-      "placarB": 11,
+      "vencedor": "B",
+      "placarA": 11,
+      "placarB": 13,
       "mapa": null,
       "matchid": 1513,
       "jogadoresA": [
@@ -58,8 +58,9 @@
       "mapeamento": "padrao",
       "team1_nome": "team_JV_putifero",
       "team2_nome": "team_max_The_Wizard",
-      "_chaveDedup": "1513:"
+      "_chaveDedup": "1513:",
+      "corrigido_manual": true
     }
   ],
-  "atualizado_em": "2026-10-06T01:40:35.655Z"
+  "atualizado_em": "2026-10-06T01:46:32.462Z"
 }
