@@ -734,10 +734,8 @@ socket.on("sorteio:iniciado", ({ jogadores }) => {
     resultadoPartidaEl.innerHTML = "";
   }
 
-  // Fica trocando o nome exibido rapidamente, tipo caça-níquel, enquanto
-  // o servidor calcula o resultado — só efeito visual, não influencia o sorteio.
-  const nomes = (jogadores || []).map((j) => j.name).filter(Boolean);
-  if (nomes.length && roletaNomeEl) girarNomes(roletaNomeEl, nomes, 2800);
+  // Enquanto o servidor calcula, a tela mostra só a frase e a barra carregando
+  // (a barra é animada por CSS e reinicia sozinha quando o bloco reaparece).
 });
 
 // ---------- Sorteio de vagas ao vivo ----------
@@ -751,8 +749,6 @@ socket.on("vaga:iniciado", ({ jogadores }) => {
   btnSortear.disabled = true;
   btnSortear.textContent = "Sorteando…";
 
-  const nomes = (jogadores || []).map((j) => j.name).filter(Boolean);
-  if (nomes.length && roletaVagaNomeEl) girarNomes(roletaVagaNomeEl, nomes, 2800);
 });
 
 socket.on("vaga:resultado", ({ sorteados, restantes }) => {

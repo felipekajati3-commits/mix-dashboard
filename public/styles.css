@@ -1989,6 +1989,7 @@ body {
 
 
 /* ============ Pontos do ranking no estilo Premier (CS2) ============ */
+.rank-row { --pc: #aab0bd; } /* padrão; as faixas abaixo sobrescrevem */
 .rank-row.premier-cinza { --pc: #aab0bd; }
 .rank-row.premier-azul-claro { --pc: #6aa8e0; }
 .rank-row.premier-azul { --pc: #3a56e8; }
@@ -1998,7 +1999,6 @@ body {
 .rank-row.premier-dourado { --pc: #f7c800; }
 
 .rank-premier {
-  --pc: #aab0bd;
   position: relative;
   flex-shrink: 0;
   margin-left: auto;
@@ -2109,4 +2109,42 @@ body {
   .team-list li.slot-time.trava,
   .team-panel.bate { animation: none; }
   .team-linha { transition: none; }
+}
+
+
+/* ============ Espera do sorteio: só a frase e a barra carregando ============ */
+.sorteio-roleta .roleta-label {
+  font-size: 20px;
+  letter-spacing: 0.5px;
+  color: var(--gold);
+  margin-bottom: 0;
+}
+.sorteio-roleta .roleta-label::after {
+  content: "";
+  display: inline-block;
+  width: 1.2em;
+  text-align: left;
+  animation: sorteio-pontos 1.2s steps(4) infinite;
+}
+@keyframes sorteio-pontos { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+.sorteio-progresso {
+  height: 4px;
+  width: min(260px, 70%);
+  margin: 12px auto 0;
+  border-radius: 2px;
+  background: var(--panel-2);
+  overflow: hidden;
+}
+.sorteio-progresso i {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+  transform-origin: left;
+  transform: scaleX(0);
+  animation: sorteio-enche 2.9s linear forwards;
+}
+@keyframes sorteio-enche { to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .sorteio-roleta .roleta-label::after { animation: none; content: "…"; }
+  .sorteio-progresso i { animation: none; transform: scaleX(1); }
 }
