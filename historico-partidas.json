@@ -1,6 +1,24 @@
 {
   "partidas": [
     {
+      "id": "obogao8cmuxgxfnb",
+      "criado_em": "2026-10-07T02:08:17.373Z",
+      "vencedor": "A",
+      "placarA": 13,
+      "placarB": 9,
+      "mapa": null,
+      "matchid": 1519,
+      "jogadoresA": null,
+      "jogadoresB": null,
+      "sorteio_em": null,
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "padrao",
+      "team1_nome": "team_GRIMM",
+      "team2_nome": "team_Avestruz",
+      "_chaveDedup": "1519:"
+    },
+    {
       "id": "glsu2hsymuxf79x9",
       "criado_em": "2026-10-07T01:19:57.510Z",
       "vencedor": "B",
@@ -303,5 +321,5 @@
       "corrigido_manual": true
     }
   ],
-  "atualizado_em": "2026-10-07T01:19:57.693Z"
+  "atualizado_em": "2026-10-07T02:08:17.783Z"
 }
