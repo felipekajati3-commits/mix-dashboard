@@ -1,6 +1,66 @@
 {
   "partidas": [
     {
+      "id": "lltapavcmuxd06i2",
+      "criado_em": "2026-10-07T00:18:27.051Z",
+      "vencedor": "A",
+      "placarA": 13,
+      "placarB": 9,
+      "mapa": null,
+      "matchid": 1517,
+      "jogadoresA": [
+        {
+          "steam_id": "76561198349784013",
+          "name": "guiiizera"
+        },
+        {
+          "steam_id": "76561199652109305",
+          "name": "✪ KU$H 011"
+        },
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        },
+        {
+          "steam_id": null,
+          "name": "cajanoi"
+        },
+        {
+          "steam_id": "76561197965451537",
+          "name": "NINGUEM TA PURO!!!"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561198107484163",
+          "name": "Apk"
+        },
+        {
+          "steam_id": "76561199078637158",
+          "name": "JAMMMMMMMMMMMMMMMMMMMMMMMMMMMMER"
+        },
+        {
+          "steam_id": "76561198814173442",
+          "name": "GUSMA1"
+        },
+        {
+          "steam_id": "76561198710365718",
+          "name": "P3SCAD0R"
+        },
+        {
+          "steam_id": "76561199242999488",
+          "name": "SCHAUSS"
+        }
+      ],
+      "sorteio_em": "2026-10-06T23:31:17.337Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_GUSMA1",
+      "team2_nome": "team_Caijaixx",
+      "_chaveDedup": "1517:"
+    },
+    {
       "id": "g0qimj1umuw3vj8f",
       "criado_em": "2026-10-06T03:15:07.560Z",
       "vencedor": "B",
@@ -183,5 +243,5 @@
       "corrigido_manual": true
     }
   ],
-  "atualizado_em": "2026-10-06T20:01:14.010Z"
+  "atualizado_em": "2026-10-07T00:18:27.434Z"
 }
