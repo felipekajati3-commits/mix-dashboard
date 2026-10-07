@@ -1986,3 +1986,127 @@ body {
   .map-tile.batida { animation: none; }
   .team-panel:hover, .history-item:hover, .vaga-result-col:hover { transform: none; }
 }
+
+
+/* ============ Pontos do ranking no estilo Premier (CS2) ============ */
+.rank-row.premier-cinza { --pc: #aab0bd; }
+.rank-row.premier-azul-claro { --pc: #6aa8e0; }
+.rank-row.premier-azul { --pc: #3a56e8; }
+.rank-row.premier-roxo { --pc: #a35cf0; }
+.rank-row.premier-rosa { --pc: #d21be6; }
+.rank-row.premier-vermelho { --pc: #f02a2a; }
+.rank-row.premier-dourado { --pc: #f7c800; }
+
+.rank-premier {
+  --pc: #aab0bd;
+  position: relative;
+  flex-shrink: 0;
+  margin-left: auto;
+  display: flex;
+  align-items: stretch;
+  height: 38px;
+  overflow: hidden;
+  transform: skewX(-14deg);
+  transform-origin: 50% 50%;
+}
+.rank-faixas {
+  width: 19px;
+  flex: none;
+  background: linear-gradient(90deg, var(--pc) 0 4px, transparent 4px 8px, var(--pc) 8px 16px, transparent 16px);
+  box-shadow: 0 0 12px -2px var(--pc);
+}
+.rank-caixa {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 92px;
+  padding: 0 18px 0 14px;
+  margin-left: 2px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--pc) 34%, transparent), color-mix(in srgb, var(--pc) 14%, transparent));
+  border: 1px solid color-mix(in srgb, var(--pc) 38%, transparent);
+  border-left: 0;
+}
+.leaderboard .rank-row .rank-premier .rank-points {
+  margin-left: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 0.5px;
+  color: color-mix(in srgb, var(--pc) 78%, #fff);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--pc) 55%, transparent);
+}
+
+/* Giro no hover (mantém a inclinação durante a volta) */
+.rank-row:hover .rank-premier { animation: premier-gira 0.6s cubic-bezier(0.4, 0.1, 0.2, 1); }
+@keyframes premier-gira {
+  from { transform: skewX(-14deg) rotateX(0); }
+  to { transform: skewX(-14deg) rotateX(360deg); }
+}
+
+/* Reflexo de metal passando nos dourados */
+.rank-row.premier-dourado .rank-premier::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.75) 50%, transparent 62%);
+  transform: translateX(-130%);
+  animation: premier-reflexo 4.8s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * 0.7s);
+}
+@keyframes premier-reflexo {
+  0%, 62% { transform: translateX(-130%); }
+  100% { transform: translateX(130%); }
+}
+
+@media (max-width: 520px) {
+  .rank-caixa { min-width: 74px; padding: 0 12px 0 10px; }
+  .leaderboard .rank-row .rank-premier .rank-points { font-size: 18px; }
+  .rank-premier { height: 34px; }
+}
+
+/* ============ Sorteio de times: roleta que trava + linha lateral ============ */
+.team-ct { --lado: var(--ct); }
+.team-t { --lado: var(--t); }
+.team-panel { position: relative; }
+.team-linha {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--lado);
+  box-shadow: 0 0 14px 1px var(--lado);
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+}
+
+.team-list li.slot-time { transform-origin: left center; border-radius: 6px; }
+.team-list li.slot-time.gira .team-player-name {
+  display: inline-block;
+  filter: blur(0.7px);
+  color: var(--muted);
+  animation: nome-treme 0.09s linear infinite;
+}
+.team-list li.slot-time.gira .tier-badge { visibility: hidden; }
+.team-list li.slot-time.gira > :first-child { opacity: 0.3; }
+@keyframes nome-treme { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(2px); } }
+.team-list li.slot-time.trava { animation: slot-fecha 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes slot-fecha {
+  0% { transform: scale(1.12); background: rgba(212, 175, 55, 0.35); }
+  40% { transform: scale(0.98); }
+  100% { transform: scale(1); background: transparent; }
+}
+.team-panel.bate { animation: painel-bate 0.16s ease-out; }
+@keyframes painel-bate { 40% { transform: translateY(3px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .rank-row:hover .rank-premier { animation: none; }
+  .rank-row.premier-dourado .rank-premier::after { animation: none; display: none; }
+  .team-list li.slot-time.gira .team-player-name,
+  .team-list li.slot-time.trava,
+  .team-panel.bate { animation: none; }
+  .team-linha { transition: none; }
+}

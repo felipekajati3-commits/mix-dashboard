@@ -76,7 +76,7 @@ const reduzirMovimento = window.matchMedia("(prefers-reduced-motion: reduce)").m
 
 function contarPontos(el, alvo) {
   if (reduzirMovimento) {
-    el.textContent = `${alvo.toLocaleString("pt-BR")} pts`;
+    el.textContent = alvo.toLocaleString("pt-BR");
     return;
   }
   const duracao = 1100;
@@ -84,7 +84,7 @@ function contarPontos(el, alvo) {
   (function passo(agora) {
     const k = Math.min((agora - inicio) / duracao, 1);
     const suave = 1 - Math.pow(1 - k, 3);
-    el.textContent = `${Math.round(alvo * suave).toLocaleString("pt-BR")} pts`;
+    el.textContent = Math.round(alvo * suave).toLocaleString("pt-BR");
     if (k < 1) requestAnimationFrame(passo);
   })(inicio);
 }
@@ -254,7 +254,7 @@ async function carregarLeaderboard({ silencioso = false, animar = !silencioso } 
               <span class="rank-name" data-idx="${i}" title="Ver perfil de ${nome}">${nome}</span>
               ${statsLinhaHtml(j.resumo)}
             </div>
-            <div class="rank-points" data-p="${pontos}">${animar ? "0" : pontos.toLocaleString("pt-BR")} pts</div>
+            <div class="rank-premier"><i class="rank-faixas"></i><div class="rank-caixa"><span class="rank-points" data-p="${pontos}">${animar ? "0" : pontos.toLocaleString("pt-BR")}</span></div></div>
           </div>`;
       })
       .join("");
@@ -1043,22 +1043,83 @@ function renderizarTimes(timeA, timeB, somaA, somaB) {
   document.getElementById("team-a-total").textContent = `força ${somaA}`;
   document.getElementById("team-b-total").textContent = `força ${somaB}`;
 
-  document.getElementById("team-a-list").innerHTML = timeA
-    .map((j, i) => `<li class="entra-time" style="--i:${i}">${avatarHtml(j)}<span class="team-player-name">${escapeHtml(j.name)}</span> <span class="pts tier-badge tier-${j.tier}">R${j.tier}</span></li>`)
-    .join("");
+  const itemTime = (j, i) =>
+    `<li class="slot-time gira" style="--i:${i}" data-nome="${escapeHtml(j.name)}">${avatarHtml(j)}<span class="team-player-name">${escapeHtml(j.name)}</span> <span class="pts tier-badge tier-${j.tier}">R${j.tier}</span></li>`;
+  document.getElementById("team-a-list").innerHTML = timeA.map(itemTime).join("");
+  document.getElementById("team-b-list").innerHTML = timeB.map(itemTime).join("");
 
-  document.getElementById("team-b-list").innerHTML = timeB
-    .map((j, i) => `<li class="entra-time" style="--i:${i}">${avatarHtml(j)}<span class="team-player-name">${escapeHtml(j.name)}</span> <span class="pts tier-badge tier-${j.tier}">R${j.tier}</span></li>`)
-    .join("");
-
-  atualizarBarraEquilibrio(somaA, somaB);
   teamsResultEl.classList.remove("hidden");
+  const duracao = animarEntradaTimes();
+  atualizarBarraEquilibrio(somaA, somaB, duracao + 200);
+}
+
+// Cada vaga gira com nomes embaralhados e "trava" no jogador sorteado, com um
+// pequeno impacto. A linha colorida de cada time acende de cima pra baixo
+// conforme os jogadores travam (ordem: A1, B1, A2, B2...). Só efeito visual:
+// o resultado já veio pronto do servidor. Devolve quanto tempo (ms) leva tudo.
+let timersEntradaTimes = [];
+let giroEntradaTimes = null;
+function animarEntradaTimes() {
+  timersEntradaTimes.forEach(clearTimeout);
+  timersEntradaTimes = [];
+  clearInterval(giroEntradaTimes);
+
+  const painel = { a: teamsResultEl.querySelector(".team-ct"), b: teamsResultEl.querySelector(".team-t") };
+  const lista = {
+    a: Array.from(document.getElementById("team-a-list").children),
+    b: Array.from(document.getElementById("team-b-list").children),
+  };
+  const linha = { a: painel.a.querySelector(".team-linha"), b: painel.b.querySelector(".team-linha") };
+
+  if (reduzirMovimento) {
+    ["a", "b"].forEach((k) => {
+      lista[k].forEach((li) => li.classList.remove("gira"));
+      linha[k].style.transform = "scaleY(1)";
+    });
+    return 0;
+  }
+
+  ["a", "b"].forEach((k) => (linha[k].style.transform = "scaleY(0)"));
+
+  const ordem = [];
+  const maximo = Math.max(lista.a.length, lista.b.length);
+  for (let i = 0; i < maximo; i++) {
+    if (lista.a[i]) ordem.push(["a", lista.a[i]]);
+    if (lista.b[i]) ordem.push(["b", lista.b[i]]);
+  }
+
+  const nomes = ordem.map(([, li]) => li.dataset.nome);
+  const nomesEl = (li) => li.querySelector(".team-player-name");
+  giroEntradaTimes = setInterval(() => {
+    ordem.forEach(([, li]) => {
+      if (li.classList.contains("gira")) nomesEl(li).textContent = nomes[Math.floor(Math.random() * nomes.length)];
+    });
+  }, 70);
+
+  const travados = { a: 0, b: 0 };
+  ordem.forEach(([k, li], n) => {
+    timersEntradaTimes.push(
+      setTimeout(() => {
+        li.classList.remove("gira");
+        nomesEl(li).textContent = li.dataset.nome;
+        void li.offsetWidth;
+        li.classList.add("trava");
+        travados[k]++;
+        linha[k].style.transform = `scaleY(${travados[k] / lista[k].length})`;
+        painel[k].classList.remove("bate");
+        void painel[k].offsetWidth;
+        painel[k].classList.add("bate");
+        if (n === ordem.length - 1) clearInterval(giroEntradaTimes);
+      }, 350 + n * 400)
+    );
+  });
+  return 350 + (ordem.length - 1) * 400;
 }
 
 // Barra mostrando a força de cada lado e se o sorteio ficou justo.
 // Anima como uma gangorra: balança (oscilação amortecida) e se estabiliza no valor final.
 let balancaAnim = null;
-function atualizarBarraEquilibrio(somaA, somaB) {
+function atualizarBarraEquilibrio(somaA, somaB, atrasoMs = 900) {
   const barA = document.getElementById("bal-a");
   const barB = document.getElementById("bal-b");
   const bloco = document.querySelector(".team-balance");
@@ -1087,7 +1148,7 @@ function atualizarBarraEquilibrio(somaA, somaB) {
 
   poe(50, 0);
   const comeco = Math.min(95, Math.max(5, final + (Math.random() < 0.5 ? -1 : 1) * 38));
-  const inicio = performance.now() + 900; // espera os jogadores entrarem na lista
+  const inicio = performance.now() + atrasoMs; // espera os jogadores travarem na lista
   const quadro = (agora) => {
     if (agora < inicio) {
       balancaAnim = requestAnimationFrame(quadro);
