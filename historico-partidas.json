@@ -1,6 +1,66 @@
 {
   "partidas": [
     {
+      "id": "glsu2hsymuxf79x9",
+      "criado_em": "2026-10-07T01:19:57.510Z",
+      "vencedor": "B",
+      "placarA": 10,
+      "placarB": 13,
+      "mapa": null,
+      "matchid": 1518,
+      "jogadoresA": [
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        },
+        {
+          "steam_id": "76561199056467023",
+          "name": "♕ Twitch.tv/Baiano_Nk ♕"
+        },
+        {
+          "steam_id": "76561199532829551",
+          "name": "Powerzin"
+        },
+        {
+          "steam_id": "76561199483341173",
+          "name": "Caijaixx..."
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561198349784013",
+          "name": "guiiizera"
+        },
+        {
+          "steam_id": "76561198375454204",
+          "name": "PedroSTREETS"
+        },
+        {
+          "steam_id": "76561199029199212",
+          "name": "🇫🇲🇱🇬🇨♕ KABALL"
+        },
+        {
+          "steam_id": "76561197965451537",
+          "name": "NINGUEM TA PURO!!!"
+        },
+        {
+          "steam_id": "76561199488437569",
+          "name": "PDznl"
+        }
+      ],
+      "sorteio_em": "2026-10-07T00:36:22.799Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_Caijaixx",
+      "team2_nome": "team_PedroSTREETS",
+      "_chaveDedup": "1518:"
+    },
+    {
       "id": "lltapavcmuxd06i2",
       "criado_em": "2026-10-07T00:18:27.051Z",
       "vencedor": "A",
@@ -243,5 +303,5 @@
       "corrigido_manual": true
     }
   ],
-  "atualizado_em": "2026-10-07T00:18:27.434Z"
+  "atualizado_em": "2026-10-07T01:19:57.693Z"
 }
