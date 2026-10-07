@@ -1,6 +1,66 @@
 {
   "partidas": [
     {
+      "id": "cnmuxl0amuxl258z",
+      "criado_em": "2026-10-07T04:03:55.573Z",
+      "vencedor": "B",
+      "placarA": 15,
+      "placarB": 19,
+      "mapa": null,
+      "matchid": 1521,
+      "jogadoresA": [
+        {
+          "steam_id": "76561199056467023",
+          "name": "♕ Twitch.tv/Baiano_Nk ♕"
+        },
+        {
+          "steam_id": "76561198107484163",
+          "name": "Apk"
+        },
+        {
+          "steam_id": "76561199030261015",
+          "name": "MatheuRO"
+        },
+        {
+          "steam_id": "76561199018880641",
+          "name": "Toddy"
+        },
+        {
+          "steam_id": null,
+          "name": "Complete 3"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561199652109305",
+          "name": "✪ KU$H 011"
+        },
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        },
+        {
+          "steam_id": "76561199242999488",
+          "name": "SCHAUSS"
+        },
+        {
+          "steam_id": "76561199483341173",
+          "name": "Caijaixx..."
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        }
+      ],
+      "sorteio_em": "2026-10-07T02:57:00.572Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_Avestruz",
+      "team2_nome": "team_max_The_Wizard",
+      "_chaveDedup": "1521:"
+    },
+    {
       "id": "kwe679ilmuxibzlw",
       "criado_em": "2026-10-07T02:47:36.086Z",
       "vencedor": "A",
@@ -381,5 +441,5 @@
       "corrigido_manual": true
     }
   ],
-  "atualizado_em": "2026-10-07T02:47:36.452Z"
+  "atualizado_em": "2026-10-07T04:03:56.051Z"
 }
