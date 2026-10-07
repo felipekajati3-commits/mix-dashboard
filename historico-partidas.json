@@ -1,6 +1,66 @@
 {
   "partidas": [
     {
+      "id": "kwe679ilmuxibzlw",
+      "criado_em": "2026-10-07T02:47:36.086Z",
+      "vencedor": "A",
+      "placarA": 13,
+      "placarB": 5,
+      "mapa": null,
+      "matchid": 1520,
+      "jogadoresA": [
+        {
+          "steam_id": "76561199062714228",
+          "name": "Avestruz"
+        },
+        {
+          "steam_id": "76561199483341173",
+          "name": "Caijaixx..."
+        },
+        {
+          "steam_id": "76561199242999488",
+          "name": "SCHAUSS"
+        },
+        {
+          "steam_id": "76561199652109305",
+          "name": "✪ KU$H 011"
+        },
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561199018880641",
+          "name": "Toddy"
+        },
+        {
+          "steam_id": "76561197965451537",
+          "name": "NINGUEM TA PURO!!!"
+        },
+        {
+          "steam_id": "76561199056467023",
+          "name": "♕ Twitch.tv/Baiano_Nk ♕"
+        },
+        {
+          "steam_id": "76561198375454204",
+          "name": "PedroSTREETS"
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        }
+      ],
+      "sorteio_em": "2026-10-07T02:12:56.038Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_Toddy",
+      "team2_nome": "team_max_The_Wizard",
+      "_chaveDedup": "1520:"
+    },
+    {
       "id": "obogao8cmuxgxfnb",
       "criado_em": "2026-10-07T02:08:17.373Z",
       "vencedor": "A",
@@ -321,5 +381,5 @@
       "corrigido_manual": true
     }
   ],
-  "atualizado_em": "2026-10-07T02:08:17.783Z"
+  "atualizado_em": "2026-10-07T02:47:36.452Z"
 }
