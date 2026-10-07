@@ -220,3 +220,16 @@ main { max-width: 920px; }
 .historico-aviso { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .historico-aviso.aviso-atencao { color: #f0b429; }
 .btn-inverter { padding: 4px 10px; font-size: 12px; }
+
+/* Snapshot: atual e anterior lado a lado (empilha em tela estreita) */
+.snapshot-duplo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.snapshot-painel { min-width: 0; }
+.snapshot-painel h3 { margin: 0 0 6px; font-size: 1rem; }
+@media (max-width: 1100px) {
+  .snapshot-duplo { grid-template-columns: 1fr; }
+}

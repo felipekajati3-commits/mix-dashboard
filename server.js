@@ -1044,30 +1044,13 @@ app.post("/api/admin/historico-partidas/:id/inverter", exigirAdmin, async (req, 
   }
 });
 
-// ---------------- SNAPSHOT DIÁRIO DO RANKING (auditoria, admin) ----------------
-// Todo dia as 7h (Brasilia) guarda uma foto do ranking (pontos + stats do
-// K4-System), SUBSTITUINDO a anterior. No plano gratuito do Render o site
-// dorme, entao ha dois caminhos pra isso acontecer:
-//   1) Um cron externo chama /api/cron/snapshot-ranking as 7h (acorda o site).
-//   2) Reserva: sempre que o site estiver acordado (ao iniciar e a cada 10
-//      min), se o ultimo snapshot for anterior a ultima marca das 7h, tira
-//      um na hora (com o horario real em que foi tirado).
-
-// Brasil nao tem horario de verao desde 2019, entao Brasilia = UTC-3 fixo.
-const OFFSET_BRASILIA_MS = 3 * 60 * 60 * 1000;
-const DIA_MS = 24 * 60 * 60 * 1000;
-
-// Instante (ms) da ultima "7h de Brasilia" que ja passou.
-function ultimaMarcaDas7hBrasilia(agora = Date.now()) {
-  const brt = new Date(agora - OFFSET_BRASILIA_MS);
-  let marca =
-    Date.UTC(brt.getUTCFullYear(), brt.getUTCMonth(), brt.getUTCDate(), 7) + OFFSET_BRASILIA_MS;
-  if (agora < marca) marca -= DIA_MS;
-  return marca;
-}
+// ---------------- SNAPSHOT DO RANKING (auditoria, admin) ----------------
+// Guarda uma foto do ranking (pontos + stats do K4-System), SUBSTITUINDO a
+// anterior. So e tirada MANUALMENTE, pelo botao "Tirar snapshot agora" do
+// admin. Nao existe mais agendamento (nada de 7h, cron ou verificacao
+// periodica).
 
 let snapshotEmAndamento = false;
-let ultimoSnapshotConhecidoEm = 0; // ms - evita ler o GitHub toda hora
 
 async function tirarSnapshotDoRanking(motivo) {
   const [rows] = await pool.query(
@@ -1094,67 +1077,24 @@ async function tirarSnapshotDoRanking(motivo) {
     };
   });
 
-  const salvo = await snapshot.salvar({
+  return snapshot.salvar({
     tirado_em: new Date().toISOString(),
     motivo,
     jogadores,
   });
-  ultimoSnapshotConhecidoEm = Date.parse(salvo.tirado_em);
-  return salvo;
 }
 
-// Tira o snapshot se precisar. Sem "forcar", so tira quando o atual e
-// anterior a ultima marca das 7h (ou nao existe).
-async function garantirSnapshot({ forcar = false, motivo }) {
+// Tira um snapshot agora (substitui o atual). Impede dois ao mesmo tempo.
+async function tirarSnapshotAgora(motivo) {
   if (snapshotEmAndamento) return { pulado: "em_andamento" };
-
-  if (!forcar && ultimoSnapshotConhecidoEm >= ultimaMarcaDas7hBrasilia()) {
-    return { pulado: "ja_atualizado" };
-  }
-
   snapshotEmAndamento = true;
   try {
-    if (!forcar) {
-      const atual = await snapshot.ler({ forcar: true });
-      if (atual.tirado_em) {
-        ultimoSnapshotConhecidoEm = Date.parse(atual.tirado_em);
-        if (ultimoSnapshotConhecidoEm >= ultimaMarcaDas7hBrasilia()) {
-          return { pulado: "ja_atualizado", snapshot: atual };
-        }
-      }
-    }
     const novo = await tirarSnapshotDoRanking(motivo);
     return { criado: true, snapshot: novo };
   } finally {
     snapshotEmAndamento = false;
   }
 }
-
-function chaveCronConfere(recebida) {
-  const esperada = config.cronSecret;
-  if (!esperada || !recebida) return false;
-  const a = Buffer.from(String(recebida), "utf8");
-  const b = Buffer.from(esperada, "utf8");
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
-}
-
-// Chamado pelo cron externo as 7h. Aceita GET ou POST. A chave pode vir no
-// cabecalho "x-cron-secret" (preferido) ou na URL (?chave=...).
-app.all("/api/cron/snapshot-ranking", async (req, res) => {
-  if (!config.cronSecret) {
-    return res.status(503).json({ error: "CRON_SECRET não configurado no servidor." });
-  }
-  if (!chaveCronConfere(req.header("x-cron-secret") || req.query.chave)) {
-    return res.status(401).json({ error: "Não autorizado." });
-  }
-  try {
-    const r = await garantirSnapshot({ motivo: "cron" });
-    res.json({ ok: true, resultado: r.criado ? "criado" : r.pulado });
-  } catch (err) {
-    console.error("[Snapshot] Falha no cron:", err.message);
-    res.status(500).json({ error: "Erro ao tirar o snapshot." });
-  }
-});
 
 app.get("/api/admin/snapshot-ranking", exigirAdmin, async (req, res) => {
   try {
@@ -1168,7 +1108,7 @@ app.get("/api/admin/snapshot-ranking", exigirAdmin, async (req, res) => {
 // Botao "Tirar snapshot agora" do admin (substitui o atual).
 app.post("/api/admin/snapshot-ranking/agora", exigirAdmin, async (req, res) => {
   try {
-    const r = await garantirSnapshot({ forcar: true, motivo: "manual" });
+    const r = await tirarSnapshotAgora("manual");
     if (r.pulado === "em_andamento") {
       return res.status(409).json({ error: "Já tem um snapshot sendo tirado. Tente de novo em instantes." });
     }
@@ -1182,13 +1122,4 @@ app.post("/api/admin/snapshot-ranking/agora", exigirAdmin, async (req, res) => {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Mix Dashboard rodando em http://localhost:${PORT}`);
-
-  // Reserva do snapshot das 7h: se o site acordou depois das 7h e ainda nao
-  // existe snapshot do dia, tira agora. Depois confere a cada 10 minutos.
-  const verificarSnapshot = (motivo) =>
-    garantirSnapshot({ motivo }).catch((err) =>
-      console.error("[Snapshot] Falha na verificação:", err.message)
-    );
-  setTimeout(() => verificarSnapshot("ao iniciar"), 10 * 1000);
-  setInterval(() => verificarSnapshot("verificação periódica"), 10 * 60 * 1000);
 });

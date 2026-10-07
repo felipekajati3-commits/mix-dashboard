@@ -97,14 +97,24 @@
     <div class="section-head historico-head">
       <h2>Snapshot do ranking (auditoria)</h2>
       <p class="muted">
-        Foto do ranking (pontos e estatísticas do K4-System) tirada todo dia às 7h, horário de Brasília.
-        Cada foto nova substitui a anterior. Se o site estiver dormindo às 7h, a foto é tirada quando ele
-        acordar, e o horário mostrado é o real. Isso não mexe em pontos nem em rankings.
+        Foto do ranking (pontos e estatísticas do K4-System) tirada manualmente, pelo botão
+        "Tirar snapshot agora". São guardadas as 2 últimas fotos: ao tirar uma nova, a atual vira a anterior
+        e a anterior antiga é apagada. Isso não mexe em pontos nem em rankings.
       </p>
     </div>
 
-    <div id="snapshot-info" class="muted snapshot-info"></div>
-    <div id="snapshot-tabela" class="snapshot-scroll"></div>
+    <div class="snapshot-duplo">
+      <div class="snapshot-painel">
+        <h3>Atual (mais recente)</h3>
+        <div id="snapshot-info" class="muted snapshot-info"></div>
+        <div id="snapshot-tabela" class="snapshot-scroll"></div>
+      </div>
+      <div class="snapshot-painel">
+        <h3>Anterior</h3>
+        <div id="snapshot-anterior-info" class="muted snapshot-info"></div>
+        <div id="snapshot-anterior-tabela" class="snapshot-scroll"></div>
+      </div>
+    </div>
 
     <div class="sorteio-controls admin-save-bar">
       <span id="snapshot-contagem" class="selected-count">0 jogadores</span>

@@ -459,10 +459,12 @@ btnLimparHistorico.addEventListener("click", async () => {
 });
 
 // ---------------- SNAPSHOT DO RANKING (auditoria) ----------------
-// Foto diária (7h de Brasília) do ranking. Ver snapshot.js e os endpoints
+// Foto do ranking, tirada manualmente pelo botão do admin. Ver snapshot.js e os endpoints
 // /api/admin/snapshot-ranking.
 const snapshotInfoEl = document.getElementById("snapshot-info");
 const snapshotTabelaEl = document.getElementById("snapshot-tabela");
+const snapshotAnteriorInfoEl = document.getElementById("snapshot-anterior-info");
+const snapshotAnteriorTabelaEl = document.getElementById("snapshot-anterior-tabela");
 const snapshotContagemEl = document.getElementById("snapshot-contagem");
 const btnSnapshotAgora = document.getElementById("btn-snapshot-agora");
 
@@ -477,20 +479,19 @@ function valorOuTraco(v) {
   return v === null || v === undefined ? "—" : v;
 }
 
-function renderizarSnapshot(dados) {
-  const jogadores = Array.isArray(dados.jogadores) ? dados.jogadores : [];
-  snapshotContagemEl.textContent = `${jogadores.length} ${jogadores.length === 1 ? "jogador" : "jogadores"}`;
-
-  if (!dados.tirado_em) {
-    snapshotInfoEl.textContent = "Nenhum snapshot tirado ainda.";
-    snapshotTabelaEl.innerHTML = "";
+// Mostra UMA foto (info + tabela) nos elementos indicados.
+function renderizarFoto(foto, infoEl, tabelaEl, textoVazio) {
+  if (!foto || !foto.tirado_em) {
+    infoEl.textContent = textoVazio;
+    tabelaEl.innerHTML = "";
     return;
   }
 
-  const quando = new Date(dados.tirado_em).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
-  snapshotInfoEl.textContent = `Tirado em ${quando} (horário de Brasília) — ${motivoSnapshot(dados.motivo)}.`;
+  const jogadores = Array.isArray(foto.jogadores) ? foto.jogadores : [];
+  const quando = new Date(foto.tirado_em).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+  infoEl.textContent = `Tirado em ${quando} (horário de Brasília) — ${motivoSnapshot(foto.motivo)} — ${jogadores.length} ${jogadores.length === 1 ? "jogador" : "jogadores"}.`;
 
-  snapshotTabelaEl.innerHTML = `
+  tabelaEl.innerHTML = `
     <table class="historico-tabela">
       <thead>
         <tr><th>#</th><th>Jogador</th><th>Pontos</th><th>V</th><th>D</th><th>K</th><th>M</th><th>A</th><th>HS</th></tr>
@@ -516,6 +517,19 @@ function renderizarSnapshot(dados) {
     </table>`;
 }
 
+function renderizarSnapshot(dados) {
+  const jogadores = Array.isArray(dados.jogadores) ? dados.jogadores : [];
+  snapshotContagemEl.textContent = `${jogadores.length} ${jogadores.length === 1 ? "jogador" : "jogadores"}`;
+
+  renderizarFoto(dados, snapshotInfoEl, snapshotTabelaEl, "Nenhum snapshot tirado ainda.");
+  renderizarFoto(
+    dados.anterior,
+    snapshotAnteriorInfoEl,
+    snapshotAnteriorTabelaEl,
+    "Ainda não há snapshot anterior (aparece depois do próximo snapshot)."
+  );
+}
+
 async function carregarSnapshot() {
   snapshotInfoEl.textContent = "Carregando…";
   try {
@@ -529,7 +543,7 @@ async function carregarSnapshot() {
 }
 
 btnSnapshotAgora.addEventListener("click", async () => {
-  if (!confirm("Tirar um snapshot agora? Ele substitui o atual.")) return;
+  if (!confirm("Tirar um snapshot agora? O atual vira o anterior e o anterior antigo é apagado.")) return;
   btnSnapshotAgora.disabled = true;
   snapshotInfoEl.textContent = "Tirando snapshot…";
   try {

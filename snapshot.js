@@ -1,9 +1,13 @@
 // ============================================================
 //  SNAPSHOT DO RANKING (auditoria)
 //
-//  Guarda UMA foto do ranking (pontos + estatisticas do K4-System)
-//  tirada todo dia as 7h (horario de Brasilia). Cada foto nova
-//  SUBSTITUI a anterior - nao existe historico de varios dias.
+//  Guarda DUAS fotos do ranking (pontos + estatisticas do K4-System),
+//  tiradas manualmente pelo admin: a mais recente ("atual") e a
+//  anterior a ela. Ao tirar uma foto nova, a atual vira a "anterior" e
+//  a anterior antiga e descartada - nunca ha mais que 2.
+//  No arquivo, os campos da foto atual ficam na raiz e a anterior fica
+//  dentro de "anterior" (assim arquivos antigos, de 1 foto, continuam
+//  validos).
 //
 //  Usa o mesmo mecanismo do historico.js: um JSON commitado na branch
 //  "data" via API do GitHub, porque o Render apaga o disco a cada
@@ -17,7 +21,7 @@ const config = require("./config");
 
 const ARQUIVO_LOCAL = path.join(__dirname, "snapshot-ranking.local.json");
 
-const ESTRUTURA_VAZIA = { tirado_em: null, motivo: null, total: 0, jogadores: [] };
+const ESTRUTURA_VAZIA = { tirado_em: null, motivo: null, total: 0, jogadores: [], anterior: null };
 
 let cache = null;
 let cacheExpiraEm = 0;
@@ -45,15 +49,21 @@ function headersGitHub() {
   };
 }
 
-function normalizar(dados) {
-  if (!dados || typeof dados !== "object") return { ...ESTRUTURA_VAZIA };
-  const jogadores = Array.isArray(dados.jogadores) ? dados.jogadores : [];
+// Normaliza UMA foto (sem o campo "anterior").
+function normalizarFoto(dados) {
+  const jogadores = Array.isArray(dados?.jogadores) ? dados.jogadores : [];
   return {
-    tirado_em: dados.tirado_em || null,
-    motivo: dados.motivo || null,
+    tirado_em: dados?.tirado_em || null,
+    motivo: dados?.motivo || null,
     total: jogadores.length,
     jogadores,
   };
+}
+
+function normalizar(dados) {
+  if (!dados || typeof dados !== "object") return { ...ESTRUTURA_VAZIA };
+  const anterior = dados.anterior && dados.anterior.tirado_em ? normalizarFoto(dados.anterior) : null;
+  return { ...normalizarFoto(dados), anterior };
 }
 
 async function lerDoGitHub() {
@@ -124,9 +134,12 @@ async function ler({ forcar = false } = {}) {
   return dados;
 }
 
-// Substitui o snapshot anterior pelo novo.
+// Guarda o snapshot novo como "atual" e passa o atual de antes para
+// "anterior" (o penultimo e descartado).
 async function salvar(dados) {
-  const normalizado = normalizar(dados);
+  const atualAntes = await ler({ forcar: true });
+  const anterior = atualAntes.tirado_em ? normalizarFoto(atualAntes) : null;
+  const normalizado = normalizar({ ...dados, anterior });
   if (usandoGitHub()) {
     await gravarNoGitHub(normalizado);
   } else {
