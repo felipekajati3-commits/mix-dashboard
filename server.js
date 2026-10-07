@@ -658,6 +658,57 @@ function sortearMapa(mapas) {
 // está no site vê os mesmos mapas em cinza. (Zera se o servidor reiniciar.)
 const mapasSorteados = new Set();
 
+// Nomes de exibição dos mapas (mesmos ids do front-end, public/app.js).
+const NOMES_DE_MAPAS = {
+  mirage: "Mirage",
+  inferno: "Inferno",
+  dust2: "Dust 2",
+  nuke: "Nuke",
+  overpass: "Overpass",
+  vertigo: "Vertigo",
+  ancient: "Ancient",
+  anubis: "Anubis",
+  train: "Train",
+  cache: "Cache",
+  cobblestone: "Cobblestone",
+};
+
+// O ultimo mapa sorteado no site ({ id, nome, em }). O MatchZy nao manda o
+// mapa de um jeito que a gente leia, entao o historico usa este como
+// alternativa. Fica na memoria, como o sorteio de times (zera se o
+// servidor reiniciar).
+let ultimoMapaSorteado = null;
+
+// "de_dust2" / "de_cbble" / "cs_office" -> "Dust 2" / "Cobblestone" / "Office".
+function nomeBonitoDoMapa(bruto) {
+  const limpo = String(bruto ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/^(de|cs|ar)_/, "");
+  if (!limpo) return null;
+  if (limpo === "cbble") return NOMES_DE_MAPAS.cobblestone;
+  if (NOMES_DE_MAPAS[limpo]) return NOMES_DE_MAPAS[limpo];
+  return limpo.charAt(0).toUpperCase() + limpo.slice(1);
+}
+
+// Procura o nome do mapa em qualquer lugar do evento do MatchZy (campo
+// "map", "map_name", "mapname", "current_map"...), sem depender de onde ele vem.
+function acharMapaNoEvento(obj, profundidade = 0) {
+  if (!obj || typeof obj !== "object" || profundidade > 4) return null;
+  for (const [chave, valor] of Object.entries(obj)) {
+    if (/^(current_?)?map(_?name)?$/i.test(chave) && typeof valor === "string" && valor.trim()) {
+      return valor.trim();
+    }
+  }
+  for (const valor of Object.values(obj)) {
+    if (valor && typeof valor === "object") {
+      const achado = acharMapaNoEvento(valor, profundidade + 1);
+      if (achado) return achado;
+    }
+  }
+  return null;
+}
+
 io.on("connection", (socket) => {
   socket.emit("mapa:sorteados", Array.from(mapasSorteados));
 });
@@ -694,6 +745,7 @@ app.post("/api/draft-mapa", async (req, res) => {
 
     setTimeout(() => {
       mapasSorteados.add(mapaId);
+      ultimoMapaSorteado = { id: mapaId, nome: NOMES_DE_MAPAS[mapaId] || mapaId, em: new Date() };
       io.emit("mapa:resultado", { mapaId });
       io.emit("mapa:sorteados", Array.from(mapasSorteados));
       mapaSorteioEmAndamento = false;
@@ -878,7 +930,7 @@ app.post("/api/matchzy/evento", (req, res) => {
         jogadoresTeam2,
         team1Nome: evento.team1?.name ?? null,
         team2Nome: evento.team2?.name ?? null,
-        mapa: evento.map_name ?? evento.mapname ?? evento.map ?? null,
+        mapa: acharMapaNoEvento(evento),
       };
       if (!jogadoresTeam1 || !jogadoresTeam2) {
         console.warn(
@@ -958,7 +1010,18 @@ app.post("/api/matchzy/evento", (req, res) => {
   };
   const team1Nome = nomeTeam1;
   const team2Nome = nomeTeam2;
-  const mapaDoEvento = ultimoPlacarDeRounds?.mapa ?? null;
+  // Mapa: primeiro o que o MatchZy mandou (map_result ou series_end); se nao
+  // veio, o ultimo mapa sorteado no site nas ultimas 4h (origem "sorteio").
+  let mapaDaPartida = null;
+  let mapaOrigem = null;
+  const mapaBruto = ultimoPlacarDeRounds?.mapa ?? acharMapaNoEvento(evento);
+  if (mapaBruto) {
+    mapaDaPartida = nomeBonitoDoMapa(mapaBruto);
+    mapaOrigem = "matchzy";
+  } else if (ultimoMapaSorteado && Date.now() - ultimoMapaSorteado.em.getTime() < 4 * 60 * 60 * 1000) {
+    mapaDaPartida = ultimoMapaSorteado.nome;
+    mapaOrigem = "sorteio";
+  }
   const enxugar = (lista) =>
     Array.isArray(lista) ? lista.map((j) => ({ steam_id: j.steam_id ?? null, name: j.name ?? null })) : null;
 
@@ -985,7 +1048,9 @@ app.post("/api/matchzy/evento", (req, res) => {
         vencedor, // "A" | "B" | null
         placarA: ultimoResultadoPartida.placarA,
         placarB: ultimoResultadoPartida.placarB,
-        mapa: mapaDoEvento || evento.map || evento.map_name || evento.mapname || null,
+        mapa: mapaDaPartida,
+        // "matchzy" = veio do evento; "sorteio" = ultimo mapa sorteado no site.
+        mapa_origem: mapaOrigem,
         matchid: evento.matchid ?? null,
         jogadoresA: enxugar(sorteioDaPartida?.timeA),
         jogadoresB: enxugar(sorteioDaPartida?.timeB),

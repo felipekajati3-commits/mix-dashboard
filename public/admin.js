@@ -381,7 +381,7 @@ async function carregarHistorico() {
               <td>${new Date(p.criado_em).toLocaleString("pt-BR")}</td>
               <td>${escapeHtml(nomeVencedor(p.vencedor))}${avisoVencedorHtml(p)}</td>
               <td>${p.placarA ?? "?"} x ${p.placarB ?? "?"}</td>
-              <td>${escapeHtml(p.mapa || "—")}</td>
+              <td>${escapeHtml(p.mapa || "—")}${p.mapa && p.mapa_origem === "sorteio" ? `<div class="historico-aviso">sorteado no site</div>` : ""}</td>
               <td>${jogadoresHtml(p)}</td>
               <td><button class="btn btn-outline btn-inverter" type="button" data-id="${escapeHtml(p.id)}" title="Troca Time A e Time B no vencedor e no placar">Inverter</button></td>
             </tr>`
