@@ -823,6 +823,35 @@ const mapaSelecionados = new Set(MAPAS.map((m) => m.id));
 // Mapas que já saíram (vem do servidor, igual pra todo mundo).
 let mapasSorteados = new Set();
 
+// Mapa sorteado em destaque: dá zoom nele e escurece os outros, até a pessoa
+// mexer na seleção. "batidaPendente" faz o tremor na hora da parada.
+let mapaDestaqueId = null;
+let batidaPendente = false;
+
+function aplicarDestaqueMapa() {
+  if (!mapaDestaqueId) return;
+  mapPickerEl.querySelectorAll(".map-tile").forEach((t) => {
+    if (t.dataset.id === mapaDestaqueId) {
+      t.classList.add("escolhido");
+      if (batidaPendente) t.classList.add("batida");
+    } else {
+      t.classList.add("apagado");
+    }
+  });
+  batidaPendente = false;
+}
+
+function limparDestaqueMapa() {
+  mapaDestaqueId = null;
+  batidaPendente = false;
+  mapPickerEl.querySelectorAll(".map-tile.escolhido, .map-tile.apagado, .map-tile.batida").forEach((t) =>
+    t.classList.remove("escolhido", "apagado", "batida")
+  );
+}
+
+// Qualquer clique na grade de mapas tira o destaque antes de tratar a seleção.
+mapPickerEl.addEventListener("click", limparDestaqueMapa, true);
+
 function renderizarMapPicker() {
   mapPickerEl.innerHTML = MAPAS.map((m) => {
     const sorteado = mapasSorteados.has(m.id);
@@ -835,6 +864,8 @@ function renderizarMapPicker() {
       </div>
     `;
   }).join("");
+
+  aplicarDestaqueMapa();
 
   mapPickerEl.querySelectorAll(".map-tile-voltar").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
@@ -982,6 +1013,7 @@ function girarMapas(candidatos, alvo, duracao) {
 }
 
 socket.on("mapa:iniciado", ({ mapas, mapaId, duracao }) => {
+  limparDestaqueMapa();
   if (Array.isArray(mapas) && mapaId) girarMapas(mapas, mapaId, duracao || 4000);
   mapaMsgEl.textContent = "";
   mapResultEl.classList.add("hidden");
@@ -992,6 +1024,9 @@ socket.on("mapa:iniciado", ({ mapas, mapaId, duracao }) => {
 
 socket.on("mapa:resultado", ({ mapaId }) => {
   pararRoletaMapa();
+  // O servidor manda "mapa:sorteados" logo em seguida, que redesenha a grade e aplica o destaque.
+  mapaDestaqueId = mapaId;
+  batidaPendente = true;
   const mapa = MAPAS.find((m) => m.id === mapaId);
   mapaLiveEl.classList.add("hidden");
   mapResultNameEl.textContent = mapa ? mapa.name : mapaId;
@@ -1021,22 +1056,54 @@ function renderizarTimes(timeA, timeB, somaA, somaB) {
 }
 
 // Barra mostrando a força de cada lado e se o sorteio ficou justo.
+// Anima como uma gangorra: balança (oscilação amortecida) e se estabiliza no valor final.
+let balancaAnim = null;
 function atualizarBarraEquilibrio(somaA, somaB) {
   const barA = document.getElementById("bal-a");
   const barB = document.getElementById("bal-b");
+  const bloco = document.querySelector(".team-balance");
   const total = (somaA + somaB) || 1;
-  barA.style.width = "50%";
-  barB.style.width = "50%";
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    barA.style.width = `${(somaA / total) * 100}%`;
-    barB.style.width = `${(somaB / total) * 100}%`;
-  }));
+  const final = (somaA / total) * 100;
+
   document.getElementById("bal-fa").textContent = `A · ${somaA}`;
   document.getElementById("bal-fb").textContent = `B · ${somaB}`;
   const dif = Math.abs(somaA - somaB);
   const diffEl = document.getElementById("bal-diff");
   diffEl.textContent = dif === 0 ? "Perfeitamente equilibrado" : `Diferença: ${dif}`;
   diffEl.classList.toggle("ok", dif <= 1);
+
+  cancelAnimationFrame(balancaAnim);
+  const poe = (pct, inclinacao) => {
+    barA.style.width = `${pct}%`;
+    barB.style.width = `${100 - pct}%`;
+    bloco.style.transform = inclinacao ? `rotate(${inclinacao}deg)` : "";
+  };
+  barA.style.transition = barB.style.transition = "none";
+
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    poe(final, 0);
+    return;
+  }
+
+  poe(50, 0);
+  const comeco = Math.min(95, Math.max(5, final + (Math.random() < 0.5 ? -1 : 1) * 38));
+  const inicio = performance.now() + 900; // espera os jogadores entrarem na lista
+  const quadro = (agora) => {
+    if (agora < inicio) {
+      balancaAnim = requestAnimationFrame(quadro);
+      return;
+    }
+    const k = (agora - inicio) / 1000;
+    if (k >= 2.2) {
+      poe(final, 0);
+      barA.style.transition = barB.style.transition = "";
+      return;
+    }
+    const pct = final + (comeco - final) * Math.exp(-2.6 * k) * Math.cos(k * 9);
+    poe(pct, (pct - final) * 0.07);
+    balancaAnim = requestAnimationFrame(quadro);
+  };
+  balancaAnim = requestAnimationFrame(quadro);
 }
 
 // ---------- Contador de online (fixo no header) ----------

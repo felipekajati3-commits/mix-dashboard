@@ -1928,3 +1928,61 @@ main {
 
 /* jogador marcado acende em dourado vivo, mesmo nas colunas mais apagadas */
 .player-row.selected { --c: #f0cf58; }
+
+
+/* ===================== Animações extras ===================== */
+
+/* Fundo: gradiente dourado/azul que se move bem devagar + canvas de partículas */
+body {
+  background-image:
+    radial-gradient(60% 50% at 20% 10%, rgba(212, 175, 55, 0.09), transparent 70%),
+    radial-gradient(50% 45% at 85% 90%, rgba(91, 141, 239, 0.06), transparent 70%);
+  background-size: 140% 140%;
+  animation: fundo-move 28s ease-in-out infinite alternate;
+}
+@keyframes fundo-move { from { background-position: 0% 0%; } to { background-position: 100% 100%; } }
+#particulas { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+
+/* Barra de equilíbrio: gira a partir do centro, como gangorra */
+.team-balance { transform-origin: 50% 50%; will-change: transform; }
+
+/* Mapa sorteado: zoom no escolhido, os outros escurecem, tremor na parada */
+.map-tile { transition: border-color 0.15s ease, filter 0.35s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.35s ease, box-shadow 0.2s ease; }
+.map-tile.apagado { opacity: 0.25; filter: grayscale(1) brightness(0.6); transform: scale(0.96); }
+.map-tile.escolhido,
+.map-tile.sorteado.escolhido {
+  filter: none;
+  opacity: 1;
+  transform: scale(1.12);
+  z-index: 5;
+  border-color: var(--gold);
+  box-shadow: 0 0 32px 2px rgba(212, 175, 55, 0.65);
+}
+.map-tile.batida { animation: mapa-tremor 0.45s linear; }
+@keyframes mapa-tremor {
+  0%, 100% { transform: scale(1.06) translate(0); }
+  15% { transform: scale(1.12) translate(-5px, 2px); }
+  35% { transform: scale(1.12) translate(5px, -2px); }
+  55% { transform: scale(1.12) translate(-3px, 1px); }
+  75% { transform: scale(1.12) translate(2px, 0); }
+}
+
+/* Cards: leve elevação e brilho no hover */
+.team-panel, .history-item, .vaga-result-col {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.team-panel:hover, .history-item:hover, .vaga-result-col:hover {
+  transform: translateY(-3px);
+  border-color: rgba(212, 175, 55, 0.55);
+  box-shadow: 0 10px 24px -10px rgba(212, 175, 55, 0.4);
+}
+
+/* Botões: efeito de pressionar (sem sombra: o .btn tem clip-path e cortaria) */
+.btn:active:not(:disabled), .btn-connect:active { transform: translateY(2px) scale(0.97); filter: brightness(0.88); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  body { animation: none; }
+  .map-tile.batida { animation: none; }
+  .team-panel:hover, .history-item:hover, .vaga-result-col:hover { transform: none; }
+}
