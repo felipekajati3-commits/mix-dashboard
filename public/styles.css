@@ -2148,3 +2148,179 @@ body {
   .sorteio-roleta .roleta-label::after { animation: none; content: "…"; }
   .sorteio-progresso i { animation: none; transform: scaleX(1); }
 }
+
+
+/* =====================================================================
+   Mapas — novo visual, opção C (só aparência; não toca nas classes da
+   animação: .roda, .escolhido, .apagado, .batida, .revelar continuam)
+   A imagem do mapa vem em --img (definida no app.js) e é usada em 2 camadas:
+   emblema à esquerda + o mesmo emblema gigante, cortado, como marca d'água.
+   ===================================================================== */
+
+.map-picker {
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 12px;
+}
+
+.map-tile {
+  /* camadas, de cima para baixo: sombra lateral, emblema, véu escuro, marca d'água */
+  --map-bg:
+    linear-gradient(90deg, rgba(8, 10, 14, 0.85) 15%, rgba(8, 10, 14, 0.15) 75%),
+    var(--img),
+    linear-gradient(rgba(8, 10, 14, 0.72), rgba(8, 10, 14, 0.72)),
+    var(--img);
+  --map-size: 100% 100%, auto 58%, 100% 100%, auto 165%;
+  --map-pos: 0 0, 18% 42%, 0 0, 135% 45%;
+
+  height: auto;
+  aspect-ratio: 16 / 10;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background-color: #0e1217;
+  background-image: var(--map-bg);
+  background-size: var(--map-size);
+  background-position: var(--map-pos);
+  background-repeat: no-repeat;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  filter: grayscale(100%) brightness(0.55);
+  opacity: 0.8;
+}
+
+.map-tile:hover {
+  filter: grayscale(40%) brightness(0.85);
+  opacity: 1;
+  border-color: rgba(212, 175, 55, 0.45);
+}
+
+.map-tile.selected {
+  filter: none;
+  opacity: 1;
+  border-color: var(--gold);
+  box-shadow:
+    0 0 0 1px rgba(212, 175, 55, 0.35),
+    0 8px 22px -10px rgba(212, 175, 55, 0.55);
+}
+
+/* nome maior, caixa alta, fonte condensada do resto do site */
+.map-tile-name {
+  padding: 26px 12px 9px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+}
+.map-tile.selected .map-tile-name { color: #fff; }
+
+/* check: círculo pequeno e discreto */
+.map-tile-check {
+  top: 8px;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 800;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
+}
+
+/* já sorteado: as camadas passam para o ::before (cinza), assim o botão fica nítido */
+.map-tile.sorteado { background-image: none; opacity: 0.9; }
+.map-tile.sorteado::before {
+  background-color: transparent;
+  background-image: var(--map-bg);
+  background-size: var(--map-size);
+  background-position: var(--map-pos);
+  background-repeat: no-repeat;
+  filter: grayscale(100%) brightness(0.4);
+}
+
+.map-tile-badge {
+  top: 8px;
+  left: 8px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
+
+.map-tile-voltar {
+  border-radius: 4px;
+  background: rgba(12, 15, 19, 0.92);
+  border-color: rgba(212, 175, 55, 0.5);
+  color: var(--gold);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+@media (hover: hover) {
+  .map-tile-voltar { opacity: 0; transform: translate(-50%, -42%); }
+  .map-tile.sorteado:hover .map-tile-voltar,
+  .map-tile-voltar:focus-visible { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+/* a animação manda: reafirma os estados da roleta depois das regras novas
+   (mesmos valores de antes, só para não serem sobrescritos por .selected) */
+.map-tile.apagado { opacity: 0.25; filter: grayscale(1) brightness(0.6); transform: scale(0.96); }
+.map-tile.roda {
+  border-color: var(--gold);
+  filter: none;
+  opacity: 1;
+  transform: scale(1.06);
+  box-shadow: 0 0 18px -2px var(--gold);
+  z-index: 4;
+}
+.map-tile.escolhido,
+.map-tile.sorteado.escolhido {
+  filter: none;
+  opacity: 1;
+  transform: scale(1.12);
+  z-index: 5;
+  border-color: var(--gold);
+  box-shadow: 0 0 32px 2px rgba(212, 175, 55, 0.65);
+}
+
+/* ---- banner do mapa sorteado ---- */
+.map-result {
+  padding: 56px 20px;
+  border-radius: 6px;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-top: 3px solid var(--gold);
+  background-size: cover;
+  background-position: center;
+}
+.map-result::before {
+  /* escurece a arte para o nome dourado ganhar contraste */
+  background:
+    radial-gradient(ellipse at center, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.8) 100%),
+    linear-gradient(to top, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.3));
+  backdrop-filter: blur(3px);
+}
+.map-result-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  color: #b8bec6;
+}
+.map-result-name {
+  font-size: 56px;
+  letter-spacing: 0.12em;
+  text-shadow: 0 2px 24px rgba(212, 175, 55, 0.45), 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* ---- histórico ---- */
+.map-chip {
+  border-radius: 4px;
+  background: rgba(20, 24, 29, 0.9);
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 520px) {
+  .map-picker { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .map-result-name { font-size: 38px; }
+}

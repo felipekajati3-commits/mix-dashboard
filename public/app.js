@@ -853,7 +853,7 @@ function renderizarMapPicker() {
     const sorteado = mapasSorteados.has(m.id);
     const marcado = mapaSelecionados.has(m.id) && !sorteado;
     return `
-      <div class="map-tile ${marcado ? "selected" : ""} ${sorteado ? "sorteado" : ""}" data-id="${m.id}" style="background-image:url('${m.img}')" role="button" tabindex="0" aria-pressed="${marcado}" ${sorteado ? 'aria-disabled="true"' : ""}>
+      <div class="map-tile ${marcado ? "selected" : ""} ${sorteado ? "sorteado" : ""}" data-id="${m.id}" style="--img:url('${m.img}')" role="button" tabindex="0" aria-pressed="${marcado}" ${sorteado ? 'aria-disabled="true"' : ""}>
         <div class="map-tile-check">✓</div>
         ${sorteado ? `<span class="map-tile-badge">Já sorteado</span><button type="button" class="map-tile-voltar" data-voltar="${m.id}" title="Devolver este mapa ao sorteio">↩ Voltar ao sorteio</button>` : ""}
         <span class="map-tile-name">${escapeHtml(m.name)}</span>
