@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "912italgmv2z3opx",
+      "criado_em": "2026-10-10T22:35:53.047Z",
+      "vencedor": "B",
+      "placarA": 11,
+      "placarB": 13,
+      "mapa": "Mirage",
+      "mapa_origem": "sorteio",
+      "matchid": 1529,
+      "jogadoresA": [
+        {
+          "steam_id": "76561199488437569",
+          "name": "PDznl"
+        },
+        {
+          "steam_id": "76561198814173442",
+          "name": "GUSMA1"
+        },
+        {
+          "steam_id": "76561199652148873",
+          "name": "JV putifero"
+        },
+        {
+          "steam_id": "76561199030261015",
+          "name": "MatheuRO"
+        },
+        {
+          "steam_id": "76561198710365718",
+          "name": "P3SCAD0R"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561199679282192",
+          "name": "Kvaratskhelia"
+        },
+        {
+          "steam_id": "76561199532829551",
+          "name": "Powerzin"
+        },
+        {
+          "steam_id": "76561199103146494",
+          "name": "GRIMM"
+        },
+        {
+          "steam_id": "76561199236137088",
+          "name": "RONY. RUIM"
+        },
+        {
+          "steam_id": null,
+          "name": "talkar"
+        }
+      ],
+      "sorteio_em": "2026-10-10T21:49:48.731Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_Modesto",
+      "team2_nome": "team_P3SCAD0R",
+      "_chaveDedup": "1529:"
+    },
+    {
       "id": "rqratg18mv1xdfjw",
       "criado_em": "2026-10-10T04:59:42.323Z",
       "vencedor": "B",
@@ -306,5 +367,5 @@
       "_chaveDedup": "1524:"
     }
   ],
-  "atualizado_em": "2026-10-10T04:59:42.716Z"
+  "atualizado_em": "2026-10-10T22:35:53.445Z"
 }
