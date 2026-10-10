@@ -365,10 +365,10 @@
       "tipo": "steam",
       "steam_id": "76561198891275528",
       "nome": "fnatic.MSI f0restwOw~",
-      "tier": 3,
-      "tier_anterior": null,
-      "movido_em": null
+      "tier": 2,
+      "tier_anterior": 3,
+      "movido_em": "2026-10-10T02:47:55.591Z"
     }
   ],
-  "atualizado_em": "2026-10-10T02:44:55.197Z"
+  "atualizado_em": "2026-10-10T02:47:55.591Z"
 }
