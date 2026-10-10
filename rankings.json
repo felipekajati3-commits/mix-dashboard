@@ -359,7 +359,16 @@
       "tier": 3,
       "tier_anterior": null,
       "movido_em": null
+    },
+    {
+      "id": "zo1l6pjfmv1sjqpz",
+      "tipo": "steam",
+      "steam_id": "76561198891275528",
+      "nome": "fnatic.MSI f0restwOw~",
+      "tier": 3,
+      "tier_anterior": null,
+      "movido_em": null
     }
   ],
-  "atualizado_em": "2026-10-10T02:06:43.223Z"
+  "atualizado_em": "2026-10-10T02:44:55.197Z"
 }
