@@ -368,7 +368,16 @@
       "tier": 2,
       "tier_anterior": 3,
       "movido_em": "2026-10-10T02:47:55.591Z"
+    },
+    {
+      "id": "15u8vbqvmv2z8eua",
+      "tipo": "steam",
+      "steam_id": "76561198885410504",
+      "nome": "Modesto",
+      "tier": 5,
+      "tier_anterior": null,
+      "movido_em": null
     }
   ],
-  "atualizado_em": "2026-10-10T02:47:55.591Z"
+  "atualizado_em": "2026-10-10T22:39:54.629Z"
 }
