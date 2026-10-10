@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "fo6lwmdgmv1sct4j",
+      "criado_em": "2026-10-10T02:39:15.367Z",
+      "vencedor": "B",
+      "placarA": 4,
+      "placarB": 13,
+      "mapa": "Overpass",
+      "mapa_origem": "sorteio",
+      "matchid": 1525,
+      "jogadoresA": [
+        {
+          "steam_id": "76561199488437569",
+          "name": "PDznl"
+        },
+        {
+          "steam_id": "76561198814173442",
+          "name": "GUSMA1"
+        },
+        {
+          "steam_id": "76561199056467023",
+          "name": "♕ Twitch.tv/Baiano_Nk ♕"
+        },
+        {
+          "steam_id": "76561199532829551",
+          "name": "Powerzin"
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561199679282192",
+          "name": "Kvaratskhelia"
+        },
+        {
+          "steam_id": "76561198349784013",
+          "name": "guiiizera"
+        },
+        {
+          "steam_id": "76561199652109305",
+          "name": "✪ KU$H 011"
+        },
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        },
+        {
+          "steam_id": null,
+          "name": "Complete 3"
+        }
+      ],
+      "sorteio_em": "2026-10-10T02:06:39.586Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_Kvaratskhelia",
+      "team2_nome": "team_GUSMA1",
+      "_chaveDedup": "1525:"
+    },
+    {
       "id": "9km0u9twmv1r2qi1",
       "criado_em": "2026-10-10T02:03:25.615Z",
       "vencedor": "A",
@@ -62,5 +123,5 @@
       "_chaveDedup": "1524:"
     }
   ],
-  "atualizado_em": "2026-10-10T02:03:25.993Z"
+  "atualizado_em": "2026-10-10T02:39:15.571Z"
 }
