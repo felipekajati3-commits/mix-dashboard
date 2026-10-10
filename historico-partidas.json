@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "q18n4zb8mv1tyoj5",
+      "criado_em": "2026-10-10T03:24:15.469Z",
+      "vencedor": "A",
+      "placarA": 13,
+      "placarB": 9,
+      "mapa": "Train",
+      "mapa_origem": "sorteio",
+      "matchid": 1526,
+      "jogadoresA": [
+        {
+          "steam_id": "76561199679282192",
+          "name": "Kvaratskhelia"
+        },
+        {
+          "steam_id": "76561199078637158",
+          "name": "JAMMMMMMMMMMMMMMMMMMMMMMMMMMMMER"
+        },
+        {
+          "steam_id": "76561198349784013",
+          "name": "guiiizera"
+        },
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        },
+        {
+          "steam_id": "76561199029199212",
+          "name": "🇫🇲🇱🇬🇨♕ KABALL"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561199488437569",
+          "name": "PDznl"
+        },
+        {
+          "steam_id": "76561198891275528",
+          "name": "fnatic.MSI f0restwOw~"
+        },
+        {
+          "steam_id": "76561199532829551",
+          "name": "Powerzin"
+        },
+        {
+          "steam_id": "76561199652109305",
+          "name": "✪ KU$H 011"
+        },
+        {
+          "steam_id": "76561198304895891",
+          "name": "JuNiN148"
+        }
+      ],
+      "sorteio_em": "2026-10-10T02:48:20.127Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team__KUH_011",
+      "team2_nome": "team_JAMMMMMMMMMMMMMMMMMMMMMMMMMMMMER",
+      "_chaveDedup": "1526:"
+    },
+    {
       "id": "fo6lwmdgmv1sct4j",
       "criado_em": "2026-10-10T02:39:15.367Z",
       "vencedor": "B",
@@ -123,5 +184,5 @@
       "_chaveDedup": "1524:"
     }
   ],
-  "atualizado_em": "2026-10-10T02:39:15.571Z"
+  "atualizado_em": "2026-10-10T03:24:15.665Z"
 }
