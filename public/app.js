@@ -1,11 +1,32 @@
 // ---------- Tabs ----------
 
+let trocaAbaTimer = null;
+
 document.querySelectorAll(".tab-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
-    document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
-    document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
+    // Troca com transição: o painel atual sai deslizando e o novo entra do
+    // lado certo (direita ao avançar, esquerda ao voltar).
+    clearTimeout(trocaAbaTimer);
+    document.querySelectorAll(".tab-panel.saindo").forEach((p) => p.classList.remove("saindo", "active"));
+    const botoes = Array.from(document.querySelectorAll(".tab-btn"));
+    const atual = botoes.find((b) => b.classList.contains("active"));
+    const dir = botoes.indexOf(btn) >= botoes.indexOf(atual) ? 1 : -1;
+    const painelAntigo = document.querySelector(".tab-panel.active");
+    const painelNovo = document.getElementById(`tab-${btn.dataset.tab}`);
+    botoes.forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
-    document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
+    painelNovo.style.setProperty("--dx", `${24 * dir}px`);
+    if (painelAntigo && painelAntigo !== painelNovo && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      painelAntigo.style.setProperty("--dx", `${24 * dir}px`);
+      painelAntigo.classList.add("saindo");
+      trocaAbaTimer = setTimeout(() => {
+        painelAntigo.classList.remove("saindo", "active");
+        painelNovo.classList.add("active");
+      }, 140);
+    } else {
+      if (painelAntigo && painelAntigo !== painelNovo) painelAntigo.classList.remove("active");
+      painelNovo.classList.add("active");
+    }
 
     // Ranking (K4-System, por pontos) e Sorteio (níveis manuais) têm
     // fontes diferentes agora. Ao voltar pra uma delas, busca de novo em
@@ -721,6 +742,7 @@ socket.on("partida:resultado", (resultado) => {
 });
 
 socket.on("sorteio:iniciado", ({ jogadores }) => {
+  window.fundoIntensidade?.(1);
   msgEl.textContent = "";
   teamsResultEl.classList.add("hidden");
   liveEl.classList.remove("hidden");
@@ -743,6 +765,7 @@ socket.on("sorteio:iniciado", ({ jogadores }) => {
 let roletaVagaInterval = null;
 
 socket.on("vaga:iniciado", ({ jogadores }) => {
+  window.fundoIntensidade?.(1);
   msgEl.textContent = "";
   vagaResultEl.classList.add("hidden");
   vagaLiveEl.classList.remove("hidden");
@@ -752,6 +775,7 @@ socket.on("vaga:iniciado", ({ jogadores }) => {
 });
 
 socket.on("vaga:resultado", ({ sorteados, restantes }) => {
+  setTimeout(() => window.fundoIntensidade?.(0), 1200);
   clearInterval(roletaVagaInterval);
   pararGiroNomes(roletaVagaNomeEl);
   vagaLiveEl.classList.add("hidden");
@@ -1009,6 +1033,7 @@ function girarMapas(candidatos, alvo, duracao) {
 }
 
 socket.on("mapa:iniciado", ({ mapas, mapaId, duracao }) => {
+  window.fundoIntensidade?.(1);
   limparDestaqueMapa();
   if (Array.isArray(mapas) && mapaId) girarMapas(mapas, mapaId, duracao || 4000);
   mapaMsgEl.textContent = "";
@@ -1019,6 +1044,7 @@ socket.on("mapa:iniciado", ({ mapas, mapaId, duracao }) => {
 });
 
 socket.on("mapa:resultado", ({ mapaId }) => {
+  setTimeout(() => window.fundoIntensidade?.(0), 1800);
   pararRoletaMapa();
   // O servidor manda "mapa:sorteados" logo em seguida, que redesenha a grade e aplica o destaque.
   mapaDestaqueId = mapaId;
@@ -1046,6 +1072,7 @@ function renderizarTimes(timeA, timeB, somaA, somaB) {
 
   teamsResultEl.classList.remove("hidden");
   const duracao = animarEntradaTimes();
+  setTimeout(() => window.fundoIntensidade?.(0), duracao + 700);
   atualizarBarraEquilibrio(somaA, somaB, duracao + 200);
 }
 

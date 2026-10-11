@@ -2324,3 +2324,13 @@ body {
   .map-picker { grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .map-result-name { font-size: 38px; }
 }
+
+
+/* ---- transição entre abas (o JS define --dx e a classe .saindo) ---- */
+.tab-panel.active { animation: abaEntra 0.38s cubic-bezier(0.3, 0.8, 0.3, 1) both; }
+.tab-panel.saindo { display: block; animation: abaSai 0.14s ease-in both; }
+@keyframes abaEntra { from { opacity: 0; transform: translateX(var(--dx, 24px)); } to { opacity: 1; transform: none; } }
+@keyframes abaSai { to { opacity: 0; transform: translateX(calc(var(--dx, 24px) * -0.5)); } }
+@media (prefers-reduced-motion: reduce) {
+  .tab-panel.active, .tab-panel.saindo { animation: none; }
+}
