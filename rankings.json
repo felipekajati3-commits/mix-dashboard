@@ -377,7 +377,16 @@
       "tier": 5,
       "tier_anterior": null,
       "movido_em": null
+    },
+    {
+      "id": "0d2adi13mv3e0cam",
+      "tipo": "steam",
+      "steam_id": "76561198695950878",
+      "nome": "Rockefeller",
+      "tier": 5,
+      "tier_anterior": null,
+      "movido_em": null
     }
   ],
-  "atualizado_em": "2026-10-10T22:39:54.629Z"
+  "atualizado_em": "2026-10-11T05:33:26.555Z"
 }
