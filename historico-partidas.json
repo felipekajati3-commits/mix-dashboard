@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "3stbtkoxmv39ie6s",
+      "criado_em": "2026-10-11T03:27:15.597Z",
+      "vencedor": "B",
+      "placarA": 5,
+      "placarB": 13,
+      "mapa": "Mirage",
+      "mapa_origem": "sorteio",
+      "matchid": 1530,
+      "jogadoresA": [
+        {
+          "steam_id": "76561199488437569",
+          "name": "PDznl"
+        },
+        {
+          "steam_id": "76561199532829551",
+          "name": "Powerzin"
+        },
+        {
+          "steam_id": "76561199103146494",
+          "name": "GRIMM"
+        },
+        {
+          "steam_id": null,
+          "name": "ERICREIS"
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561199679282192",
+          "name": "Kvaratskhelia"
+        },
+        {
+          "steam_id": "76561198814173442",
+          "name": "GUSMA1"
+        },
+        {
+          "steam_id": "76561199056467023",
+          "name": "♕ Twitch.tv/Baiano_Nk ♕"
+        },
+        {
+          "steam_id": "76561198710365718",
+          "name": "P3SCAD0R"
+        },
+        {
+          "steam_id": "76561199236137088",
+          "name": "RONY. RUIM"
+        }
+      ],
+      "sorteio_em": "2026-10-11T02:46:50.489Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_P3SCAD0R",
+      "team2_nome": "team_Powerzin",
+      "_chaveDedup": "1530:"
+    },
+    {
       "id": "912italgmv2z3opx",
       "criado_em": "2026-10-10T22:35:53.047Z",
       "vencedor": "B",
@@ -367,5 +428,5 @@
       "_chaveDedup": "1524:"
     }
   ],
-  "atualizado_em": "2026-10-10T22:35:53.445Z"
+  "atualizado_em": "2026-10-11T03:27:15.796Z"
 }
