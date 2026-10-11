@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "fygt679umv3fwrwp",
+      "criado_em": "2026-10-11T06:26:24.093Z",
+      "vencedor": "B",
+      "placarA": 11,
+      "placarB": 13,
+      "mapa": "Dust 2",
+      "mapa_origem": "sorteio",
+      "matchid": 1533,
+      "jogadoresA": [
+        {
+          "steam_id": "76561199652109305",
+          "name": "✪ KU$H 011"
+        },
+        {
+          "steam_id": "76561199242999488",
+          "name": "SCHAUSS"
+        },
+        {
+          "steam_id": "76561199652148873",
+          "name": "JV putifero"
+        },
+        {
+          "steam_id": "76561199030261015",
+          "name": "MatheuRO"
+        },
+        {
+          "steam_id": "76561199488437569",
+          "name": "PDznl"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561199679282192",
+          "name": "Kvaratskhelia"
+        },
+        {
+          "steam_id": "76561199078637158",
+          "name": "JAMMMMMMMMMMMMMMMMMMMMMMMMMMMMER"
+        },
+        {
+          "steam_id": "76561199532829551",
+          "name": "Powerzin"
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        },
+        {
+          "steam_id": "76561198695950878",
+          "name": "Rockefeller"
+        }
+      ],
+      "sorteio_em": "2026-10-11T05:34:05.632Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_SCHAUSS",
+      "team2_nome": "team_Rockefeller",
+      "_chaveDedup": "1533:"
+    },
+    {
       "id": "9fmws95vmv3dwu9q",
       "criado_em": "2026-10-11T05:30:28.083Z",
       "vencedor": "B",
@@ -550,5 +611,5 @@
       "_chaveDedup": "1524:"
     }
   ],
-  "atualizado_em": "2026-10-11T05:30:28.286Z"
+  "atualizado_em": "2026-10-11T06:26:24.457Z"
 }
