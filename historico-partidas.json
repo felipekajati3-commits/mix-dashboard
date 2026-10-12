@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "onpkcz6kmv4qempt",
+      "criado_em": "2026-10-12T04:07:59.510Z",
+      "vencedor": "B",
+      "placarA": 2,
+      "placarB": 13,
+      "mapa": "Train",
+      "mapa_origem": "sorteio",
+      "matchid": 1536,
+      "jogadoresA": [
+        {
+          "steam_id": "76561199679282192",
+          "name": "Kvaratskhelia"
+        },
+        {
+          "steam_id": "76561199056467023",
+          "name": "♕ Twitch.tv/Baiano_Nk ♕"
+        },
+        {
+          "steam_id": "76561199488437569",
+          "name": "PDznl"
+        },
+        {
+          "steam_id": "76561199108628392",
+          "name": "https://www.twitch.tv/objecctt"
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561198349784013",
+          "name": "guiiizera"
+        },
+        {
+          "steam_id": "76561199078637158",
+          "name": "JAMMMMMMMMMMMMMMMMMMMMMMMMMMMMER"
+        },
+        {
+          "steam_id": "76561199483341173",
+          "name": "Caijaixx..."
+        },
+        {
+          "steam_id": "76561199030261015",
+          "name": "MatheuRO"
+        },
+        {
+          "steam_id": "76561199103146494",
+          "name": "GRIMM"
+        }
+      ],
+      "sorteio_em": "2026-10-12T03:44:45.597Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_GRIMM",
+      "team2_nome": "team_PDznl",
+      "_chaveDedup": "1536:"
+    },
+    {
       "id": "1pez9qd6mv4pgb86",
       "criado_em": "2026-10-12T03:41:18.331Z",
       "vencedor": "B",
@@ -123,5 +184,5 @@
       "_chaveDedup": "1534:"
     }
   ],
-  "atualizado_em": "2026-10-12T03:41:18.678Z"
+  "atualizado_em": "2026-10-12T04:07:59.873Z"
 }
