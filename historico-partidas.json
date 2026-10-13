@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "n3zy4j3cmv61qsbw",
+      "criado_em": "2026-10-13T02:13:08.743Z",
+      "vencedor": "A",
+      "placarA": 13,
+      "placarB": 10,
+      "mapa": "Overpass",
+      "mapa_origem": "sorteio",
+      "matchid": 1539,
+      "jogadoresA": [
+        {
+          "steam_id": "76561198297974111",
+          "name": "BOY MAGUINHO"
+        },
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        },
+        {
+          "steam_id": "76561199056467023",
+          "name": "♕ Twitch.tv/Baiano_Nk ♕"
+        },
+        {
+          "steam_id": "76561199483341173",
+          "name": "Caijaixx..."
+        },
+        {
+          "steam_id": "76561199103146494",
+          "name": "GRIMM"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561198814173442",
+          "name": "GUSMA1"
+        },
+        {
+          "steam_id": "76561199652109305",
+          "name": "✪ KU$H 011"
+        },
+        {
+          "steam_id": "76561199018880641",
+          "name": "Toddy"
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        },
+        {
+          "steam_id": "76561199652148873",
+          "name": "JV putifero"
+        }
+      ],
+      "sorteio_em": "2026-10-13T01:27:55.727Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_Caijaixx",
+      "team2_nome": "team__KUH_011",
+      "_chaveDedup": "1539:"
+    },
+    {
       "id": "6q9q7w8vmv5zyx47",
       "criado_em": "2026-10-13T01:23:28.795Z",
       "vencedor": "A",
@@ -306,5 +367,5 @@
       "_chaveDedup": "1534:"
     }
   ],
-  "atualizado_em": "2026-10-13T01:23:29.191Z"
+  "atualizado_em": "2026-10-13T02:13:08.972Z"
 }
