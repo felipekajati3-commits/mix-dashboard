@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "3nyemwi9mv63fow4",
+      "criado_em": "2026-10-13T03:00:30.256Z",
+      "vencedor": "A",
+      "placarA": 13,
+      "placarB": 9,
+      "mapa": "Mirage",
+      "mapa_origem": "sorteio",
+      "matchid": 1540,
+      "jogadoresA": [
+        {
+          "steam_id": "76561199652109305",
+          "name": "✪ KU$H 011"
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        },
+        {
+          "steam_id": "76561198349784013",
+          "name": "guiiizera"
+        },
+        {
+          "steam_id": "76561199103146494",
+          "name": "GRIMM"
+        },
+        {
+          "steam_id": "76561199483341173",
+          "name": "Caijaixx..."
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561198814173442",
+          "name": "GUSMA1"
+        },
+        {
+          "steam_id": "76561199488437569",
+          "name": "PDznl"
+        },
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        },
+        {
+          "steam_id": "76561198297974111",
+          "name": "BOY MAGUINHO"
+        },
+        {
+          "steam_id": "76561199030261015",
+          "name": "MatheuRO"
+        }
+      ],
+      "sorteio_em": "2026-10-13T02:15:51.840Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team__KUH_011",
+      "team2_nome": "team_MatheuRO",
+      "_chaveDedup": "1540:"
+    },
+    {
       "id": "n3zy4j3cmv61qsbw",
       "criado_em": "2026-10-13T02:13:08.743Z",
       "vencedor": "A",
@@ -367,5 +428,5 @@
       "_chaveDedup": "1534:"
     }
   ],
-  "atualizado_em": "2026-10-13T02:13:08.972Z"
+  "atualizado_em": "2026-10-13T03:00:30.532Z"
 }
