@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "x8gjg6zomvbu6b8i",
+      "criado_em": "2026-10-17T03:27:52.981Z",
+      "vencedor": "A",
+      "placarA": 13,
+      "placarB": 7,
+      "mapa": "Cache",
+      "mapa_origem": "sorteio",
+      "matchid": 1543,
+      "jogadoresA": [
+        {
+          "steam_id": "76561199030261015",
+          "name": "MatheuRO"
+        },
+        {
+          "steam_id": "76561199679282192",
+          "name": "Kvaratskhelia"
+        },
+        {
+          "steam_id": "76561199488437569",
+          "name": "PDznl"
+        },
+        {
+          "steam_id": "76561198297974111",
+          "name": "BOY MAGUINHO"
+        },
+        {
+          "steam_id": "76561199624307524",
+          "name": "Falkes"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561199652109305",
+          "name": "✪ KU$H 011"
+        },
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        },
+        {
+          "steam_id": "76561198107484163",
+          "name": "Apk"
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        },
+        {
+          "steam_id": "76561199242999488",
+          "name": "SCHAUSS"
+        }
+      ],
+      "sorteio_em": "2026-10-17T02:48:52.912Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_panco",
+      "team2_nome": "team_PATRICK_JANE",
+      "_chaveDedup": "1543:"
+    },
+    {
       "id": "iewreisomvbslr3q",
       "criado_em": "2026-10-17T02:43:54.343Z",
       "vencedor": "B",
@@ -489,5 +550,5 @@
       "_chaveDedup": "1534:"
     }
   ],
-  "atualizado_em": "2026-10-17T02:43:54.614Z"
+  "atualizado_em": "2026-10-17T03:27:53.442Z"
 }
