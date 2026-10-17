@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "iewreisomvbslr3q",
+      "criado_em": "2026-10-17T02:43:54.343Z",
+      "vencedor": "B",
+      "placarA": 11,
+      "placarB": 13,
+      "mapa": "Nuke",
+      "mapa_origem": "sorteio",
+      "matchid": 1541,
+      "jogadoresA": [
+        {
+          "steam_id": "76561199652109305",
+          "name": "✪ KU$H 011"
+        },
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        },
+        {
+          "steam_id": "76561199056467023",
+          "name": "♕ Twitch.tv/Baiano_Nk ♕"
+        },
+        {
+          "steam_id": "76561199532829551",
+          "name": "Powerzin"
+        },
+        {
+          "steam_id": "76561199030261015",
+          "name": "MatheuRO"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561199488437569",
+          "name": "PDznl"
+        },
+        {
+          "steam_id": "76561198107484163",
+          "name": "Apk"
+        },
+        {
+          "steam_id": "76561199624307524",
+          "name": "Falkes"
+        },
+        {
+          "steam_id": "76561199215655481",
+          "name": "GhostLCS"
+        },
+        {
+          "steam_id": "76561198297974111",
+          "name": "BOY MAGUINHO"
+        }
+      ],
+      "sorteio_em": "2026-10-17T01:49:02.619Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_GhostLCS",
+      "team2_nome": "team_max_The_Wizard",
+      "_chaveDedup": "1541:"
+    },
+    {
       "id": "3nyemwi9mv63fow4",
       "criado_em": "2026-10-13T03:00:30.256Z",
       "vencedor": "A",
@@ -428,5 +489,5 @@
       "_chaveDedup": "1534:"
     }
   ],
-  "atualizado_em": "2026-10-13T03:00:30.532Z"
+  "atualizado_em": "2026-10-17T02:43:54.614Z"
 }
