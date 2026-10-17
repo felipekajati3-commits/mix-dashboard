@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "tvs7tsssmvbwytif",
+      "criado_em": "2026-10-17T04:46:02.480Z",
+      "vencedor": "B",
+      "placarA": 3,
+      "placarB": 13,
+      "mapa": "Mirage",
+      "mapa_origem": "sorteio",
+      "matchid": 1545,
+      "jogadoresA": [
+        {
+          "steam_id": "76561199679282192",
+          "name": "Kvaratskhelia"
+        },
+        {
+          "steam_id": "76561199078637158",
+          "name": "JAMMMMMMMMMMMMMMMMMMMMMMMMMMMMER"
+        },
+        {
+          "steam_id": "76561199624307524",
+          "name": "Falkes"
+        },
+        {
+          "steam_id": "76561198297974111",
+          "name": "BOY MAGUINHO"
+        },
+        {
+          "steam_id": "76561199030261015",
+          "name": "MatheuRO"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561198107484163",
+          "name": "Apk"
+        },
+        {
+          "steam_id": "76561199652109305",
+          "name": "✪ KU$H 011"
+        },
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        },
+        {
+          "steam_id": "76561199652148873",
+          "name": "JV putifero"
+        }
+      ],
+      "sorteio_em": "2026-10-17T04:12:21.173Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_JAMMMMMMMMMMMMMMMMMMMMMMMMMMMMER",
+      "team2_nome": "team_Apk",
+      "_chaveDedup": "1545:"
+    },
+    {
       "id": "t0duhbmlmvbvmdi8",
       "criado_em": "2026-10-17T04:08:22.002Z",
       "vencedor": "A",
@@ -611,5 +672,5 @@
       "_chaveDedup": "1534:"
     }
   ],
-  "atualizado_em": "2026-10-17T04:08:22.496Z"
+  "atualizado_em": "2026-10-17T04:46:02.727Z"
 }
