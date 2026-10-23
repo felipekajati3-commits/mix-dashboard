@@ -15,7 +15,7 @@ module.exports = {
     database: process.env.DB_NAME || "s15_server",
   },
 
-  steamApiKey: process.env.STEAM_API_KEY || "04B6564650DCBC25DA0677E4E8DACC1A",
+  steamApiKey: process.env.STEAM_API_KEY || "",
 
   // Senha compartilhada com o plugin do servidor de CS2 (o mesmo valor
   // precisa estar configurado lá). Só quem souber essa senha consegue
