@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "uncimb05mvn92a42",
+      "criado_em": "2026-10-25T03:10:07.045Z",
+      "vencedor": "A",
+      "placarA": 16,
+      "placarB": 12,
+      "mapa": "Dust 2",
+      "mapa_origem": "sorteio",
+      "matchid": 1552,
+      "jogadoresA": [
+        {
+          "steam_id": "76561199488437569",
+          "name": "PDznl"
+        },
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        },
+        {
+          "steam_id": "76561199056467023",
+          "name": "♕ Twitch.tv/Baiano_Nk ♕"
+        },
+        {
+          "steam_id": "76561199103146494",
+          "name": "GRIMM"
+        },
+        {
+          "steam_id": "76561199029199212",
+          "name": "🇫🇲🇱🇬🇨♕ KABALL"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561199679282192",
+          "name": "Kvaratskhelia"
+        },
+        {
+          "steam_id": "76561198107484163",
+          "name": "Apk"
+        },
+        {
+          "steam_id": "76561199532829551",
+          "name": "Powerzin"
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        },
+        {
+          "steam_id": "76561198710365718",
+          "name": "P3SCAD0R"
+        }
+      ],
+      "sorteio_em": "2026-10-25T02:19:00.260Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_max_The_Wizard",
+      "team2_nome": "team_Apk",
+      "_chaveDedup": "1552:"
+    },
+    {
       "id": "ff24wytbmvn74vxz",
       "criado_em": "2026-10-25T02:16:09.651Z",
       "vencedor": "B",
@@ -855,5 +916,5 @@
       "_chaveDedup": "1534:"
     }
   ],
-  "atualizado_em": "2026-10-25T02:16:09.911Z"
+  "atualizado_em": "2026-10-25T03:10:07.538Z"
 }
