@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "ff24wytbmvn74vxz",
+      "criado_em": "2026-10-25T02:16:09.651Z",
+      "vencedor": "B",
+      "placarA": 13,
+      "placarB": 16,
+      "mapa": "Mirage",
+      "mapa_origem": "sorteio",
+      "matchid": 1551,
+      "jogadoresA": [
+        {
+          "steam_id": "76561198107484163",
+          "name": "Apk"
+        },
+        {
+          "steam_id": "76561199056467023",
+          "name": "♕ Twitch.tv/Baiano_Nk ♕"
+        },
+        {
+          "steam_id": "76561199652109305",
+          "name": "✪ KU$H 011"
+        },
+        {
+          "steam_id": "76561199103146494",
+          "name": "GRIMM"
+        },
+        {
+          "steam_id": "76561199029199212",
+          "name": "🇫🇲🇱🇬🇨♕ KABALL"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561199488437569",
+          "name": "PDznl"
+        },
+        {
+          "steam_id": "76561199679282192",
+          "name": "Kvaratskhelia"
+        },
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        },
+        {
+          "steam_id": "76561198710365718",
+          "name": "P3SCAD0R"
+        }
+      ],
+      "sorteio_em": "2026-10-25T01:20:35.541Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team__TwitchtvBaiano_Nk_",
+      "team2_nome": "team_Kvaratskhelia",
+      "_chaveDedup": "1551:"
+    },
+    {
       "id": "km853vavmvg0z4ie",
       "criado_em": "2026-10-20T01:49:19.676Z",
       "vencedor": "A",
@@ -794,5 +855,5 @@
       "_chaveDedup": "1534:"
     }
   ],
-  "atualizado_em": "2026-10-20T01:49:20.150Z"
+  "atualizado_em": "2026-10-25T02:16:09.911Z"
 }
