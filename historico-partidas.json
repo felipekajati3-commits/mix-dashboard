@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "sjk8mhb3mvsxdcrc",
+      "criado_em": "2026-10-29T02:29:25.353Z",
+      "vencedor": "B",
+      "placarA": 10,
+      "placarB": 13,
+      "mapa": "Vertigo",
+      "mapa_origem": "sorteio",
+      "matchid": 1559,
+      "jogadoresA": [
+        {
+          "steam_id": "76561198349784013",
+          "name": "guiiizera"
+        },
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        },
+        {
+          "steam_id": "76561198375454204",
+          "name": "PedroSTREETS"
+        },
+        {
+          "steam_id": null,
+          "name": "Complete 4"
+        },
+        {
+          "steam_id": "76561198297974111",
+          "name": "BOY MAGUINHO"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561199488437569",
+          "name": "PDznl"
+        },
+        {
+          "steam_id": "76561199652109305",
+          "name": "✪ KU$H 011"
+        },
+        {
+          "steam_id": "76561199030261015",
+          "name": "MatheuRO"
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        },
+        {
+          "steam_id": "76561199215655481",
+          "name": "GhostLCS"
+        }
+      ],
+      "sorteio_em": "2026-10-29T01:37:46.579Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_GhostLCS",
+      "team2_nome": "team_PedroSTREETS",
+      "_chaveDedup": "1559:"
+    },
+    {
       "id": "gbcalfylmvsv4f6y",
       "criado_em": "2026-10-29T01:26:29.616Z",
       "vencedor": "B",
@@ -1221,5 +1282,5 @@
       "_chaveDedup": "1534:"
     }
   ],
-  "atualizado_em": "2026-10-29T01:26:29.866Z"
+  "atualizado_em": "2026-10-29T02:29:25.848Z"
 }
