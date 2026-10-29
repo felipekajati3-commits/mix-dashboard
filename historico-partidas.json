@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "kufbuwaymvstq8ti",
+      "criado_em": "2026-10-29T00:47:28.283Z",
+      "vencedor": "B",
+      "placarA": 8,
+      "placarB": 13,
+      "mapa": "Cache",
+      "mapa_origem": "sorteio",
+      "matchid": 1556,
+      "jogadoresA": [
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        },
+        {
+          "steam_id": "76561199056467023",
+          "name": "♕ Twitch.tv/Baiano_Nk ♕"
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        },
+        {
+          "steam_id": "76561199215655481",
+          "name": "GhostLCS"
+        },
+        {
+          "steam_id": "76561199652109305",
+          "name": "✪ KU$H 011"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561198814173442",
+          "name": "GUSMA1"
+        },
+        {
+          "steam_id": "76561199532829551",
+          "name": "Powerzin"
+        },
+        {
+          "steam_id": "76561199030261015",
+          "name": "MatheuRO"
+        },
+        {
+          "steam_id": "76561198710365718",
+          "name": "P3SCAD0R"
+        },
+        {
+          "steam_id": "76561198349784013",
+          "name": "guiiizera"
+        }
+      ],
+      "sorteio_em": "2026-10-29T00:04:54.183Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_Powerzin",
+      "team2_nome": "team__KUH_011",
+      "_chaveDedup": "1556:"
+    },
+    {
       "id": "x8p4qxu9mvokaxmn",
       "criado_em": "2026-10-26T01:12:32.961Z",
       "vencedor": "B",
@@ -1099,5 +1160,5 @@
       "_chaveDedup": "1534:"
     }
   ],
-  "atualizado_em": "2026-10-26T01:12:33.215Z"
+  "atualizado_em": "2026-10-29T00:47:28.806Z"
 }
