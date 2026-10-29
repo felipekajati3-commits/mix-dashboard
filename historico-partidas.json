@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "gbcalfylmvsv4f6y",
+      "criado_em": "2026-10-29T01:26:29.616Z",
+      "vencedor": "B",
+      "placarA": 2,
+      "placarB": 13,
+      "mapa": "Train",
+      "mapa_origem": "sorteio",
+      "matchid": 1558,
+      "jogadoresA": [
+        {
+          "steam_id": "76561199488437569",
+          "name": "PDznl"
+        },
+        {
+          "steam_id": "76561198814173442",
+          "name": "GUSMA1"
+        },
+        {
+          "steam_id": "76561198375454204",
+          "name": "PedroSTREETS"
+        },
+        {
+          "steam_id": "76561198710365718",
+          "name": "P3SCAD0R"
+        },
+        {
+          "steam_id": null,
+          "name": "Complete 4"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561198349784013",
+          "name": "guiiizera"
+        },
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        },
+        {
+          "steam_id": "76561199652109305",
+          "name": "✪ KU$H 011"
+        },
+        {
+          "steam_id": "76561199030261015",
+          "name": "MatheuRO"
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        }
+      ],
+      "sorteio_em": "2026-10-29T00:56:41.037Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_panco",
+      "team2_nome": "team_PedroSTREETS",
+      "_chaveDedup": "1558:"
+    },
+    {
       "id": "kufbuwaymvstq8ti",
       "criado_em": "2026-10-29T00:47:28.283Z",
       "vencedor": "B",
@@ -1160,5 +1221,5 @@
       "_chaveDedup": "1534:"
     }
   ],
-  "atualizado_em": "2026-10-29T00:47:28.806Z"
+  "atualizado_em": "2026-10-29T01:26:29.866Z"
 }
