@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "vu29mukxmvuba53n",
+      "criado_em": "2026-10-30T01:46:36.443Z",
+      "vencedor": "B",
+      "placarA": 11,
+      "placarB": 13,
+      "mapa": "Inferno",
+      "mapa_origem": "sorteio",
+      "matchid": 1563,
+      "jogadoresA": [
+        {
+          "steam_id": "76561198349784013",
+          "name": "guiiizera"
+        },
+        {
+          "steam_id": "76561199652109305",
+          "name": "✪ KU$H 011"
+        },
+        {
+          "steam_id": "76561199624307524",
+          "name": "Falkes"
+        },
+        {
+          "steam_id": "76561199062714228",
+          "name": "Avestruz"
+        },
+        {
+          "steam_id": "76561199030261015",
+          "name": "MatheuRO"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561198814173442",
+          "name": "GUSMA1"
+        },
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        },
+        {
+          "steam_id": "76561199532829551",
+          "name": "Powerzin"
+        },
+        {
+          "steam_id": null,
+          "name": "Complete 4"
+        },
+        {
+          "steam_id": "76561198297974111",
+          "name": "BOY MAGUINHO"
+        }
+      ],
+      "sorteio_em": "2026-10-30T00:52:41.864Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team__KUH_011",
+      "team2_nome": "team_Powerzin",
+      "_chaveDedup": "1563:"
+    },
+    {
       "id": "qdqalf1jmvu9968a",
       "criado_em": "2026-10-30T00:49:51.779Z",
       "vencedor": "B",
@@ -1404,5 +1465,5 @@
       "_chaveDedup": "1534:"
     }
   ],
-  "atualizado_em": "2026-10-30T00:49:52.330Z"
+  "atualizado_em": "2026-10-30T01:46:36.755Z"
 }
