@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "h17005uumvvr14vm",
+      "criado_em": "2026-10-31T01:55:16.267Z",
+      "vencedor": "B",
+      "placarA": 11,
+      "placarB": 13,
+      "mapa": "Overpass",
+      "mapa_origem": "sorteio",
+      "matchid": 1564,
+      "jogadoresA": [
+        {
+          "steam_id": "76561198349784013",
+          "name": "guiiizera"
+        },
+        {
+          "steam_id": "76561198814173442",
+          "name": "GUSMA1"
+        },
+        {
+          "steam_id": "76561199108628392",
+          "name": "https://www.twitch.tv/objecctt"
+        },
+        {
+          "steam_id": "76561199030261015",
+          "name": "MatheuRO"
+        },
+        {
+          "steam_id": "76561199488437569",
+          "name": "PDznl"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561199679282192",
+          "name": "Kvaratskhelia"
+        },
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        },
+        {
+          "steam_id": "76561199056467023",
+          "name": "♕ Twitch.tv/Baiano_Nk ♕"
+        },
+        {
+          "steam_id": "76561199062714228",
+          "name": "Avestruz"
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        }
+      ],
+      "sorteio_em": "2026-10-31T01:06:00.642Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_Kvaratskhelia",
+      "team2_nome": "team_MatheuRO",
+      "_chaveDedup": "1564:"
+    },
+    {
       "id": "vu29mukxmvuba53n",
       "criado_em": "2026-10-30T01:46:36.443Z",
       "vencedor": "B",
@@ -1465,5 +1526,5 @@
       "_chaveDedup": "1534:"
     }
   ],
-  "atualizado_em": "2026-10-30T01:46:36.755Z"
+  "atualizado_em": "2026-10-31T01:55:16.594Z"
 }
