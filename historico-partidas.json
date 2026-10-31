@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "zrzumovymvvu5lnc",
+      "criado_em": "2026-10-31T03:22:43.491Z",
+      "vencedor": "B",
+      "placarA": 2,
+      "placarB": 13,
+      "mapa": "Anubis",
+      "mapa_origem": "sorteio",
+      "matchid": 1566,
+      "jogadoresA": [
+        {
+          "steam_id": "76561198814173442",
+          "name": "GUSMA1"
+        },
+        {
+          "steam_id": "76561199679282192",
+          "name": "Kvaratskhelia"
+        },
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        },
+        {
+          "steam_id": "76561199582376084",
+          "name": "×͜×ㅤM𝙰𝙻𝙾𝙽𝙴"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561199488437569",
+          "name": "PDznl"
+        },
+        {
+          "steam_id": "76561198349784013",
+          "name": "guiiizera"
+        },
+        {
+          "steam_id": "76561199652109305",
+          "name": "✪ KU$H 011"
+        },
+        {
+          "steam_id": "76561199108628392",
+          "name": "https://www.twitch.tv/objecctt"
+        },
+        {
+          "steam_id": "76561199030261015",
+          "name": "MatheuRO"
+        }
+      ],
+      "sorteio_em": "2026-10-31T02:55:56.090Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_guiiizera",
+      "team2_nome": "team_ㅤALEMAO",
+      "_chaveDedup": "1566:"
+    },
+    {
       "id": "2po403zsmvvsualm",
       "criado_em": "2026-10-31T02:45:55.894Z",
       "vencedor": "A",
@@ -1587,5 +1648,5 @@
       "_chaveDedup": "1534:"
     }
   ],
-  "atualizado_em": "2026-10-31T02:45:56.650Z"
+  "atualizado_em": "2026-10-31T03:22:43.800Z"
 }
