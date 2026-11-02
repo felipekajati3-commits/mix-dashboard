@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "1xjitjc4mvypw0n7",
+      "criado_em": "2026-11-02T03:46:36.176Z",
+      "vencedor": "B",
+      "placarA": 11,
+      "placarB": 13,
+      "mapa": "Ancient",
+      "mapa_origem": "sorteio",
+      "matchid": 1567,
+      "jogadoresA": [
+        {
+          "steam_id": "76561198349784013",
+          "name": "guiiizera"
+        },
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        },
+        {
+          "steam_id": "76561199624307524",
+          "name": "Falkes"
+        },
+        {
+          "steam_id": "76561199030261015",
+          "name": "MatheuRO"
+        },
+        {
+          "steam_id": "76561199215655481",
+          "name": "GhostLCS"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561199488437569",
+          "name": "PDznl"
+        },
+        {
+          "steam_id": "76561199532829551",
+          "name": "Powerzin"
+        },
+        {
+          "steam_id": "76561199652109305",
+          "name": "✪ KU$H 011"
+        },
+        {
+          "steam_id": "76561199103146494",
+          "name": "GRIMM"
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        }
+      ],
+      "sorteio_em": "2026-11-02T02:33:38.192Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_Falkes",
+      "team2_nome": "team__KUH_011",
+      "_chaveDedup": "1567:"
+    },
+    {
       "id": "zrzumovymvvu5lnc",
       "criado_em": "2026-10-31T03:22:43.491Z",
       "vencedor": "B",
@@ -1648,5 +1709,5 @@
       "_chaveDedup": "1534:"
     }
   ],
-  "atualizado_em": "2026-10-31T03:22:43.800Z"
+  "atualizado_em": "2026-11-02T03:46:36.739Z"
 }
