@@ -120,6 +120,34 @@
       <span id="snapshot-contagem" class="selected-count">0 jogadores</span>
       <button id="btn-snapshot-agora" class="btn btn-outline" type="button">Tirar snapshot agora</button>
     </div>
+
+    <div class="section-head historico-head">
+      <h2>Temporadas (ranking mensal)</h2>
+      <p class="muted">
+        Guarda o ranking final de um mês na aba "Temporadas" do site. Temporadas são permanentes: nada é apagado
+        sozinho. No último dia do mês, a partir das 23:50 (Brasília), o site também fecha a temporada sozinho se o
+        ranking ainda não tiver sido zerado. Isso <b>não zera</b> os pontos no K4-System — o reset continua sendo feito por você.
+      </p>
+    </div>
+
+    <div class="admin-add temporada-form">
+      <label class="temporada-campo">
+        <span class="muted">Mês</span>
+        <input id="temp-mes" class="search-input" type="month" />
+      </label>
+      <label class="temporada-campo">
+        <span class="muted">Guardar a partir de</span>
+        <select id="temp-fonte" class="search-input">
+          <option value="snapshot_atual">Snapshot atual (mais recente)</option>
+          <option value="snapshot_anterior">Snapshot anterior</option>
+          <option value="ranking">Ranking ao vivo agora</option>
+        </select>
+      </label>
+      <button id="btn-temp-salvar" class="btn btn-primary" type="button">Salvar temporada</button>
+    </div>
+    <div id="temp-msg" class="msg"></div>
+
+    <div id="temp-admin-lista" class="historico-lista"></div>
   </section>
 
 </main>

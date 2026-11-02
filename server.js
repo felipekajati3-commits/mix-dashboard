@@ -7,6 +7,7 @@ const config = require("./config");
 const store = require("./store");
 const historico = require("./historico");
 const snapshot = require("./snapshot");
+const temporadas = require("./temporadas");
 
 const app = express();
 app.use(express.json());
@@ -1117,7 +1118,9 @@ app.post("/api/admin/historico-partidas/:id/inverter", exigirAdmin, async (req, 
 
 let snapshotEmAndamento = false;
 
-async function tirarSnapshotDoRanking(motivo) {
+// Le o ranking ao vivo (pontos + stats do K4-System), do 1o ao ultimo.
+// Usado pelo snapshot e pelo fechamento de temporada.
+async function lerRankingAoVivo() {
   const [rows] = await pool.query(
     `SELECT steam_id, name, points
      FROM rank_mix_k4ranks
@@ -1126,7 +1129,7 @@ async function tirarSnapshotDoRanking(motivo) {
   );
   const stats = await buscarResumoStats(rows.map((r) => r.steam_id));
 
-  const jogadores = rows.map((r, i) => {
+  return rows.map((r, i) => {
     const s = stats[r.steam_id] || {};
     return {
       pos: i + 1,
@@ -1141,7 +1144,10 @@ async function tirarSnapshotDoRanking(motivo) {
       hs: s.hs ?? null,
     };
   });
+}
 
+async function tirarSnapshotDoRanking(motivo) {
+  const jogadores = await lerRankingAoVivo();
   return snapshot.salvar({
     tirado_em: new Date().toISOString(),
     motivo,
@@ -1184,7 +1190,199 @@ app.post("/api/admin/snapshot-ranking/agora", exigirAdmin, async (req, res) => {
   }
 });
 
+// ---------------- TEMPORADAS (ranking mensal) ----------------
+// Todo mes o ranking e fechado e guardado como uma temporada (ver
+// temporadas.js). A aba "Temporadas" do site le daqui; o fechamento pode
+// ser feito pelo admin (a partir de um snapshot ou do ranking ao vivo) ou
+// automaticamente no ultimo dia do mes. O RESET dos pontos continua sendo
+// feito por voce no K4-System - o site nunca zera pontos sozinho.
+
+// Data/hora em Brasilia, independente do fuso do servidor (o Render roda em UTC).
+function partesBrasilia(data = new Date()) {
+  const f = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+  });
+  const p = Object.fromEntries(f.formatToParts(data).map((x) => [x.type, x.value]));
+  const ano = Number(p.year);
+  const mes = Number(p.month);
+  return {
+    ano, mes,
+    dia: Number(p.day),
+    hora: Number(p.hour),
+    minuto: Number(p.minute),
+    ultimoDia: new Date(Date.UTC(ano, mes, 0)).getUTCDate(),
+    id: `${p.year}-${p.month}`,
+  };
+}
+
+function resumoTemporada(t, avatares = {}) {
+  const lider = t.jogadores[0] || null;
+  return {
+    id: t.id,
+    nome: t.nome,
+    fechado_em: t.fechado_em,
+    origem: t.origem,
+    total: t.jogadores.length,
+    campeao: lider
+      ? { steam_id: lider.steam_id, name: lider.name, points: lider.points, avatar_url: avatares[lider.steam_id] || null }
+      : null,
+  };
+}
+
+// Lista publica de temporadas (so o resumo, sem a tabela inteira).
+app.get("/api/temporadas", async (req, res) => {
+  try {
+    const lista = await temporadas.listar();
+    const avatares = await buscarAvatares(lista.map((t) => t.jogadores[0]?.steam_id).filter(Boolean));
+    res.json(lista.map((t) => resumoTemporada(t, avatares)));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao carregar as temporadas." });
+  }
+});
+
+// Uma temporada completa (ranking daquele mes), com avatares.
+app.get("/api/temporadas/:id", async (req, res) => {
+  try {
+    const t = await temporadas.obter(req.params.id);
+    if (!t) return res.status(404).json({ error: "Temporada não encontrada." });
+    const avatares = await buscarAvatares(t.jogadores.map((j) => j.steam_id));
+    res.json({
+      ...resumoTemporada(t, avatares),
+      jogadores: t.jogadores.map((j) => ({ ...j, avatar_url: avatares[j.steam_id] || null })),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao carregar a temporada." });
+  }
+});
+
+const ERROS_TEMPORADA = {
+  mes_invalido: [400, "Mês inválido. Use o formato AAAA-MM (ex.: 2026-10)."],
+  sem_jogadores: [400, "Não há jogadores para guardar nessa temporada."],
+  ja_existe: [409, "Já existe uma temporada desse mês. Marque \"substituir\" se quiser trocar."],
+  nao_encontrada: [404, "Temporada não encontrada."],
+};
+
+// Fecha uma temporada pelo admin. fonte:
+//   "snapshot_atual"    -> usa o snapshot mais recente (ex.: o que voce tirou antes do reset)
+//   "snapshot_anterior" -> usa o snapshot anterior
+//   "ranking"           -> usa o ranking ao vivo agora
+app.post("/api/admin/temporadas", exigirAdmin, async (req, res) => {
+  try {
+    const { mes, fonte, substituir } = req.body || {};
+    if (!temporadas.nomeDoMes(mes)) {
+      const [status, error] = ERROS_TEMPORADA.mes_invalido;
+      return res.status(status).json({ error });
+    }
+
+    let jogadores = [];
+    let tirado_em = null;
+    if (fonte === "snapshot_atual" || fonte === "snapshot_anterior") {
+      const snap = await snapshot.ler({ forcar: true });
+      const foto = fonte === "snapshot_atual" ? snap : snap.anterior;
+      if (!foto || !foto.jogadores?.length) {
+        return res.status(400).json({ error: "Esse snapshot não existe ou está vazio." });
+      }
+      jogadores = foto.jogadores;
+      tirado_em = foto.tirado_em;
+    } else if (fonte === "ranking") {
+      jogadores = await lerRankingAoVivo();
+      tirado_em = new Date().toISOString();
+      if (!jogadores.length || Number(jogadores[0].points) <= 0) {
+        return res.status(400).json({
+          error: "O ranking ao vivo está zerado (o reset já foi feito?). Use um snapshot como fonte.",
+        });
+      }
+    } else {
+      return res.status(400).json({ error: "Fonte inválida." });
+    }
+
+    const r = await temporadas.salvar({ id: mes, jogadores, origem: fonte, tirado_em, substituir: Boolean(substituir) });
+    if (!r.ok) {
+      const [status, error] = ERROS_TEMPORADA[r.motivo] || [500, "Erro ao salvar a temporada."];
+      return res.status(status).json({ error });
+    }
+    res.json(resumoTemporada(r.temporada));
+  } catch (err) {
+    console.error("[Temporadas] Falha ao fechar:", err.message);
+    res.status(500).json({ error: "Erro ao salvar a temporada." });
+  }
+});
+
+app.delete("/api/admin/temporadas/:id", exigirAdmin, async (req, res) => {
+  try {
+    const r = await temporadas.remover(req.params.id);
+    if (!r.ok) {
+      const [status, error] = ERROS_TEMPORADA[r.motivo] || [500, "Erro ao remover a temporada."];
+      return res.status(status).json({ error });
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("[Temporadas] Falha ao remover:", err.message);
+    res.status(500).json({ error: "Erro ao remover a temporada." });
+  }
+});
+
+// Fechamento automatico: no ULTIMO DIA do mes, a partir das 23:50 (Brasilia),
+// guarda o ranking ao vivo como a temporada daquele mes. Salvaguardas:
+//  - nao faz nada se a temporada do mes ja existir (nunca sobrescreve);
+//  - nao faz nada se o ranking estiver zerado (reset ja feito).
+// Precisa do servidor acordado nessa janela; por isso tambem existe a rota
+// /api/cron/fechar-temporada, pra um cron externo acordar o site as 23:55.
+let fechamentoEmAndamento = false;
+
+async function fecharMesAutomatico() {
+  const agora = partesBrasilia();
+  const naJanela = agora.dia === agora.ultimoDia && (agora.hora > 23 || (agora.hora === 23 && agora.minuto >= 50));
+  if (!naJanela) return { pulado: "fora_da_janela" };
+  if (fechamentoEmAndamento) return { pulado: "em_andamento" };
+
+  fechamentoEmAndamento = true;
+  try {
+    if (await temporadas.obter(agora.id)) return { pulado: "ja_existe", id: agora.id };
+
+    const jogadores = await lerRankingAoVivo();
+    if (!jogadores.length || Number(jogadores[0].points) <= 0) return { pulado: "ranking_zerado" };
+
+    const r = await temporadas.salvar({
+      id: agora.id,
+      jogadores,
+      origem: "automatico",
+      tirado_em: new Date().toISOString(),
+    });
+    if (r.ok) console.log(`[Temporadas] ${r.temporada.nome} fechada automaticamente (${jogadores.length} jogadores).`);
+    return r.ok ? { criado: true, id: agora.id } : { pulado: r.motivo };
+  } finally {
+    fechamentoEmAndamento = false;
+  }
+}
+
+// Rota pro cron externo (mesma CRON_SECRET do config). Desligada se a variavel nao existir.
+app.all("/api/cron/fechar-temporada", async (req, res) => {
+  if (!config.cronSecret) return res.status(404).json({ error: "Não encontrado." });
+  const chave = String(req.query.key || req.headers["x-cron-key"] || "");
+  const a = Buffer.from(chave);
+  const b = Buffer.from(config.cronSecret);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+    return res.status(401).json({ error: "Chave inválida." });
+  }
+  try {
+    res.json(await fecharMesAutomatico());
+  } catch (err) {
+    console.error("[Temporadas] Falha no cron:", err.message);
+    res.status(500).json({ error: "Erro ao fechar a temporada." });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Mix Dashboard rodando em http://localhost:${PORT}`);
 });
+
+// Confere uma vez por minuto se e hora de fechar a temporada do mes.
+setInterval(() => {
+  fecharMesAutomatico().catch((err) => console.error("[Temporadas] Falha no fechamento automático:", err.message));
+}, 60 * 1000).unref();

@@ -233,3 +233,8 @@ main { max-width: 920px; }
 @media (max-width: 1100px) {
   .snapshot-duplo { grid-template-columns: 1fr; }
 }
+
+/* ---------- Temporadas (admin) ---------- */
+.temporada-form { align-items: flex-end; margin: 4px 0 10px; }
+.temporada-campo { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.temporada-campo .search-input { flex: 0 0 auto; width: auto; min-width: 200px; }

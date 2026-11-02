@@ -36,6 +36,8 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
       carregarLeaderboard({ silencioso: true, animar: true });
     } else if (btn.dataset.tab === "sorteio") {
       carregarJogadores({ silencioso: true });
+    } else if (btn.dataset.tab === "temporadas") {
+      carregarTemporadas();
     }
   });
 });
@@ -185,12 +187,12 @@ function statsLinhaHtml(r) {
 const perfilOv = document.getElementById("perfil-ov");
 const perfilCard = document.getElementById("perfil-card");
 
-function abrirPerfil(idx) {
-  const j = jogadoresRanking[idx];
+function abrirPerfil(idx, lista = jogadoresRanking, nomeTemporada = null) {
+  const j = lista[idx];
   if (!j) return;
   const classe = faixaPremier(j.points);
   const info = FAIXA_INFO[classe];
-  const r = j.resumo;
+  const r = nomeTemporada ? j : j.resumo; // na temporada as stats ficam direto no jogador
   const stats = [];
   if (r) {
     if (temNum(r.k)) stats.push(["Kills", r.k]);
@@ -205,7 +207,7 @@ function abrirPerfil(idx) {
     if (temNum(r.d)) stats.push(["Derrotas", r.d]);
     if (temNum(r.v) && temNum(r.d) && r.v + r.d > 0) stats.push(["% Vitórias", fixo((r.v / (r.v + r.d)) * 100, 0) + "%"]);
   }
-  const mov = movimentosRanking[j.steam_id];
+  const mov = nomeTemporada ? undefined : movimentosRanking[j.steam_id]; // temporada encerrada nao tem setas
   let nota = "";
   if (mov === "novo") nota = "Novo no ranking desde a última visita";
   else if (mov > 0) nota = `Subiu ${mov} posição(ões) desde a última visita`;
@@ -218,7 +220,7 @@ function abrirPerfil(idx) {
     <div class="perfil-top">
       <div class="perfil-avatar">${avatarHtml({ name: j.name, avatar_url: j.avatar_url })}</div>
       <h2>${escapeHtml(j.name || "Jogador")}</h2>
-      <div class="perfil-tags"><span class="perfil-tag">#${idx + 1} no ranking</span><span class="perfil-tag">${info.nome}</span></div>
+      <div class="perfil-tags"><span class="perfil-tag">#${idx + 1} ${nomeTemporada ? "em " + escapeHtml(nomeTemporada) : "no ranking"}</span><span class="perfil-tag">${info.nome}</span></div>
     </div>
     <div class="perfil-pontos"><b>${(j.points ?? 0).toLocaleString("pt-BR")}</b><small>PONTOS</small></div>
     ${stats.length
@@ -292,6 +294,128 @@ async function carregarLeaderboard({ silencioso = false, animar = !silencioso } 
 }
 
 carregarLeaderboard();
+
+
+// ---------- Temporadas (ranking final de cada mês) ----------
+// Vem de /api/temporadas (resumo) e /api/temporadas/:id (tabela completa).
+// O fechamento e feito no servidor/admin - aqui so mostramos.
+
+const tempSeletorEl = document.getElementById("temp-seletor");
+const tempResumoEl = document.getElementById("temp-resumo");
+const tempListaEl = document.getElementById("temp-lista");
+
+let listaTemporadas = [];
+let temporadaSelecionada = null; // id ("AAAA-MM")
+let jogadoresTemporada = [];
+let nomeTemporadaAtual = "";
+let tempReqId = 0; // descarta respostas antigas se a pessoa clicar rapido em outra temporada
+
+function dataBR(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+function renderizarSeletorTemporadas() {
+  tempSeletorEl.innerHTML = listaTemporadas
+    .map(
+      (t) =>
+        `<button type="button" class="temp-pill ${t.id === temporadaSelecionada ? "active" : ""}" data-id="${escapeHtml(t.id)}">${escapeHtml(t.nome)}</button>`
+    )
+    .join("");
+}
+
+function renderizarTemporada(t, animar) {
+  jogadoresTemporada = t.jogadores;
+  nomeTemporadaAtual = t.nome;
+
+  const campeao = t.campeao;
+  tempResumoEl.classList.remove("hidden");
+  tempResumoEl.innerHTML = `
+    <div class="temp-resumo-nome">${escapeHtml(t.nome)}</div>
+    <div class="temp-resumo-info">
+      ${campeao ? `<span>🏆 Campeão: <b>${escapeHtml(campeao.name || "Jogador")}</b> · ${(campeao.points ?? 0).toLocaleString("pt-BR")} pts</span>` : ""}
+      <span>${t.total} ${t.total === 1 ? "jogador" : "jogadores"}</span>
+      <span>Encerrada em ${dataBR(t.fechado_em)}</span>
+    </div>`;
+
+  tempListaEl.className = `leaderboard glow-${faixaPremier(t.jogadores[0]?.points)}`;
+  tempListaEl.innerHTML = t.jogadores
+    .map((j, i) => {
+      const pos = i + 1;
+      const nome = escapeHtml(j.name || "Jogador");
+      const pontos = j.points ?? 0;
+      return `
+        <div class="rank-row pos-${pos} ${faixaPremier(pontos)} ${animar ? "anima" : ""}" style="--i:${i}">
+          <div class="rank-posbox">
+            <div class="rank-pos">${String(pos).padStart(2, "0")}</div>
+          </div>
+          ${avatarHtml({ name: j.name, avatar_url: j.avatar_url })}
+          <div class="rank-info">
+            <span class="rank-name" data-idx="${i}" title="Ver perfil de ${nome}">${nome}</span>
+            ${statsLinhaHtml(j)}
+          </div>
+          <div class="rank-premier"><i class="rank-faixas"></i><div class="rank-caixa"><span class="rank-points" data-p="${pontos}">${animar ? "0" : pontos.toLocaleString("pt-BR")}</span></div></div>
+        </div>`;
+    })
+    .join("");
+
+  if (animar) {
+    tempListaEl.querySelectorAll(".rank-points").forEach((el, i) => {
+      setTimeout(() => contarPontos(el, Number(el.dataset.p)), i * 60);
+    });
+  }
+}
+
+async function abrirTemporada(id, { animar = true } = {}) {
+  temporadaSelecionada = id;
+  renderizarSeletorTemporadas();
+  const minhaReq = ++tempReqId;
+  tempListaEl.className = "leaderboard";
+  tempListaEl.innerHTML = `<div class="loading">Carregando temporada…</div>`;
+  try {
+    const res = await fetch(`/api/temporadas/${encodeURIComponent(id)}`, { cache: "no-store" });
+    if (!res.ok) throw new Error("Falha ao carregar.");
+    const t = await res.json();
+    if (minhaReq !== tempReqId) return;
+    renderizarTemporada(t, animar && !reduzirMovimento);
+  } catch (err) {
+    if (minhaReq !== tempReqId) return;
+    tempListaEl.innerHTML = `<div class="loading">Erro ao carregar a temporada.</div>`;
+  }
+}
+
+async function carregarTemporadas() {
+  try {
+    const res = await fetch("/api/temporadas", { cache: "no-store" });
+    if (!res.ok) throw new Error("Falha ao carregar.");
+    listaTemporadas = await res.json();
+
+    if (!listaTemporadas.length) {
+      tempSeletorEl.innerHTML = "";
+      tempResumoEl.classList.add("hidden");
+      tempListaEl.className = "leaderboard";
+      tempListaEl.innerHTML = `<div class="loading">Nenhuma temporada encerrada ainda. A primeira aparece quando o mês fechar.</div>`;
+      return;
+    }
+
+    // Mantem a escolhida se ainda existir; senao abre a mais recente.
+    const manter = listaTemporadas.some((t) => t.id === temporadaSelecionada);
+    abrirTemporada(manter ? temporadaSelecionada : listaTemporadas[0].id, { animar: !manter });
+  } catch (err) {
+    if (listaTemporadas.length) return; // mantem o que ja estava na tela
+    tempListaEl.innerHTML = `<div class="loading">Erro ao carregar as temporadas.</div>`;
+  }
+}
+
+tempSeletorEl.addEventListener("click", (e) => {
+  const pill = e.target.closest(".temp-pill");
+  if (pill && pill.dataset.id !== temporadaSelecionada) abrirTemporada(pill.dataset.id);
+});
+
+tempListaEl.addEventListener("click", (e) => {
+  const nome = e.target.closest(".rank-name");
+  if (nome) abrirPerfil(Number(nome.dataset.idx), jogadoresTemporada, nomeTemporadaAtual);
+});
 
 
 // ---------- Lista de jogadores (base do Sorteio) ----------

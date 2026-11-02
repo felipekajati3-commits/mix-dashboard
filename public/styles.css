@@ -2334,3 +2334,76 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .tab-panel.active, .tab-panel.saindo { animation: none; }
 }
+
+/* ---------- Aba Temporadas ---------- */
+.temp-seletor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.temp-pill {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.temp-pill:hover { color: var(--text); border-color: color-mix(in srgb, var(--gold) 60%, transparent); }
+.temp-pill.active,
+.temp-pill.active:hover {
+  background: rgba(212, 175, 55, 0.12);
+  color: var(--text);
+  border-color: var(--gold);
+}
+
+.temp-resumo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 24px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--gold);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 18px;
+}
+.temp-resumo.hidden { display: none; }
+.temp-resumo-nome {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.temp-resumo-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.temp-resumo-info b { color: var(--text); }
+
+@media (max-width: 520px) {
+  .tab-btn { padding: 9px 11px; font-size: 13px; }
+  .tabs { gap: 2px; }
+  .temp-resumo-nome { font-size: 19px; }
+}
+
+/* Com 4 abas o centro absoluto nao cabe mais ao lado do indicador "online"
+   e do botao Conectar. Largas: as abas ficam no espaco livre do meio.
+   Medias: vao pra uma linha propria (igual ao celular). */
+@media (min-width: 1321px) {
+  .tabs { position: relative; left: auto; top: auto; transform: none; margin: 0 auto; }
+}
+@media (min-width: 901px) and (max-width: 1320px) {
+  .tabs { position: relative; left: auto; top: auto; transform: none; order: 3; width: 100%; justify-content: center; }
+}

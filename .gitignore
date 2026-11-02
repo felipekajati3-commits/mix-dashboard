@@ -3,3 +3,4 @@ node_modules/
 rankings.local.json
 snapshot-ranking.local.json
 historico-partidas.local.json
+temporadas.local.json

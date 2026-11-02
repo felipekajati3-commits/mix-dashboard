@@ -47,6 +47,26 @@ onde você rodou, se outras pessoas forem acessar pela rede).
   lista é **independente** da aba Ranking agora. Nas vagas "Complete N"
   existe um lápis para trocar o nome só para os sorteios.
 - **Aba Mapa**: sorteio de mapa ao vivo.
+- **Aba Temporadas**: ranking final de cada mês, guardado de forma
+  permanente (arquivo `temporadas.json` na branch `data`, via
+  `temporadas.js`). Mostra um seletor de mês, o campeão e a tabela
+  completa daquela temporada, com o mesmo visual do Ranking. As
+  temporadas são fechadas assim:
+  - **Pelo admin** (`/admin.html` → "Temporadas"): escolha o mês e a
+    fonte (snapshot atual, snapshot anterior ou ranking ao vivo). É o
+    jeito certo de guardar um mês cujo reset já foi feito, usando o
+    snapshot tirado antes do reset.
+  - **Automático**: no último dia do mês, a partir das 23:50 (Brasília),
+    o site guarda o ranking ao vivo como a temporada do mês — mas só se
+    o mês ainda não existir e o ranking não estiver zerado. Isso exige o
+    site acordado nessa janela (no Render grátis ele dorme): configure um
+    cron externo para chamar todo dia às 23:55 (Brasília)
+    `https://SEU-SITE/api/cron/fechar-temporada?key=SUA_CRON_SECRET`
+    (defina a variável `CRON_SECRET` no host; sem ela a rota fica
+    desligada). Em dias que não são o último do mês a chamada não faz nada.
+  - O site **não zera os pontos** no K4-System: o reset continua sendo
+    feito por você. Fluxo mensal: tire o snapshot / deixe o automático
+    fechar → confira em "Temporadas" → faça o reset.
 - **/admin.html**: onde a equipe edita os níveis usados no Sorteio (e só
   nele — não afeta mais a aba Ranking).
 

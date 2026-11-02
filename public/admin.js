@@ -58,6 +58,7 @@ async function verificarLogin() {
     carregarRankings();
     carregarHistorico();
     carregarSnapshot();
+    carregarTemporadasAdmin();
   } else {
     telaLogin.classList.remove("hidden");
     telaPainel.classList.add("hidden");
@@ -555,6 +556,126 @@ btnSnapshotAgora.addEventListener("click", async () => {
     snapshotInfoEl.textContent = err.message;
   } finally {
     btnSnapshotAgora.disabled = false;
+  }
+});
+
+// ---------------- TEMPORADAS (ranking mensal) ----------------
+// Fecha/lista/remove temporadas. Ver temporadas.js e os endpoints /api/admin/temporadas.
+const tempMesEl = document.getElementById("temp-mes");
+const tempFonteEl = document.getElementById("temp-fonte");
+const btnTempSalvar = document.getElementById("btn-temp-salvar");
+const tempMsgEl = document.getElementById("temp-msg");
+const tempAdminListaEl = document.getElementById("temp-admin-lista");
+
+const ORIGENS_TEMPORADA = {
+  snapshot_atual: "Snapshot atual",
+  snapshot_anterior: "Snapshot anterior",
+  ranking: "Ranking ao vivo",
+  automatico: "Automático (fim do mês)",
+};
+
+function escTemp(str) {
+  return String(str ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+// Sugere o mes anterior (o que normalmente se fecha logo depois do reset).
+function mesAnteriorPadrao() {
+  const d = new Date();
+  d.setDate(1);
+  d.setMonth(d.getMonth() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+if (tempMesEl) tempMesEl.value = mesAnteriorPadrao();
+
+function renderizarTemporadasAdmin(lista) {
+  if (!lista.length) {
+    tempAdminListaEl.innerHTML = `<div class="muted" style="padding:14px">Nenhuma temporada guardada ainda.</div>`;
+    return;
+  }
+  const linhas = lista
+    .map((t) => {
+      const quando = t.fechado_em
+        ? new Date(t.fechado_em).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })
+        : "—";
+      const campeao = t.campeao
+        ? `${escTemp(t.campeao.name || "Jogador")} (${Number(t.campeao.points || 0).toLocaleString("pt-BR")})`
+        : "—";
+      return `<tr>
+        <td><b>${escTemp(t.nome)}</b></td>
+        <td>${campeao}</td>
+        <td>${t.total}</td>
+        <td>${escTemp(ORIGENS_TEMPORADA[t.origem] || t.origem || "—")}</td>
+        <td>${quando}</td>
+        <td><button type="button" class="btn btn-outline" data-remover="${escTemp(t.id)}" data-nome="${escTemp(t.nome)}">Remover</button></td>
+      </tr>`;
+    })
+    .join("");
+  tempAdminListaEl.innerHTML = `<table class="historico-tabela">
+    <thead><tr><th>Temporada</th><th>Campeão</th><th>Jogadores</th><th>Origem</th><th>Fechada em</th><th></th></tr></thead>
+    <tbody>${linhas}</tbody></table>`;
+}
+
+async function carregarTemporadasAdmin() {
+  try {
+    const res = await fetch("/api/temporadas", { cache: "no-store" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erro ao carregar as temporadas.");
+    renderizarTemporadasAdmin(data);
+  } catch (err) {
+    tempAdminListaEl.innerHTML = `<div class="muted" style="padding:14px">${escTemp(err.message)}</div>`;
+  }
+}
+
+async function salvarTemporada(substituir) {
+  const mes = tempMesEl.value;
+  if (!mes) {
+    tempMsgEl.textContent = "Escolha o mês da temporada.";
+    return;
+  }
+  btnTempSalvar.disabled = true;
+  tempMsgEl.textContent = "Salvando temporada…";
+  try {
+    const res = await fetch("/api/admin/temporadas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mes, fonte: tempFonteEl.value, substituir }),
+    });
+    const data = await res.json();
+    if (res.status === 409 && !substituir) {
+      // Ja existe: pergunta antes de trocar.
+      if (confirm(`${data.error}\n\nSubstituir a temporada desse mês pelos dados escolhidos?`)) {
+        btnTempSalvar.disabled = false;
+        return salvarTemporada(true);
+      }
+      tempMsgEl.textContent = "Nada foi alterado.";
+      return;
+    }
+    if (!res.ok) throw new Error(data.error || "Erro ao salvar a temporada.");
+    tempMsgEl.textContent = `Temporada "${data.nome}" salva com ${data.total} jogadores.`;
+    carregarTemporadasAdmin();
+  } catch (err) {
+    tempMsgEl.textContent = err.message;
+  } finally {
+    btnTempSalvar.disabled = false;
+  }
+}
+
+btnTempSalvar.addEventListener("click", () => salvarTemporada(false));
+
+tempAdminListaEl.addEventListener("click", async (e) => {
+  const btn = e.target.closest("[data-remover]");
+  if (!btn) return;
+  if (!confirm(`Remover a temporada "${btn.dataset.nome}"? Isso apaga o ranking guardado desse mês.`)) return;
+  btn.disabled = true;
+  try {
+    const res = await fetch(`/api/admin/temporadas/${encodeURIComponent(btn.dataset.remover)}`, { method: "DELETE" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erro ao remover.");
+    tempMsgEl.textContent = `Temporada "${btn.dataset.nome}" removida.`;
+    carregarTemporadasAdmin();
+  } catch (err) {
+    tempMsgEl.textContent = err.message;
+    btn.disabled = false;
   }
 });
 

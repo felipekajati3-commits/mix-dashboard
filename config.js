@@ -61,6 +61,10 @@ module.exports = {
     // Arquivo separado (mesma branch) com o snapshot diário do ranking
     // (ver snapshot.js) - sempre só o mais recente.
     arquivoSnapshot: process.env.GITHUB_ARQUIVO_SNAPSHOT || "snapshot-ranking.json",
+
+    // Arquivo separado (mesma branch) com as TEMPORADAS mensais fechadas
+    // (ver temporadas.js) - permanente, nunca e apagado sozinho.
+    arquivoTemporadas: process.env.GITHUB_ARQUIVO_TEMPORADAS || "temporadas.json",
   },
 
   // ---------------- Pesos do sorteio ----------------
