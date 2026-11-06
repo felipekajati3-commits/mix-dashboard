@@ -2407,3 +2407,25 @@ body {
 @media (min-width: 901px) and (max-width: 1320px) {
   .tabs { position: relative; left: auto; top: auto; transform: none; order: 3; width: 100%; justify-content: center; }
 }
+
+/* ---------- Histórico de Partidas ---------- */
+.partidas-lista { display: flex; flex-direction: column; gap: 10px; }
+.partida { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+.partida > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 110px 1fr auto; gap: 14px; align-items: center; padding: 14px 18px; }
+.partida > summary::-webkit-details-marker { display: none; }
+.pt-mapa { font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.pt-placar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; color: var(--muted); }
+.pt-placar em { font-style: normal; color: var(--text); font-weight: 700; }
+.pt-data { color: var(--muted); font-size: 13px; }
+.partida .venceu { color: var(--gold, #f2c94c); }
+.pt-times { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; padding: 4px 18px 16px; }
+.pt-times h4 { margin: 0 0 6px; font-size: 14px; }
+.pt-tabela { width: 100%; border-collapse: collapse; font-size: 13px; }
+.pt-tabela th, .pt-tabela td { padding: 5px 6px; text-align: right; white-space: nowrap; }
+.pt-tabela th { color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); }
+.pt-tabela .pt-nome { text-align: left; max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 760px) {
+  .partida > summary { grid-template-columns: 1fr; gap: 6px; }
+  .pt-placar { justify-content: flex-start; }
+  .pt-times { grid-template-columns: 1fr; overflow-x: auto; }
+}

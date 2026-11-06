@@ -36,6 +36,8 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
       carregarLeaderboard({ silencioso: true, animar: true });
     } else if (btn.dataset.tab === "sorteio") {
       carregarJogadores({ silencioso: true });
+    } else if (btn.dataset.tab === "partidas") {
+      carregarPartidas();
     } else if (btn.dataset.tab === "temporadas") {
       carregarTemporadas();
     }
@@ -295,6 +297,74 @@ async function carregarLeaderboard({ silencioso = false, animar = !silencioso } 
 
 carregarLeaderboard();
 
+
+// ---------- Histórico de Partidas (MatchZy) ----------
+// Vem de /api/partidas. Cada partida abre/fecha com <details>.
+
+const partidasListaEl = document.getElementById("partidas-lista");
+
+function nomeTimePartida(n) {
+  return String(n || "").replace(/^team_+/i, "") || "Time";
+}
+
+function nomeMapaPartida(m) {
+  const base = String(m || "").replace(/^de_/, "").replace(/_/g, " ");
+  return base.charAt(0).toUpperCase() + base.slice(1);
+}
+
+function dataHoraBR(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit",
+  });
+}
+
+function tabelaTimePartida(jogs) {
+  if (!jogs.length) return "";
+  const linhas = jogs.map((j) => {
+    const kd = j.d > 0 ? (j.k / j.d).toFixed(2) : j.k.toFixed(2);
+    const hs = j.k > 0 ? Math.round((j.hs / j.k) * 100) + "%" : "—";
+    return `<tr><td class="pt-nome">${escapeHtml(j.nome)}</td><td>${j.k}</td><td>${j.d}</td><td>${j.a}</td><td>${kd}</td><td>${j.dano}</td><td>${hs}</td></tr>`;
+  }).join("");
+  return `<table class="pt-tabela"><thead><tr><th>Jogador</th><th>K</th><th>M</th><th>A</th><th>K/D</th><th>Dano</th><th>HS</th></tr></thead><tbody>${linhas}</tbody></table>`;
+}
+
+function renderizarPartidas(lista) {
+  if (!lista.length) {
+    partidasListaEl.innerHTML = `<div class="loading">Nenhuma partida registrada ainda.</div>`;
+    return;
+  }
+  partidasListaEl.innerHTML = lista.map((p) => {
+    const t1 = escapeHtml(nomeTimePartida(p.time1));
+    const t2 = escapeHtml(nomeTimePartida(p.time2));
+    const cls1 = p.vencedor === 1 ? "venceu" : "", cls2 = p.vencedor === 2 ? "venceu" : "";
+    const j1 = p.jogadores.filter((j) => j.time === 1);
+    const j2 = p.jogadores.filter((j) => j.time === 2);
+    return `
+      <details class="partida">
+        <summary>
+          <span class="pt-mapa">${escapeHtml(nomeMapaPartida(p.mapa))}</span>
+          <span class="pt-placar"><b class="${cls1}">${t1}</b> <em>${p.placar1} x ${p.placar2}</em> <b class="${cls2}">${t2}</b></span>
+          <span class="pt-data">${dataHoraBR(p.fim)}</span>
+        </summary>
+        <div class="pt-times">
+          <div><h4 class="${cls1}">${t1}</h4>${tabelaTimePartida(j1)}</div>
+          <div><h4 class="${cls2}">${t2}</h4>${tabelaTimePartida(j2)}</div>
+        </div>
+      </details>`;
+  }).join("");
+}
+
+async function carregarPartidas() {
+  try {
+    const res = await fetch("/api/partidas", { cache: "no-store" });
+    if (!res.ok) throw new Error("Falha ao carregar.");
+    renderizarPartidas(await res.json());
+  } catch (err) {
+    if (partidasListaEl.querySelector(".partida")) return; // mantem o que ja estava na tela
+    partidasListaEl.innerHTML = `<div class="loading">Erro ao carregar as partidas.</div>`;
+  }
+}
 
 // ---------- Temporadas (ranking final de cada mês) ----------
 // Vem de /api/temporadas (resumo) e /api/temporadas/:id (tabela completa).

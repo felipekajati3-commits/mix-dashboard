@@ -26,6 +26,7 @@
     <button class="tab-btn active" data-tab="ranking">Ranking</button>
     <button class="tab-btn" data-tab="sorteio">Sorteio</button>
     <button class="tab-btn" data-tab="mapa">Mapa</button>
+    <button class="tab-btn" data-tab="partidas">Histórico de Partidas</button>
     <button class="tab-btn" data-tab="temporadas">Temporadas</button>
     <span class="tab-slider" id="tab-slider"></span>
   </nav>
@@ -189,6 +190,16 @@
     <div id="map-history" class="map-history"></div>
 
     <div id="mapa-msg" class="msg"></div>
+  </section>
+
+  <section id="tab-partidas" class="tab-panel">
+    <div class="section-head">
+      <h2>Histórico de Partidas</h2>
+      <p class="muted">Últimas partidas do servidor, da mais recente para a mais antiga. Clique numa partida para ver o desempenho de cada jogador.</p>
+    </div>
+    <div id="partidas-lista" class="partidas-lista">
+      <div class="loading">Carregando partidas…</div>
+    </div>
   </section>
 
   <section id="tab-temporadas" class="tab-panel">

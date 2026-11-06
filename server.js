@@ -1231,6 +1231,68 @@ function resumoTemporada(t, avatares = {}) {
   };
 }
 
+// Histórico de partidas (tabelas do MatchZy: matchzy_stats_*). Lista as
+// últimas partidas com o desempenho de cada jogador. Espectadores
+// (team = 'Spectator') ficam de fora. O vencedor sai do placar, não do
+// nome gravado em "winner" (a tabela de mapas corta nomes longos).
+app.get("/api/partidas", async (req, res) => {
+  try {
+    const limite = Math.min(Math.max(parseInt(req.query.limit, 10) || 30, 1), 100);
+    const [partidas] = await pool.query(
+      `SELECT m.matchid, mp.mapname,
+              DATE_FORMAT(COALESCE(mp.end_time, m.end_time, m.start_time), '%Y-%m-%dT%H:%i:%sZ') AS fim,
+              m.team1_name, m.team2_name, mp.team1_score, mp.team2_score
+         FROM matchzy_stats_matches m
+         JOIN matchzy_stats_maps mp ON mp.matchid = m.matchid AND mp.mapnumber = 0
+        ORDER BY m.matchid DESC
+        LIMIT ?`,
+      [limite]
+    );
+    if (!partidas.length) return res.json([]);
+
+    const [jogs] = await pool.query(
+      `SELECT matchid, steamid64, team, name, kills, deaths, assists, damage, head_shot_kills
+         FROM matchzy_stats_players
+        WHERE mapnumber = 0 AND team <> 'Spectator' AND matchid IN (?)`,
+      [partidas.map((p) => p.matchid)]
+    );
+
+    const porPartida = {};
+    for (const j of jogs) {
+      (porPartida[j.matchid] ||= []).push({
+        steam_id: String(j.steamid64),
+        nome: j.name,
+        time: null,
+        team: j.team,
+        k: j.kills, d: j.deaths, a: j.assists, dano: j.damage, hs: j.head_shot_kills,
+      });
+    }
+
+    res.json(
+      partidas.map((p) => {
+        const venc = p.team1_score > p.team2_score ? 1 : p.team2_score > p.team1_score ? 2 : null;
+        const jogadores = (porPartida[p.matchid] || [])
+          .map((j) => ({ ...j, time: j.team === p.team1_name ? 1 : 2, team: undefined }))
+          .sort((a, b) => a.time - b.time || b.k - a.k);
+        return {
+          id: p.matchid,
+          mapa: p.mapname,
+          fim: p.fim,
+          time1: p.team1_name,
+          time2: p.team2_name,
+          placar1: p.team1_score,
+          placar2: p.team2_score,
+          vencedor: venc,
+          jogadores,
+        };
+      })
+    );
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao carregar as partidas." });
+  }
+});
+
 // Lista publica de temporadas (so o resumo, sem a tabela inteira).
 app.get("/api/temporadas", async (req, res) => {
   try {
