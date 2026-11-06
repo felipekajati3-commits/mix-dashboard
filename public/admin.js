@@ -59,6 +59,7 @@ async function verificarLogin() {
     carregarHistorico();
     carregarSnapshot();
     carregarTemporadasAdmin();
+    carregarCorte();
   } else {
     telaLogin.classList.remove("hidden");
     telaPainel.classList.add("hidden");
@@ -682,6 +683,54 @@ tempAdminListaEl.addEventListener("click", async (e) => {
 // Avisa antes de fechar a aba com alteração pendente.
 window.addEventListener("beforeunload", (e) => {
   if (alterado) e.preventDefault();
+});
+
+// ---------------- Corte do histórico de partidas ----------------
+// Esconde partidas anteriores a uma data. Ver corte.js e /api/admin/partidas-corte.
+const corteStatusEl = document.getElementById("corte-status");
+const corteMsgEl = document.getElementById("corte-msg");
+const btnCorteZerar = document.getElementById("btn-corte-zerar");
+const btnCorteDesfazer = document.getElementById("btn-corte-desfazer");
+
+function mostrarCorte(c) {
+  corteStatusEl.textContent = c.desde
+    ? `Mostrando partidas a partir de ${new Date(c.desde).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}`
+    : "Mostrando todas as partidas";
+  btnCorteDesfazer.hidden = !c.desde;
+}
+
+async function chamarCorte(metodo) {
+  corteMsgEl.textContent = "";
+  btnCorteZerar.disabled = btnCorteDesfazer.disabled = true;
+  try {
+    const res = await fetch("/api/admin/partidas-corte", { method: metodo });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erro ao salvar.");
+    mostrarCorte(data);
+  } catch (err) {
+    corteMsgEl.textContent = err.message;
+  } finally {
+    btnCorteZerar.disabled = btnCorteDesfazer.disabled = false;
+  }
+}
+
+async function carregarCorte() {
+  try {
+    const res = await fetch("/api/admin/partidas-corte", { cache: "no-store" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erro ao carregar.");
+    mostrarCorte(data);
+  } catch (err) {
+    corteStatusEl.textContent = err.message;
+  }
+}
+
+btnCorteZerar.addEventListener("click", () => {
+  const r = prompt("Isso esconde TODAS as partidas de antes de agora do site (nada é apagado do banco).\nDigite ZERAR para confirmar:");
+  if (r && r.trim().toUpperCase() === "ZERAR") chamarCorte("POST");
+});
+btnCorteDesfazer.addEventListener("click", () => {
+  if (confirm("Voltar a mostrar todas as partidas?")) chamarCorte("DELETE");
 });
 
 verificarLogin();

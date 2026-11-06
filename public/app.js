@@ -345,11 +345,16 @@ function ptBlocoTime(p, lado) {
     ${jogs.map((j) => ptLinha(j, p)).join("")}</div>`;
 }
 
-// Foto do time: o capitão (nome igual ao do time) ou, se não achar, quem mais matou.
+// Compara nomes sem acento, espaço, sublinhado ou símbolo ("JV_putifero" = "JV putifero").
+const ptNorm = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}]/gu, "");
+
+// Foto do time = o capitão (nome igual ao do time). Se ele não jogou a partida,
+// fica o círculo com a inicial: melhor que a foto de outra pessoa.
 function ptLider(p, lado) {
-  const js = p.jogadores.filter((j) => j.time === lado);
-  const cap = nomeTimePartida(lado === 1 ? p.time1 : p.time2).toLowerCase();
-  return js.find((j) => j.nome.toLowerCase() === cap) || [...js].sort((a, b) => b.k - a.k)[0] || { nome: cap };
+  const nome = nomeTimePartida(lado === 1 ? p.time1 : p.time2);
+  const alvo = ptNorm(nome);
+  const cap = alvo && p.jogadores.find((j) => j.time === lado && ptNorm(j.nome) === alvo);
+  return cap || { nome };
 }
 
 const PT_SETA = `<svg class="pt-seta" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>`;
@@ -414,23 +419,55 @@ function filtrarJogadorPartidas(steam) {
   carregarPartidas();
 }
 
-ptBuscaEl.addEventListener("input", () => {
-  clearTimeout(ptTimer);
-  const q = ptBuscaEl.value.trim();
-  if (q.length < 2) { ptSugestoesEl.hidden = true; return; }
-  ptTimer = setTimeout(async () => {
-    try {
-      const res = await fetch(`/api/partidas/jogadores?q=${encodeURIComponent(q)}`);
-      const lista = res.ok ? await res.json() : [];
-      if (ptBuscaEl.value.trim() !== q) return;
-      ptSugestoesEl.innerHTML = lista.length
-        ? lista.map((j) => `<button class="pt-sug" data-steam="${j.steam_id}" type="button">${ptAv(j)}
-            <span>${escapeHtml(j.nome)}</span><small>${j.partidas} ${j.partidas === 1 ? "partida" : "partidas"}</small></button>`).join("")
-        : `<div class="pt-sug-vazio">Nenhum jogador encontrado.</div>`;
-      ptSugestoesEl.hidden = false;
-    } catch (err) { ptSugestoesEl.hidden = true; }
-  }, 300);
+// ----- Pesquisa: caixa + seta com todos os jogadores -----
+let ptJogadores = null; // carregado uma vez, filtrado na hora
+
+async function ptCarregarJogadores() {
+  if (ptJogadores) return ptJogadores;
+  try {
+    const res = await fetch("/api/partidas/jogadores");
+    ptJogadores = res.ok ? await res.json() : [];
+  } catch (err) { ptJogadores = []; }
+  return ptJogadores;
+}
+
+function ptFecharOpcoes() {
+  ptSugestoesEl.hidden = true;
+  ptBuscaEl.setAttribute("aria-expanded", "false");
+}
+
+async function ptMostrarOpcoes() {
+  const lista = await ptCarregarJogadores();
+  const q = ptNorm(ptBuscaEl.value);
+  let itens = lista.map((j) => ({ j, achado: q ? j.nomes.find((n) => ptNorm(n).includes(q)) : null }));
+  if (q) itens = itens.filter((x) => x.achado || x.j.steam_id.includes(q));
+  else itens.sort((a, b) => a.j.nome.localeCompare(b.j.nome, "pt-BR", { sensitivity: "base" }));
+  ptSugestoesEl.innerHTML = itens.length
+    ? itens.map(({ j, achado }) => `<button class="pt-sug" role="option" data-steam="${j.steam_id}" type="button">${ptAv(j)}
+        <span>${escapeHtml(j.nome)}${achado && achado !== j.nome ? ` <em>(jogou como ${escapeHtml(achado)})</em>` : ""}</span>
+        <small>${j.partidas} ${j.partidas === 1 ? "partida" : "partidas"}</small></button>`).join("")
+    : `<div class="pt-sug-vazio">Nenhum jogador encontrado.</div>`;
+  ptSugestoesEl.hidden = false;
+  ptBuscaEl.setAttribute("aria-expanded", "true");
+}
+
+ptBuscaEl.addEventListener("input", ptMostrarOpcoes);
+ptBuscaEl.addEventListener("focus", ptMostrarOpcoes);
+document.getElementById("pt-seta").addEventListener("click", () => {
+  if (ptSugestoesEl.hidden) { ptBuscaEl.focus(); ptMostrarOpcoes(); } else ptFecharOpcoes();
 });
+ptBuscaEl.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowDown") { e.preventDefault(); (ptSugestoesEl.querySelector(".pt-sug") || ptBuscaEl).focus(); }
+  else if (e.key === "Enter") { ptSugestoesEl.querySelector(".pt-sug")?.click(); }
+  else if (e.key === "Escape") ptFecharOpcoes();
+});
+ptSugestoesEl.addEventListener("keydown", (e) => {
+  const op = e.target.closest(".pt-sug");
+  if (e.key === "ArrowDown") { e.preventDefault(); op?.nextElementSibling?.focus(); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); (op?.previousElementSibling || ptBuscaEl).focus(); }
+  else if (e.key === "Escape") { ptFecharOpcoes(); ptBuscaEl.focus(); }
+});
+document.addEventListener("click", (e) => { if (!e.target.closest(".pt-busca-wrap")) ptFecharOpcoes(); });
 
 document.getElementById("tab-partidas").addEventListener("click", (e) => {
   const alvo = e.target.closest("[data-steam], #pt-limpar, [data-toggle]");

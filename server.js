@@ -6,6 +6,7 @@ const crypto = require("crypto");
 const config = require("./config");
 const store = require("./store");
 const historico = require("./historico");
+const corte = require("./corte");
 const snapshot = require("./snapshot");
 const temporadas = require("./temporadas");
 
@@ -1236,29 +1237,57 @@ function resumoTemporada(t, avatares = {}) {
 // "winner" (a tabela de mapas corta nomes longos). steamid64 é lido como texto
 // (CAST) porque BIGINT perde precisão como número no JavaScript.
 
-// Pesquisa jogadores pelo nome (ou SteamID64) e devolve até 8 candidatos.
+// Data de corte do histórico (admin: "Zerar histórico de partidas"), no formato
+// do MySQL (UTC). Sem corte, devolve null e tudo aparece.
+async function corteSql() {
+  try {
+    const c = await corte.ler();
+    return c.desde ? new Date(c.desde).toISOString().slice(0, 19).replace("T", " ") : null;
+  } catch (err) {
+    console.error("[Corte]", err.message);
+    return null;
+  }
+}
+
+// Todos os jogadores com partida depois do corte (a tela filtra na hora, sem
+// ir ao servidor a cada letra). "nomes" inclui apelidos antigos.
 app.get("/api/partidas/jogadores", async (req, res) => {
   try {
-    const q = String(req.query.q || "").trim().slice(0, 40);
-    if (q.length < 2) return res.json([]);
-    const params = ["%" + q.replace(/[\\%_]/g, (m) => "\\" + m) + "%"];
-    let cond = "name LIKE ?";
-    if (/^\d{17}$/.test(q)) { cond += " OR steamid64 = CAST(? AS UNSIGNED)"; params.push(q); }
+    const desde = await corteSql();
     const [rows] = await pool.query(
       `SELECT CAST(steamid64 AS CHAR) AS steam,
-              SUBSTRING_INDEX(GROUP_CONCAT(name ORDER BY matchid DESC SEPARATOR '\\n'), '\\n', 1) AS nome,
+              SUBSTRING_INDEX(GROUP_CONCAT(name ORDER BY matchid DESC SEPARATOR '\n'), '\n', 1) AS nome,
+              GROUP_CONCAT(DISTINCT name SEPARATOR '\n') AS nomes,
               COUNT(*) AS partidas
          FROM matchzy_stats_players
-        WHERE mapnumber = 0 AND team <> 'Spectator' AND (${cond})
-        GROUP BY steamid64 ORDER BY partidas DESC LIMIT 8`,
-      params
+        WHERE mapnumber = 0 AND team <> 'Spectator'
+          ${desde ? "AND matchid IN (SELECT matchid FROM matchzy_stats_maps WHERE mapnumber = 0 AND COALESCE(end_time, start_time) >= ?)" : ""}
+        GROUP BY steamid64 ORDER BY partidas DESC LIMIT 500`,
+      desde ? [desde] : []
     );
     const av = await buscarAvatares(rows.map((r) => r.steam));
-    res.json(rows.map((r) => ({ steam_id: r.steam, nome: r.nome, partidas: r.partidas, avatar_url: av[r.steam] || null })));
+    res.json(rows.map((r) => ({
+      steam_id: r.steam, nome: r.nome, partidas: r.partidas, avatar_url: av[r.steam] || null,
+      nomes: String(r.nomes || "").split("\n").slice(0, 8),
+    })));
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Erro ao pesquisar jogadores." });
+    res.status(500).json({ error: "Erro ao listar jogadores." });
   }
+});
+
+// Admin: corte do histórico. POST = "a partir de agora"; DELETE = mostra tudo.
+app.get("/api/admin/partidas-corte", exigirAdmin, async (req, res) => {
+  try { res.json(await corte.ler({ forcar: true })); }
+  catch (err) { console.error(err); res.status(500).json({ error: "Erro ao ler o corte." }); }
+});
+app.post("/api/admin/partidas-corte", exigirAdmin, async (req, res) => {
+  try { res.json(await corte.definir(new Date().toISOString())); }
+  catch (err) { console.error(err); res.status(500).json({ error: "Erro ao salvar o corte." }); }
+});
+app.delete("/api/admin/partidas-corte", exigirAdmin, async (req, res) => {
+  try { res.json(await corte.definir(null)); }
+  catch (err) { console.error(err); res.status(500).json({ error: "Erro ao remover o corte." }); }
 });
 
 // Lista as últimas partidas. Com ?steam=ID, só as partidas desse jogador (até
@@ -1267,10 +1296,15 @@ app.get("/api/partidas", async (req, res) => {
   try {
     const steam = /^\d{17}$/.test(String(req.query.steam || "")) ? String(req.query.steam) : null;
     const limite = Math.min(Math.max(parseInt(req.query.limit, 10) || (steam ? 100 : 30), 1), 100);
-    const filtro = steam
-      ? `WHERE m.matchid IN (SELECT matchid FROM matchzy_stats_players
-                              WHERE mapnumber = 0 AND team <> 'Spectator' AND steamid64 = CAST(? AS UNSIGNED))`
-      : "";
+    const desde = await corteSql();
+    const conds = [], pars = [];
+    if (desde) { conds.push("COALESCE(mp.end_time, m.end_time, m.start_time) >= ?"); pars.push(desde); }
+    if (steam) {
+      conds.push(`m.matchid IN (SELECT matchid FROM matchzy_stats_players
+                                 WHERE mapnumber = 0 AND team <> 'Spectator' AND steamid64 = CAST(? AS UNSIGNED))`);
+      pars.push(steam);
+    }
+    const filtro = conds.length ? "WHERE " + conds.join(" AND ") : "";
     const [partidas] = await pool.query(
       `SELECT m.matchid, mp.mapname,
               DATE_FORMAT(COALESCE(mp.end_time, m.end_time, m.start_time), '%Y-%m-%dT%H:%i:%sZ') AS fim,
@@ -1280,7 +1314,7 @@ app.get("/api/partidas", async (req, res) => {
          JOIN matchzy_stats_maps mp ON mp.matchid = m.matchid AND mp.mapnumber = 0
          ${filtro}
         ORDER BY m.matchid DESC LIMIT ?`,
-      steam ? [steam, limite] : [limite]
+      [...pars, limite]
     );
     if (!partidas.length) return res.json({ partidas: [], jogador: null });
 

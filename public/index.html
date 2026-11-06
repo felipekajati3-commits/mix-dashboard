@@ -197,9 +197,11 @@
       <h2>Histórico de Partidas</h2>
       <p class="muted">Últimas partidas do servidor. Clique numa partida para ver o placar de cada jogador. Pesquise um jogador para ver todas as partidas dele.</p>
     </div>
+    <h3 class="pt-busca-titulo">Pesquise suas partidas</h3>
     <div class="pt-busca-wrap">
-      <input id="pt-busca" class="search-input" type="search" placeholder="Pesquisar jogador pelo nome…" autocomplete="off" />
-      <div id="pt-sugestoes" class="pt-sugestoes" hidden></div>
+      <input id="pt-busca" class="search-input" type="text" role="combobox" aria-expanded="false" aria-controls="pt-sugestoes" placeholder="Digite seu nome ou escolha na lista…" autocomplete="off" />
+      <button id="pt-seta" class="pt-seta-btn" type="button" aria-label="Ver todos os jogadores"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+      <div id="pt-sugestoes" class="pt-sugestoes" role="listbox" hidden></div>
     </div>
     <div id="pt-perfil"></div>
     <div id="partidas-lista" class="partidas-lista">
