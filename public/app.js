@@ -444,8 +444,7 @@ async function ptMostrarOpcoes() {
   else itens.sort((a, b) => a.j.nome.localeCompare(b.j.nome, "pt-BR", { sensitivity: "base" }));
   ptSugestoesEl.innerHTML = itens.length
     ? itens.map(({ j, achado }) => `<button class="pt-sug" role="option" data-steam="${j.steam_id}" type="button">${ptAv(j)}
-        <span>${escapeHtml(j.nome)}${achado && achado !== j.nome ? ` <em>(jogou como ${escapeHtml(achado)})</em>` : ""}</span>
-        <small>${j.partidas} ${j.partidas === 1 ? "partida" : "partidas"}</small></button>`).join("")
+        <span>${escapeHtml(j.nome)}${achado && achado !== j.nome ? ` <em>(jogou como ${escapeHtml(achado)})</em>` : ""}</span></button>`).join("")
     : `<div class="pt-sug-vazio">Nenhum jogador encontrado.</div>`;
   ptSugestoesEl.hidden = false;
   ptBuscaEl.setAttribute("aria-expanded", "true");
