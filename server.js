@@ -1231,62 +1231,95 @@ function resumoTemporada(t, avatares = {}) {
   };
 }
 
-// Histórico de partidas (tabelas do MatchZy: matchzy_stats_*). Lista as
-// últimas partidas com o desempenho de cada jogador. Espectadores
-// (team = 'Spectator') ficam de fora. O vencedor sai do placar, não do
-// nome gravado em "winner" (a tabela de mapas corta nomes longos).
+// Histórico de partidas (tabelas do MatchZy: matchzy_stats_*). Espectadores
+// (team = 'Spectator') ficam de fora. O vencedor sai do placar, não do campo
+// "winner" (a tabela de mapas corta nomes longos). steamid64 é lido como texto
+// (CAST) porque BIGINT perde precisão como número no JavaScript.
+
+// Pesquisa jogadores pelo nome (ou SteamID64) e devolve até 8 candidatos.
+app.get("/api/partidas/jogadores", async (req, res) => {
+  try {
+    const q = String(req.query.q || "").trim().slice(0, 40);
+    if (q.length < 2) return res.json([]);
+    const params = ["%" + q.replace(/[\\%_]/g, (m) => "\\" + m) + "%"];
+    let cond = "name LIKE ?";
+    if (/^\d{17}$/.test(q)) { cond += " OR steamid64 = CAST(? AS UNSIGNED)"; params.push(q); }
+    const [rows] = await pool.query(
+      `SELECT CAST(steamid64 AS CHAR) AS steam,
+              SUBSTRING_INDEX(GROUP_CONCAT(name ORDER BY matchid DESC SEPARATOR '\\n'), '\\n', 1) AS nome,
+              COUNT(*) AS partidas
+         FROM matchzy_stats_players
+        WHERE mapnumber = 0 AND team <> 'Spectator' AND (${cond})
+        GROUP BY steamid64 ORDER BY partidas DESC LIMIT 8`,
+      params
+    );
+    const av = await buscarAvatares(rows.map((r) => r.steam));
+    res.json(rows.map((r) => ({ steam_id: r.steam, nome: r.nome, partidas: r.partidas, avatar_url: av[r.steam] || null })));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao pesquisar jogadores." });
+  }
+});
+
+// Lista as últimas partidas. Com ?steam=ID, só as partidas desse jogador (até
+// 100) e um resumo dele.
 app.get("/api/partidas", async (req, res) => {
   try {
-    const limite = Math.min(Math.max(parseInt(req.query.limit, 10) || 30, 1), 100);
+    const steam = /^\d{17}$/.test(String(req.query.steam || "")) ? String(req.query.steam) : null;
+    const limite = Math.min(Math.max(parseInt(req.query.limit, 10) || (steam ? 100 : 30), 1), 100);
+    const filtro = steam
+      ? `WHERE m.matchid IN (SELECT matchid FROM matchzy_stats_players
+                              WHERE mapnumber = 0 AND team <> 'Spectator' AND steamid64 = CAST(? AS UNSIGNED))`
+      : "";
     const [partidas] = await pool.query(
       `SELECT m.matchid, mp.mapname,
               DATE_FORMAT(COALESCE(mp.end_time, m.end_time, m.start_time), '%Y-%m-%dT%H:%i:%sZ') AS fim,
               m.team1_name, m.team2_name, mp.team1_score, mp.team2_score
          FROM matchzy_stats_matches m
          JOIN matchzy_stats_maps mp ON mp.matchid = m.matchid AND mp.mapnumber = 0
-        ORDER BY m.matchid DESC
-        LIMIT ?`,
-      [limite]
+         ${filtro}
+        ORDER BY m.matchid DESC LIMIT ?`,
+      steam ? [steam, limite] : [limite]
     );
-    if (!partidas.length) return res.json([]);
+    if (!partidas.length) return res.json({ partidas: [], jogador: null });
 
     const [jogs] = await pool.query(
-      `SELECT matchid, steamid64, team, name, kills, deaths, assists, damage, head_shot_kills
+      `SELECT matchid, CAST(steamid64 AS CHAR) AS steam, team, name, kills, deaths, assists, damage, head_shot_kills
          FROM matchzy_stats_players
         WHERE mapnumber = 0 AND team <> 'Spectator' AND matchid IN (?)`,
       [partidas.map((p) => p.matchid)]
     );
+    const av = await buscarAvatares([...new Set(jogs.map((j) => j.steam))]);
 
     const porPartida = {};
     for (const j of jogs) {
       (porPartida[j.matchid] ||= []).push({
-        steam_id: String(j.steamid64),
-        nome: j.name,
-        time: null,
-        team: j.team,
+        steam_id: j.steam, nome: j.name, team: j.team, avatar_url: av[j.steam] || null,
         k: j.kills, d: j.deaths, a: j.assists, dano: j.damage, hs: j.head_shot_kills,
       });
     }
 
-    res.json(
-      partidas.map((p) => {
-        const venc = p.team1_score > p.team2_score ? 1 : p.team2_score > p.team1_score ? 2 : null;
-        const jogadores = (porPartida[p.matchid] || [])
-          .map((j) => ({ ...j, time: j.team === p.team1_name ? 1 : 2, team: undefined }))
-          .sort((a, b) => a.time - b.time || b.k - a.k);
-        return {
-          id: p.matchid,
-          mapa: p.mapname,
-          fim: p.fim,
-          time1: p.team1_name,
-          time2: p.team2_name,
-          placar1: p.team1_score,
-          placar2: p.team2_score,
-          vencedor: venc,
-          jogadores,
-        };
-      })
-    );
+    let jogador = null;
+    const saida = partidas.map((p) => {
+      const vencedor = p.team1_score > p.team2_score ? 1 : p.team2_score > p.team1_score ? 2 : null;
+      const jogadores = (porPartida[p.matchid] || [])
+        .map((j) => ({ ...j, time: j.team === p.team1_name ? 1 : 2, team: undefined }))
+        .sort((a, b) => a.time - b.time || b.k - a.k);
+      if (steam) {
+        const eu = jogadores.find((j) => j.steam_id === steam);
+        if (eu) {
+          jogador ||= { steam_id: steam, nome: eu.nome, avatar_url: eu.avatar_url,
+                        resumo: { partidas: 0, v: 0, d: 0, k: 0, m: 0, a: 0, dano: 0, rounds: 0, hs: 0 } };
+          const r = jogador.resumo;
+          r.partidas++; r.k += eu.k; r.m += eu.d; r.a += eu.a; r.dano += eu.dano; r.hs += eu.hs;
+          r.rounds += p.team1_score + p.team2_score;
+          if (vencedor === eu.time) r.v++; else if (vencedor) r.d++;
+        }
+      }
+      return { id: p.matchid, mapa: p.mapname, fim: p.fim, time1: p.team1_name, time2: p.team2_name,
+               placar1: p.team1_score, placar2: p.team2_score, vencedor, jogadores };
+    });
+    res.json({ partidas: saida, jogador });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erro ao carregar as partidas." });

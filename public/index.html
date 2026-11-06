@@ -195,8 +195,13 @@
   <section id="tab-partidas" class="tab-panel">
     <div class="section-head">
       <h2>Histórico de Partidas</h2>
-      <p class="muted">Últimas partidas do servidor, da mais recente para a mais antiga. Clique numa partida para ver o desempenho de cada jogador.</p>
+      <p class="muted">Últimas partidas do servidor. Clique numa partida para ver o placar de cada jogador. Pesquise um jogador para ver todas as partidas dele.</p>
     </div>
+    <div class="pt-busca-wrap">
+      <input id="pt-busca" class="search-input" type="search" placeholder="Pesquisar jogador pelo nome…" autocomplete="off" />
+      <div id="pt-sugestoes" class="pt-sugestoes" hidden></div>
+    </div>
+    <div id="pt-perfil"></div>
     <div id="partidas-lista" class="partidas-lista">
       <div class="loading">Carregando partidas…</div>
     </div>

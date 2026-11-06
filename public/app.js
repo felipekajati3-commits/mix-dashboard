@@ -299,72 +299,133 @@ carregarLeaderboard();
 
 
 // ---------- Histórico de Partidas (MatchZy) ----------
-// Vem de /api/partidas. Cada partida abre/fecha com <details>.
+// /api/partidas (lista, ou ?steam=ID do jogador) e /api/partidas/jogadores?q=.
 
 const partidasListaEl = document.getElementById("partidas-lista");
+const ptBuscaEl = document.getElementById("pt-busca");
+const ptSugestoesEl = document.getElementById("pt-sugestoes");
+const ptPerfilEl = document.getElementById("pt-perfil");
+let ptSteam = null; // jogador filtrado (SteamID64) ou null
+let ptReq = 0, ptTimer = null;
 
-function nomeTimePartida(n) {
-  return String(n || "").replace(/^team_+/i, "") || "Time";
-}
-
+const nomeTimePartida = (n) => String(n || "").replace(/^team_+/i, "") || "Time";
 function nomeMapaPartida(m) {
-  const base = String(m || "").replace(/^de_/, "").replace(/_/g, " ");
-  return base.charAt(0).toUpperCase() + base.slice(1);
+  const b = String(m || "").replace(/^de_/, "").replace(/_/g, " ");
+  return b.charAt(0).toUpperCase() + b.slice(1);
 }
-
 function dataHoraBR(iso) {
   if (!iso) return "";
-  return new Date(iso).toLocaleString("pt-BR", {
-    timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit",
-  });
+  return new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
+const ptAv = (j) => avatarHtml({ name: j.nome, avatar_url: j.avatar_url });
+
+function ptLinha(j, p) {
+  const rounds = p.placar1 + p.placar2 || 1;
+  const diff = j.k - j.d;
+  const kd = j.d > 0 ? j.k / j.d : j.k;
+  const hs = j.k > 0 ? Math.round((j.hs / j.k) * 100) + "%" : "—";
+  const cd = diff > 0 ? "pos" : diff < 0 ? "neg" : "";
+  const ck = kd >= 1 ? "pos" : "neg";
+  return `<div class="pt-row ${j.steam_id === ptSteam ? "eu" : ""}">
+    <button class="pt-jog" data-steam="${j.steam_id}" type="button">${ptAv(j)}<span>${escapeHtml(j.nome)}</span></button>
+    <span>${j.k}</span><span>${j.a}</span><span>${j.d}</span>
+    <span class="${cd}">${diff > 0 ? "+" : ""}${diff}</span>
+    <span>${(j.dano / rounds).toFixed(1)}</span><span class="${ck}">${kd.toFixed(2)}</span><span>${hs}</span></div>`;
 }
 
-function tabelaTimePartida(jogs) {
-  if (!jogs.length) return "";
-  const linhas = jogs.map((j) => {
-    const kd = j.d > 0 ? (j.k / j.d).toFixed(2) : j.k.toFixed(2);
-    const hs = j.k > 0 ? Math.round((j.hs / j.k) * 100) + "%" : "—";
-    return `<tr><td class="pt-nome">${escapeHtml(j.nome)}</td><td>${j.k}</td><td>${j.d}</td><td>${j.a}</td><td>${kd}</td><td>${j.dano}</td><td>${hs}</td></tr>`;
-  }).join("");
-  return `<table class="pt-tabela"><thead><tr><th>Jogador</th><th>K</th><th>M</th><th>A</th><th>K/D</th><th>Dano</th><th>HS</th></tr></thead><tbody>${linhas}</tbody></table>`;
+function ptBlocoTime(p, lado) {
+  const jogs = p.jogadores.filter((j) => j.time === lado);
+  const venceu = p.vencedor === lado;
+  const nome = escapeHtml(nomeTimePartida(lado === 1 ? p.time1 : p.time2));
+  const placar = lado === 1 ? p.placar1 : p.placar2;
+  return `<div class="pt-time">
+    <div class="pt-row pt-head"><div class="pt-tn"><b class="pt-score ${venceu ? "pos" : "neg"}">${placar}</b>
+      <span>Time ${nome}</span><small>${venceu ? "Vitória" : p.vencedor ? "Derrota" : "Empate"}</small></div>
+      <span>K</span><span>A</span><span>D</span><span>DIFF</span><span>ADR</span><span>K/D</span><span>HS%</span></div>
+    ${jogs.map((j) => ptLinha(j, p)).join("")}</div>`;
 }
 
 function renderizarPartidas(lista) {
   if (!lista.length) {
-    partidasListaEl.innerHTML = `<div class="loading">Nenhuma partida registrada ainda.</div>`;
+    partidasListaEl.innerHTML = `<div class="loading">Nenhuma partida encontrada.</div>`;
     return;
   }
   partidasListaEl.innerHTML = lista.map((p) => {
-    const t1 = escapeHtml(nomeTimePartida(p.time1));
-    const t2 = escapeHtml(nomeTimePartida(p.time2));
-    const cls1 = p.vencedor === 1 ? "venceu" : "", cls2 = p.vencedor === 2 ? "venceu" : "";
-    const j1 = p.jogadores.filter((j) => j.time === 1);
-    const j2 = p.jogadores.filter((j) => j.time === 2);
-    return `
-      <details class="partida">
-        <summary>
-          <span class="pt-mapa">${escapeHtml(nomeMapaPartida(p.mapa))}</span>
-          <span class="pt-placar"><b class="${cls1}">${t1}</b> <em>${p.placar1} x ${p.placar2}</em> <b class="${cls2}">${t2}</b></span>
-          <span class="pt-data">${dataHoraBR(p.fim)}</span>
-        </summary>
-        <div class="pt-times">
-          <div><h4 class="${cls1}">${t1}</h4>${tabelaTimePartida(j1)}</div>
-          <div><h4 class="${cls2}">${t2}</h4>${tabelaTimePartida(j2)}</div>
-        </div>
-      </details>`;
+    const eu = ptSteam && p.jogadores.find((j) => j.steam_id === ptSteam);
+    const res = eu ? (p.vencedor === eu.time ? "V" : p.vencedor ? "D" : "E") : "";
+    const stats = eu ? `<span class="pt-eu">${eu.k}/${eu.a}/${eu.d}</span>` : "";
+    return `<details class="partida">
+      <summary>${res ? `<b class="pt-res r${res}">${res}</b>` : ""}
+        <span class="pt-mapa">${escapeHtml(nomeMapaPartida(p.mapa))}</span>
+        <span class="pt-placar"><b class="${p.vencedor === 1 ? "pos" : ""}">${escapeHtml(nomeTimePartida(p.time1))}</b>
+          <em>${p.placar1} x ${p.placar2}</em><b class="${p.vencedor === 2 ? "pos" : ""}">${escapeHtml(nomeTimePartida(p.time2))}</b></span>
+        ${stats}<span class="pt-data">${dataHoraBR(p.fim)}</span></summary>
+      <div class="pt-corpo">${ptBlocoTime(p, 1)}<div class="pt-vs"><span>VS</span></div>${ptBlocoTime(p, 2)}</div>
+    </details>`;
   }).join("");
 }
 
+function renderizarPerfilPartidas(j) {
+  if (!ptSteam || !j) { ptPerfilEl.innerHTML = ""; return; }
+  const r = j.resumo, kd = r.m > 0 ? r.k / r.m : r.k;
+  const item = (rot, val) => `<div><b>${val}</b><small>${rot}</small></div>`;
+  ptPerfilEl.innerHTML = `<div class="pt-perfil">
+    <div class="pt-perfil-id">${ptAv(j)}<div><h3>${escapeHtml(j.nome)}</h3>
+      <button id="pt-limpar" class="btn btn-outline" type="button">Ver todas as partidas</button></div></div>
+    <div class="pt-perfil-stats">${item("Partidas", r.partidas)}${item("Vitórias", r.v)}${item("Derrotas", r.d)}
+      ${item("% vitória", r.partidas ? Math.round((r.v / r.partidas) * 100) + "%" : "—")}
+      ${item("K/D", kd.toFixed(2))}${item("ADR", r.rounds ? (r.dano / r.rounds).toFixed(1) : "—")}
+      ${item("HS%", r.k ? Math.round((r.hs / r.k) * 100) + "%" : "—")}</div></div>`;
+}
+
 async function carregarPartidas() {
+  const id = ++ptReq;
   try {
-    const res = await fetch("/api/partidas", { cache: "no-store" });
+    const res = await fetch("/api/partidas" + (ptSteam ? `?steam=${ptSteam}` : ""), { cache: "no-store" });
     if (!res.ok) throw new Error("Falha ao carregar.");
-    renderizarPartidas(await res.json());
+    const data = await res.json();
+    if (id !== ptReq) return; // chegou resposta mais nova
+    renderizarPerfilPartidas(data.jogador);
+    renderizarPartidas(data.partidas);
   } catch (err) {
-    if (partidasListaEl.querySelector(".partida")) return; // mantem o que ja estava na tela
+    if (partidasListaEl.querySelector(".partida")) return;
     partidasListaEl.innerHTML = `<div class="loading">Erro ao carregar as partidas.</div>`;
   }
 }
+
+function filtrarJogadorPartidas(steam) {
+  ptSteam = steam || null;
+  ptSugestoesEl.hidden = true;
+  if (!steam) ptBuscaEl.value = "";
+  carregarPartidas();
+}
+
+ptBuscaEl.addEventListener("input", () => {
+  clearTimeout(ptTimer);
+  const q = ptBuscaEl.value.trim();
+  if (q.length < 2) { ptSugestoesEl.hidden = true; return; }
+  ptTimer = setTimeout(async () => {
+    try {
+      const res = await fetch(`/api/partidas/jogadores?q=${encodeURIComponent(q)}`);
+      const lista = res.ok ? await res.json() : [];
+      if (ptBuscaEl.value.trim() !== q) return;
+      ptSugestoesEl.innerHTML = lista.length
+        ? lista.map((j) => `<button class="pt-sug" data-steam="${j.steam_id}" type="button">${ptAv(j)}
+            <span>${escapeHtml(j.nome)}</span><small>${j.partidas} ${j.partidas === 1 ? "partida" : "partidas"}</small></button>`).join("")
+        : `<div class="pt-sug-vazio">Nenhum jogador encontrado.</div>`;
+      ptSugestoesEl.hidden = false;
+    } catch (err) { ptSugestoesEl.hidden = true; }
+  }, 300);
+});
+
+document.getElementById("tab-partidas").addEventListener("click", (e) => {
+  const alvo = e.target.closest("[data-steam], #pt-limpar");
+  if (!alvo) return;
+  if (alvo.id === "pt-limpar") return filtrarJogadorPartidas(null);
+  e.preventDefault();
+  ptBuscaEl.value = "";
+  filtrarJogadorPartidas(alvo.dataset.steam);
+});
 
 // ---------- Temporadas (ranking final de cada mês) ----------
 // Vem de /api/temporadas (resumo) e /api/temporadas/:id (tabela completa).
