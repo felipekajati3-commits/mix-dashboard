@@ -2458,6 +2458,11 @@ body {
 .pt-busca-wrap .search-input:focus { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold, #f2c94c) 25%, transparent); }
 .pt-seta-btn { position: absolute; right: 4px; top: 4px; bottom: 4px; width: 34px; display: grid; place-items: center; background: none; border: 0; color: var(--gold, #f2c94c); cursor: pointer; border-radius: 6px; }
 .pt-seta-btn:hover { color: var(--text); }
-.pt-sugestoes { max-height: 340px; overflow-y: auto; }
+.pt-sugestoes { max-height: 340px; overflow-y: auto; overflow-x: hidden; color-scheme: dark; scrollbar-width: thin; scrollbar-color: #3a424c transparent; }
+.pt-sugestoes::-webkit-scrollbar { width: 8px; }
+.pt-sugestoes::-webkit-scrollbar-track { background: transparent; }
+.pt-sugestoes::-webkit-scrollbar-thumb { background: #3a424c; border-radius: 4px; }
+.pt-sugestoes::-webkit-scrollbar-thumb:hover { background: #4b5560; }
+.pt-sug span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pt-sug span em { color: var(--muted); font-style: normal; font-size: 13px; }
 .pt-sug:focus-visible { outline: 2px solid var(--gold, #f2c94c); outline-offset: -2px; }
