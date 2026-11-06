@@ -1274,7 +1274,8 @@ app.get("/api/partidas", async (req, res) => {
     const [partidas] = await pool.query(
       `SELECT m.matchid, mp.mapname,
               DATE_FORMAT(COALESCE(mp.end_time, m.end_time, m.start_time), '%Y-%m-%dT%H:%i:%sZ') AS fim,
-              m.team1_name, m.team2_name, mp.team1_score, mp.team2_score
+              m.team1_name, m.team2_name, mp.team1_score, mp.team2_score,
+              TIMESTAMPDIFF(MINUTE, mp.start_time, mp.end_time) AS dur
          FROM matchzy_stats_matches m
          JOIN matchzy_stats_maps mp ON mp.matchid = m.matchid AND mp.mapnumber = 0
          ${filtro}
@@ -1317,7 +1318,8 @@ app.get("/api/partidas", async (req, res) => {
         }
       }
       return { id: p.matchid, mapa: p.mapname, fim: p.fim, time1: p.team1_name, time2: p.team2_name,
-               placar1: p.team1_score, placar2: p.team2_score, vencedor, jogadores };
+               placar1: p.team1_score, placar2: p.team2_score, vencedor, jogadores,
+               duracao: p.dur != null && p.dur >= 0 ? Number(p.dur) : null };
     });
     res.json({ partidas: saida, jogador });
   } catch (err) {

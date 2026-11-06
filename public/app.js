@@ -345,6 +345,16 @@ function ptBlocoTime(p, lado) {
     ${jogs.map((j) => ptLinha(j, p)).join("")}</div>`;
 }
 
+// Foto do time: o capitão (nome igual ao do time) ou, se não achar, quem mais matou.
+function ptLider(p, lado) {
+  const js = p.jogadores.filter((j) => j.time === lado);
+  const cap = nomeTimePartida(lado === 1 ? p.time1 : p.time2).toLowerCase();
+  return js.find((j) => j.nome.toLowerCase() === cap) || [...js].sort((a, b) => b.k - a.k)[0] || { nome: cap };
+}
+
+const PT_SETA = `<svg class="pt-seta" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>`;
+const ptCel = (rot, val, cls = "") => `<div class="pt-cel ${cls}"><small>${rot}</small><b>${val}</b></div>`;
+
 function renderizarPartidas(lista) {
   if (!lista.length) {
     partidasListaEl.innerHTML = `<div class="loading">Nenhuma partida encontrada.</div>`;
@@ -353,15 +363,19 @@ function renderizarPartidas(lista) {
   partidasListaEl.innerHTML = lista.map((p) => {
     const eu = ptSteam && p.jogadores.find((j) => j.steam_id === ptSteam);
     const res = eu ? (p.vencedor === eu.time ? "V" : p.vencedor ? "D" : "E") : "";
-    const stats = eu ? `<span class="pt-eu">${eu.k}/${eu.a}/${eu.d}</span>` : "";
-    return `<details class="partida">
-      <summary>${res ? `<b class="pt-res r${res}">${res}</b>` : ""}
-        <span class="pt-mapa">${escapeHtml(nomeMapaPartida(p.mapa))}</span>
-        <span class="pt-placar"><b class="${p.vencedor === 1 ? "pos" : ""}">${escapeHtml(nomeTimePartida(p.time1))}</b>
-          <em>${p.placar1} x ${p.placar2}</em><b class="${p.vencedor === 2 ? "pos" : ""}">${escapeHtml(nomeTimePartida(p.time2))}</b></span>
-        ${stats}<span class="pt-data">${dataHoraBR(p.fim)}</span></summary>
-      <div class="pt-corpo">${ptBlocoTime(p, 1)}<div class="pt-vs"><span>VS</span></div>${ptBlocoTime(p, 2)}</div>
-    </details>`;
+    const top = [...p.jogadores].sort((a, b) => b.k - a.k)[0];
+    const lado = (n, cls, l, placar, ok) => `<div class="pt-lado ${cls}"><span class="pt-tt">Time ${escapeHtml(nomeTimePartida(n))}</span>${ptAv(l)}<b class="pt-big ${ok ? "pos" : "neg"}">${placar}</b></div>`;
+    return `<div class="partida">
+      <div class="pt-hd">${lado(p.time1, "esq", ptLider(p, 1), p.placar1, p.vencedor === 1)}<span class="pt-vs">vs</span>${lado(p.time2, "dir", ptLider(p, 2), p.placar2, p.vencedor === 2)}</div>
+      <div class="pt-ft">
+        ${eu ? ptCel("Resultado", `<span class="pt-res r${res}">${res}</span>`) + ptCel("K/A/D", `${eu.k}/${eu.a}/${eu.d}`) : ""}
+        ${ptCel("Data", dataHoraBR(p.fim))}${ptCel("Mapa", escapeHtml(nomeMapaPartida(p.mapa)))}
+        ${ptCel("Duração", p.duracao != null ? p.duracao + " min" : "—")}
+        ${ptCel("Destaque", top ? `${escapeHtml(top.nome)} · ${top.k} kills` : "—", "pt-dest")}
+        <button class="pt-bt" data-toggle type="button" aria-expanded="false"><span>Detalhes</span>${PT_SETA}</button>
+      </div>
+      <div class="pt-corpo" hidden>${ptBlocoTime(p, 1)}<div class="pt-vsd">VS</div>${ptBlocoTime(p, 2)}</div>
+    </div>`;
   }).join("");
 }
 
@@ -419,8 +433,16 @@ ptBuscaEl.addEventListener("input", () => {
 });
 
 document.getElementById("tab-partidas").addEventListener("click", (e) => {
-  const alvo = e.target.closest("[data-steam], #pt-limpar");
+  const alvo = e.target.closest("[data-steam], #pt-limpar, [data-toggle]");
   if (!alvo) return;
+  if (alvo.dataset.toggle !== undefined) {
+    const corpo = alvo.closest(".partida").querySelector(".pt-corpo");
+    corpo.hidden = !corpo.hidden;
+    alvo.classList.toggle("on", !corpo.hidden);
+    alvo.setAttribute("aria-expanded", String(!corpo.hidden));
+    alvo.querySelector("span").textContent = corpo.hidden ? "Detalhes" : "Ocultar";
+    return;
+  }
   if (alvo.id === "pt-limpar") return filtrarJogadorPartidas(null);
   e.preventDefault();
   ptBuscaEl.value = "";
