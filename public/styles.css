@@ -2421,7 +2421,8 @@ body {
 .pt-perfil { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; margin-bottom: 14px; }
 .pt-perfil-id { display: flex; align-items: center; gap: 14px; }
 .pt-perfil-id .avatar-img, .pt-perfil-id .avatar-fallback { width: 56px; height: 56px; }
-.pt-perfil-id h3 { margin: 0 0 6px; }
+.pt-perfil-id h3 { margin: 0; }
+.pt-voltar { margin-bottom: 12px; }
 .pt-perfil-stats { display: flex; flex-wrap: wrap; gap: 8px 26px; margin-top: 14px; }
 .pt-perfil-stats b { display: block; font-size: 20px; } .pt-perfil-stats small { color: var(--muted); }
 .partidas-lista { display: flex; flex-direction: column; gap: 10px; }

@@ -369,9 +369,9 @@ function renderizarPerfilPartidas(j) {
   if (!ptSteam || !j) { ptPerfilEl.innerHTML = ""; return; }
   const r = j.resumo, kd = r.m > 0 ? r.k / r.m : r.k;
   const item = (rot, val) => `<div><b>${val}</b><small>${rot}</small></div>`;
-  ptPerfilEl.innerHTML = `<div class="pt-perfil">
-    <div class="pt-perfil-id">${ptAv(j)}<div><h3>${escapeHtml(j.nome)}</h3>
-      <button id="pt-limpar" class="btn btn-outline" type="button">Ver todas as partidas</button></div></div>
+  ptPerfilEl.innerHTML = `<button id="pt-limpar" class="btn btn-outline pt-voltar" type="button">← Ver todas as partidas</button>
+    <div class="pt-perfil">
+    <div class="pt-perfil-id">${ptAv(j)}<h3>${escapeHtml(j.nome)}</h3></div>
     <div class="pt-perfil-stats">${item("Partidas", r.partidas)}${item("Vitórias", r.v)}${item("Derrotas", r.d)}
       ${item("% vitória", r.partidas ? Math.round((r.v / r.partidas) * 100) + "%" : "—")}
       ${item("K/D", kd.toFixed(2))}${item("ADR", r.rounds ? (r.dano / r.rounds).toFixed(1) : "—")}
