@@ -7,6 +7,7 @@ const config = require("./config");
 const store = require("./store");
 const historico = require("./historico");
 const corte = require("./corte");
+const demos = require("./demos");
 const snapshot = require("./snapshot");
 const temporadas = require("./temporadas");
 
@@ -1326,6 +1327,24 @@ app.delete("/api/admin/partidas-corte", exigirAdmin, async (req, res) => {
   catch (err) { console.error(err); res.status(500).json({ error: "Erro ao remover o corte." }); }
 });
 
+// Baixar a demo de uma partida: pede ao painel um link temporário e redireciona.
+// Limite simples (30 por minuto no site todo) pra ninguém martelar a API do painel.
+let demoJanela = 0, demoCont = 0;
+app.get("/api/partidas/:id/demo", async (req, res) => {
+  const agora = Date.now();
+  if (agora - demoJanela > 60000) { demoJanela = agora; demoCont = 0; }
+  if (++demoCont > 30) return res.status(429).type("text").send("Muitos downloads agora. Tente de novo em instantes.");
+  if (!/^\d+$/.test(req.params.id)) return res.status(400).type("text").send("Partida inválida.");
+  try {
+    const url = await demos.linkDownload(req.params.id);
+    if (!url) return res.status(404).type("text").send("Demo não encontrada para essa partida.");
+    res.redirect(url);
+  } catch (err) {
+    console.error("[demos]", err.message);
+    res.status(502).type("text").send("Não consegui falar com o servidor das demos agora. Tente de novo mais tarde.");
+  }
+});
+
 // Lista as últimas partidas. Com ?steam=ID, só as partidas desse jogador (até
 // 100) e um resumo dele.
 app.get("/api/partidas", async (req, res) => {
@@ -1361,6 +1380,8 @@ app.get("/api/partidas", async (req, res) => {
       [partidas.map((p) => p.matchid)]
     );
     const av = await buscarAvatares([...new Set(jogs.map((j) => j.steam))]);
+    // Quais partidas têm demo na pasta do servidor (falha = sem botão, sem quebrar a lista).
+    const demoMap = await demos.mapa().catch((err) => { console.warn("[demos]", err.message); return {}; });
 
     const porPartida = {};
     for (const j of jogs) {
@@ -1389,6 +1410,7 @@ app.get("/api/partidas", async (req, res) => {
       }
       return { id: p.matchid, mapa: p.mapname, fim: p.fim, time1: p.team1_name, time2: p.team2_name,
                placar1: p.team1_score, placar2: p.team2_score, vencedor, jogadores,
+               demo: demoMap[String(p.matchid)] ? { mb: Math.round(demoMap[String(p.matchid)].tamanho / 1048576) } : null,
                duracao: p.dur != null && p.dur >= 0 ? Number(p.dur) : null };
     });
     res.json({ partidas: saida, jogador });

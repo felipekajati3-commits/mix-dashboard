@@ -377,6 +377,7 @@ function renderizarPartidas(lista) {
         ${ptCel("Data", dataHoraBR(p.fim))}${ptCel("Mapa", escapeHtml(nomeMapaPartida(p.mapa)))}
         ${ptCel("Duração", p.duracao != null ? p.duracao + " min" : "—")}
         ${ptCel("Destaque", top ? `${escapeHtml(top.nome)} · ${top.k} kills` : "—", "pt-dest")}
+        ${p.demo ? `<a class="pt-demo" href="/api/partidas/${p.id}/demo" title="Baixar a demo desta partida (.dem)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>Demo · ${p.demo.mb} MB</a>` : ""}
         <button class="pt-bt" data-toggle type="button" aria-expanded="false"><span>Detalhes</span>${PT_SETA}</button>
       </div>
       <div class="pt-corpo" hidden>${ptBlocoTime(p, 1)}<div class="pt-vsd">VS</div>${ptBlocoTime(p, 2)}</div>

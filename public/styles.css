@@ -2466,3 +2466,6 @@ body {
 .pt-sug span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pt-sug span em { color: var(--muted); font-style: normal; font-size: 13px; }
 .pt-sug:focus-visible { outline: 2px solid var(--gold, #f2c94c); outline-offset: -2px; }
+.pt-demo { display: flex; align-items: center; gap: 6px; border: 1px solid var(--gold, #f2c94c); color: var(--gold, #f2c94c); border-radius: 6px; padding: 7px 12px; min-height: 38px; font-weight: 700; font-size: 13px; text-decoration: none; white-space: nowrap; }
+.pt-demo:hover { background: color-mix(in srgb, var(--gold, #f2c94c) 15%, transparent); }
+@media (max-width: 760px) { .pt-demo { width: 100%; justify-content: center; } }
