@@ -1420,6 +1420,25 @@ app.get("/api/partidas", async (req, res) => {
   }
 });
 
+// Pontos de um jogador ao fim de cada temporada (alimenta o grafico do perfil).
+app.get("/api/jogador/:steam/temporadas", async (req, res) => {
+  if (!/^\d{17}$/.test(req.params.steam)) return res.status(400).json({ error: "SteamID inválido." });
+  try {
+    const lista = await temporadas.listar();
+    const saida = lista
+      .map((t) => {
+        const j = (t.jogadores || []).find((x) => String(x.steam_id) === req.params.steam);
+        return j ? { id: t.id, nome: t.nome, points: j.points ?? 0 } : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => String(a.id).localeCompare(String(b.id)));
+    res.json(saida);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao carregar o histórico de pontos." });
+  }
+});
+
 // Lista publica de temporadas (so o resumo, sem a tabela inteira).
 app.get("/api/temporadas", async (req, res) => {
   try {
