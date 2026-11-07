@@ -424,12 +424,10 @@ function renderizarPartidas(lista) {
     const eu = ptSteam && p.jogadores.find((j) => j.steam_id === ptSteam);
     const res = eu ? (p.vencedor === eu.time ? "V" : p.vencedor ? "D" : "E") : "";
     const top = [...p.jogadores].sort((a, b) => b.k - a.k || (a.d - b.d))[0];
-    const mid = String(p.mapa || "").replace(/^de_/, "").replace(/^cbble$/, "cobblestone");
-    const mimg = (MAPAS.find((m) => m.id === mid) || {}).img;
     const mvpKd = top ? (top.d > 0 ? top.k / top.d : top.k).toFixed(2) : "";
     const lado = (n, cls, l, placar, ok) => `<div class="pt-lado ${cls}"><span class="pt-tt">Time ${escapeHtml(nomeTimePartida(n))}</span>${ptAv(l)}<b class="pt-big ${ok ? "pos" : "neg"}">${placar}</b></div>`;
     return `<div class="partida">
-      <div class="pt-hd"${mimg ? ` style="--pimg:url('${mimg}')"` : ""}>${lado(p.time1, "esq", ptLider(p, 1), p.placar1, p.vencedor === 1)}<span class="pt-vs">vs</span>${lado(p.time2, "dir", ptLider(p, 2), p.placar2, p.vencedor === 2)}</div>
+      <div class="pt-hd${p.vencedor === 1 ? " v1" : p.vencedor === 2 ? " v2" : ""}">${lado(p.time1, "esq", ptLider(p, 1), p.placar1, p.vencedor === 1)}<span class="pt-vs">vs</span>${lado(p.time2, "dir", ptLider(p, 2), p.placar2, p.vencedor === 2)}</div>
       ${top ? `<div class="pt-mvp"><b>MVP</b><span>${escapeHtml(top.nome)} · ${top.k} kills · ${mvpKd} K/D</span></div>` : ""}
       <div class="pt-ft">
         ${eu ? ptCel("Resultado", `<span class="pt-res r${res}">${res}</span>`) + ptCel("K/A/D", `${eu.k}/${eu.a}/${eu.d}`) : ""}
