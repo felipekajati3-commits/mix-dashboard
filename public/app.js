@@ -228,9 +228,64 @@ function abrirPerfil(idx, lista = jogadoresRanking, nomeTemporada = null) {
     ${stats.length
       ? `<div class="perfil-grid">${stats.map(([rot, val], k) => `<div class="perfil-s" style="--i:${k}"><b>${val}</b><small>${rot}</small></div>`).join("")}</div>`
       : `<div class="perfil-nota">Sem estatísticas detalhadas para este jogador.</div>`}
-    ${nota ? `<div class="perfil-nota">${nota}</div>` : ""}`;
+    ${nota ? `<div class="perfil-nota">${nota}</div>` : ""}
+    <div class="perfil-extra" id="perfil-extra"></div>`;
+  perfilCard.dataset.steam = !nomeTemporada && j.steam_id ? j.steam_id : "";
   perfilOv.classList.add("on");
+  if (perfilCard.dataset.steam) carregarPerfilExtras(j);
   document.getElementById("perfil-x").addEventListener("click", fecharPerfil);
+}
+
+// Extras do perfil (busca ao abrir): últimas partidas, mapas favoritos e pontos por temporada.
+function graficoPontos(pts, cor) {
+  const W = 360, H = 120, mn = Math.min(...pts.map((p) => p.v)), mx = Math.max(...pts.map((p) => p.v));
+  const sx = (i) => 12 + (i * (W - 24)) / (pts.length - 1);
+  const sy = (v) => H - 22 - ((v - mn) / (mx - mn || 1)) * (H - 44);
+  const linha = pts.map((p, i) => `${sx(i)},${sy(p.v)}`).join(" ");
+  return `<svg class="perfil-graf" viewBox="0 0 ${W} ${H}" role="img" aria-label="Pontos por temporada">
+    <polygon points="12,${H - 18} ${linha} ${W - 12},${H - 18}" fill="${cor}" fill-opacity=".16"/>
+    <polyline points="${linha}" fill="none" stroke="${cor}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+    ${pts.map((p, i) => `<circle cx="${sx(i)}" cy="${sy(p.v)}" r="3.5" fill="${cor}"><title>${escapeHtml(p.r)}: ${p.v.toLocaleString("pt-BR")}</title></circle>
+      <text x="${sx(i)}" y="${H - 4}" text-anchor="${i === 0 ? "start" : i === pts.length - 1 ? "end" : "middle"}" font-size="9" fill="#8b94a0">${escapeHtml(p.r)}</text>`).join("")}</svg>`;
+}
+
+async function carregarPerfilExtras(j) {
+  const steam = String(j.steam_id);
+  const alvo = document.getElementById("perfil-extra");
+  if (!alvo) return;
+  const cor = FAIXA_INFO[faixaPremier(j.points)].cor;
+  const [rp, rt] = await Promise.all([
+    fetch(`/api/partidas?steam=${steam}`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    fetch(`/api/jogador/${steam}/temporadas`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+  ]);
+  if (perfilCard.dataset.steam !== steam) return; // o perfil já foi trocado ou fechado
+  let html = "";
+  const partidas = (rp && rp.partidas) || [];
+  const meus = partidas
+    .map((p) => {
+      const eu = p.jogadores.find((x) => x.steam_id === steam);
+      return eu ? { mapa: p.mapa, res: p.vencedor ? (p.vencedor === eu.time ? "V" : "D") : "E" } : null;
+    })
+    .filter(Boolean);
+  if (meus.length) {
+    const ult = meus.slice(0, 10).reverse(); // mais antiga à esquerda
+    html += `<div class="perfil-sec">Últimas ${ult.length} partidas</div>
+      <div class="perfil-forma">${ult.map((m) => `<i class="r${m.res}" title="${m.res === "V" ? "Vitória" : m.res === "D" ? "Derrota" : "Empate"} · ${escapeHtml(nomeMapaPartida(m.mapa))}"></i>`).join("")}</div>`;
+    const porMapa = {};
+    for (const m of meus) {
+      const o = (porMapa[m.mapa] ||= { n: 0, v: 0 });
+      o.n++; if (m.res === "V") o.v++;
+    }
+    const top = Object.entries(porMapa).sort((x, y) => y[1].n - x[1].n || y[1].v - x[1].v).slice(0, 4);
+    html += `<div class="perfil-sec">Mapas mais jogados</div>` + top.map(([mapa, o]) => {
+      const pc = Math.round((o.v / o.n) * 100);
+      return `<div class="perfil-mapa"><span>${escapeHtml(nomeMapaPartida(mapa))}</span><div class="perfil-barra"><i style="width:${pc}%"></i></div><span>${pc}% · ${o.n}</span></div>`;
+    }).join("");
+  }
+  const pts = ((rt) || []).map((t) => ({ r: t.nome, v: t.points }));
+  if (temNum(j.points)) pts.push({ r: "Atual", v: j.points });
+  if (pts.length >= 2) html += `<div class="perfil-sec">Pontos por temporada</div>${graficoPontos(pts, cor)}`;
+  alvo.innerHTML = html;
 }
 
 function fecharPerfil() { perfilOv.classList.remove("on"); }
@@ -368,15 +423,18 @@ function renderizarPartidas(lista) {
   partidasListaEl.innerHTML = lista.map((p) => {
     const eu = ptSteam && p.jogadores.find((j) => j.steam_id === ptSteam);
     const res = eu ? (p.vencedor === eu.time ? "V" : p.vencedor ? "D" : "E") : "";
-    const top = [...p.jogadores].sort((a, b) => b.k - a.k)[0];
+    const top = [...p.jogadores].sort((a, b) => b.k - a.k || (a.d - b.d))[0];
+    const mid = String(p.mapa || "").replace(/^de_/, "").replace(/^cbble$/, "cobblestone");
+    const mimg = (MAPAS.find((m) => m.id === mid) || {}).img;
+    const mvpKd = top ? (top.d > 0 ? top.k / top.d : top.k).toFixed(2) : "";
     const lado = (n, cls, l, placar, ok) => `<div class="pt-lado ${cls}"><span class="pt-tt">Time ${escapeHtml(nomeTimePartida(n))}</span>${ptAv(l)}<b class="pt-big ${ok ? "pos" : "neg"}">${placar}</b></div>`;
     return `<div class="partida">
-      <div class="pt-hd">${lado(p.time1, "esq", ptLider(p, 1), p.placar1, p.vencedor === 1)}<span class="pt-vs">vs</span>${lado(p.time2, "dir", ptLider(p, 2), p.placar2, p.vencedor === 2)}</div>
+      <div class="pt-hd"${mimg ? ` style="--pimg:url('${mimg}')"` : ""}>${lado(p.time1, "esq", ptLider(p, 1), p.placar1, p.vencedor === 1)}<span class="pt-vs">vs</span>${lado(p.time2, "dir", ptLider(p, 2), p.placar2, p.vencedor === 2)}</div>
+      ${top ? `<div class="pt-mvp"><b>MVP</b><span>${escapeHtml(top.nome)} · ${top.k} kills · ${mvpKd} K/D</span></div>` : ""}
       <div class="pt-ft">
         ${eu ? ptCel("Resultado", `<span class="pt-res r${res}">${res}</span>`) + ptCel("K/A/D", `${eu.k}/${eu.a}/${eu.d}`) : ""}
         ${ptCel("Data", dataHoraBR(p.fim))}${ptCel("Mapa", escapeHtml(nomeMapaPartida(p.mapa)))}
         ${ptCel("Duração", p.duracao != null ? p.duracao + " min" : "—")}
-        ${ptCel("Destaque", top ? `${escapeHtml(top.nome)} · ${top.k} kills` : "—", "pt-dest")}
         ${p.demo ? `<a class="pt-demo" href="/api/partidas/${p.id}/demo" title="Baixar a demo desta partida (.dem)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>Demo · ${p.demo.mb} MB</a>` : ""}
         <button class="pt-bt" data-toggle type="button" aria-expanded="false"><span>Detalhes</span>${PT_SETA}</button>
       </div>
