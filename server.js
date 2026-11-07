@@ -317,15 +317,51 @@ function pegarStat(linha, candidatos) {
   return null;
 }
 
+// Vitórias e derrotas REAIS por jogador, contadas nas partidas do MatchZy (as
+// mesmas do Histórico de Partidas, respeitando o "Zerar histórico"). O contador
+// game_win/game_lose do K4-System às vezes deixa de contar derrotas, mesmo com os
+// pontos já descontados. Devolve null se der erro, e aí vale o contador do K4.
+async function buscarVitoriasMatchzy() {
+  try {
+    const desde = await corteSql();
+    const [rows] = await pool.query(
+      `SELECT CAST(p.steamid64 AS CHAR) AS steam,
+              SUM((p.team = m.team1_name AND mp.team1_score > mp.team2_score)
+               OR (p.team = m.team2_name AND mp.team2_score > mp.team1_score)) AS v,
+              SUM((p.team = m.team1_name AND mp.team1_score < mp.team2_score)
+               OR (p.team = m.team2_name AND mp.team2_score < mp.team1_score)) AS d
+         FROM matchzy_stats_players p
+         JOIN matchzy_stats_matches m ON m.matchid = p.matchid
+         JOIN matchzy_stats_maps mp ON mp.matchid = p.matchid AND mp.mapnumber = 0
+        WHERE p.mapnumber = 0 AND p.team <> 'Spectator'
+          ${desde ? "AND COALESCE(mp.end_time, m.end_time, m.start_time) >= ?" : ""}
+        GROUP BY p.steamid64`,
+      desde ? [desde] : []
+    );
+    const porSteam = {};
+    for (const r of rows) porSteam[r.steam] = { v: Number(r.v), d: Number(r.d) };
+    return porSteam;
+  } catch (err) {
+    console.warn("[leaderboard] Não consegui contar vitórias pelo MatchZy:", err.message);
+    return null;
+  }
+}
+
 async function buscarResumoStats(steamIds) {
   if (!steamIds.length) return {};
   try {
     const [rows] = await pool.query("SELECT * FROM rank_mix_k4stats WHERE steam_id IN (?)", [steamIds]);
+    const mz = await buscarVitoriasMatchzy();
     const porSteam = {};
     for (const r of rows) {
       const resumo = {};
       for (const [chave, candidatos] of Object.entries(COLUNAS_STATS)) {
         resumo[chave] = pegarStat(r, candidatos);
+      }
+      if (mz) {
+        const m = mz[String(r.steam_id)];
+        resumo.v = m ? m.v : 0;
+        resumo.d = m ? m.d : 0;
       }
       porSteam[r.steam_id] = resumo;
     }
