@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "cvl0bp55mwk6153c",
+      "criado_em": "2026-11-17T04:01:38.955Z",
+      "vencedor": "B",
+      "placarA": 7,
+      "placarB": 13,
+      "mapa": "Overpass",
+      "mapa_origem": "sorteio",
+      "matchid": 2001,
+      "jogadoresA": [
+        {
+          "steam_id": "76561199488437569",
+          "name": "PDznl"
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        },
+        {
+          "steam_id": "76561199236137088",
+          "name": "RONY. RUIM"
+        },
+        {
+          "steam_id": "76561199679282192",
+          "name": "Kvaratskhelia"
+        },
+        {
+          "steam_id": "76561199652148873",
+          "name": "JV putifero"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561199056467023",
+          "name": "♕ Twitch.tv/Baiano_Nk ♕"
+        },
+        {
+          "steam_id": "76561199652109305",
+          "name": "✪ KU$H 011"
+        },
+        {
+          "steam_id": "76561199103146494",
+          "name": "GRIMM"
+        },
+        {
+          "steam_id": "76561199030261015",
+          "name": "MatheuRO"
+        },
+        {
+          "steam_id": "76561198297974111",
+          "name": "BOY MAGUINHO"
+        }
+      ],
+      "sorteio_em": "2026-11-17T03:24:45.176Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_Kvaratskhelia",
+      "team2_nome": "team__KUH_011",
+      "_chaveDedup": "2001:"
+    },
+    {
       "id": "dseosdwbmwk4jccg",
       "criado_em": "2026-11-17T03:19:48.838Z",
       "vencedor": "A",
@@ -62,5 +123,5 @@
       "_chaveDedup": "2000:"
     }
   ],
-  "atualizado_em": "2026-11-17T03:19:49.312Z"
+  "atualizado_em": "2026-11-17T04:01:39.336Z"
 }
