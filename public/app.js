@@ -362,6 +362,12 @@ const ptSugestoesEl = document.getElementById("pt-sugestoes");
 const ptPerfilEl = document.getElementById("pt-perfil");
 let ptSteam = null; // jogador filtrado (SteamID64) ou null
 let ptReq = 0, ptTimer = null;
+// Botão "Excluir" só aparece pra quem está logado como admin (o servidor também confere).
+let ptAdmin = false;
+fetch("/api/admin/status", { cache: "no-store" })
+  .then((r) => (r.ok ? r.json() : null))
+  .then((s) => { if (s && s.logado) { ptAdmin = true; if (partidasListaEl.querySelector(".partida")) carregarPartidas(); } })
+  .catch(() => {});
 
 const nomeTimePartida = (n) => String(n || "").replace(/^team_+/i, "") || "Time";
 function nomeMapaPartida(m) {
@@ -434,6 +440,7 @@ function renderizarPartidas(lista) {
         ${ptCel("Data", dataHoraBR(p.fim))}${ptCel("Mapa", escapeHtml(nomeMapaPartida(p.mapa)))}
         ${ptCel("Duração", p.duracao != null ? p.duracao + " min" : "—")}
         ${p.demo ? `<a class="pt-demo" href="/api/partidas/${p.id}/demo" title="Baixar a demo desta partida (.dem)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>Demo · ${p.demo.mb} MB</a>` : ""}
+        ${ptAdmin ? `<button class="pt-del" data-excluir="${p.id}" type="button" title="Excluir esta partida do histórico (só admin)">Excluir</button>` : ""}
         <button class="pt-bt" data-toggle type="button" aria-expanded="false"><span>Detalhes</span>${PT_SETA}</button>
       </div>
       <div class="pt-corpo" hidden>${ptBlocoTime(p, 1)}<div class="pt-vsd">VS</div>${ptBlocoTime(p, 2)}</div>
@@ -526,8 +533,16 @@ ptSugestoesEl.addEventListener("keydown", (e) => {
 document.addEventListener("click", (e) => { if (!e.target.closest(".pt-busca-wrap")) ptFecharOpcoes(); });
 
 document.getElementById("tab-partidas").addEventListener("click", (e) => {
-  const alvo = e.target.closest("[data-steam], #pt-limpar, [data-toggle]");
+  const alvo = e.target.closest("[data-steam], #pt-limpar, [data-toggle], [data-excluir]");
   if (!alvo) return;
+  if (alvo.dataset.excluir !== undefined) {
+    if (!confirm("Excluir esta partida do histórico? (Ela some do site; não é apagada do banco.)")) return;
+    alvo.disabled = true;
+    fetch(`/api/admin/partidas/${alvo.dataset.excluir}/ocultar`, { method: "POST" })
+      .then((r) => { if (!r.ok) throw new Error(); alvo.closest(".partida").remove(); })
+      .catch(() => { alvo.disabled = false; alert("Não consegui excluir. Veja se você ainda está logado no /admin.html."); });
+    return;
+  }
   if (alvo.dataset.toggle !== undefined) {
     const corpo = alvo.closest(".partida").querySelector(".pt-corpo");
     corpo.hidden = !corpo.hidden;

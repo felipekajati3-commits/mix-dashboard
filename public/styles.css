@@ -2494,3 +2494,9 @@ body {
 .pt-mvp { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 8px 14px; background: rgba(212,175,55,.1); border-top: 1px solid rgba(212,175,55,.35); font-size: 13px; font-weight: 600; flex-wrap: wrap; text-align: center; }
 .pt-mvp b { background: var(--gold); color: #111; border-radius: 5px; padding: 1px 8px; font-size: 12px; letter-spacing: .05em; }
 @media (max-width: 760px) { .pt-big { font-size: 38px; } }
+
+/* Botão de excluir partida (só admin) */
+.pt-del { background: transparent; color: #ef5350; border: 1px solid #ef5350; border-radius: 6px; padding: 7px 12px; min-height: 38px; font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; }
+.pt-del:hover { background: color-mix(in srgb, #ef5350 15%, transparent); }
+.pt-del:disabled { opacity: .5; cursor: wait; }
+@media (max-width: 760px) { .pt-del { width: 100%; } }
