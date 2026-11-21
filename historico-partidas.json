@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "0wq1cguhmwpx3iqe",
+      "criado_em": "2026-11-21T04:38:10.388Z",
+      "vencedor": "B",
+      "placarA": 11,
+      "placarB": 13,
+      "mapa": "Train",
+      "mapa_origem": "sorteio",
+      "matchid": 2002,
+      "jogadoresA": [
+        {
+          "steam_id": "76561199652109305",
+          "name": "✪ KU$H 011"
+        },
+        {
+          "steam_id": "76561198000147200",
+          "name": "max The Wizard"
+        },
+        {
+          "steam_id": "76561199018880641",
+          "name": "Toddy"
+        },
+        {
+          "steam_id": "76561198304895891",
+          "name": "JuNiN148"
+        },
+        {
+          "steam_id": "76561198710365718",
+          "name": "P3SCAD0R"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561199078637158",
+          "name": "JAMMMMMMMMMMMMMMMMMMMMMMMMMMMMER"
+        },
+        {
+          "steam_id": "76561198907178234",
+          "name": "🇫🇲🇱🇬🇨♕ Razec"
+        },
+        {
+          "steam_id": "76561199103146494",
+          "name": "GRIMM"
+        },
+        {
+          "steam_id": "76561198841110758",
+          "name": "pixelcopata"
+        },
+        {
+          "steam_id": "76561199652148873",
+          "name": "JV putifero"
+        }
+      ],
+      "sorteio_em": "2026-11-21T03:56:30.114Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "padrao",
+      "team1_nome": "team__KUH_011",
+      "team2_nome": "team_ILHAMILGRAU",
+      "_chaveDedup": "2002:"
+    },
+    {
       "id": "cvl0bp55mwk6153c",
       "criado_em": "2026-11-17T04:01:38.955Z",
       "vencedor": "B",
@@ -123,5 +184,5 @@
       "_chaveDedup": "2000:"
     }
   ],
-  "atualizado_em": "2026-11-17T04:01:39.336Z"
+  "atualizado_em": "2026-11-21T04:38:10.839Z"
 }
