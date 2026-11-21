@@ -62,6 +62,10 @@ module.exports = {
     // (ver snapshot.js) - sempre só o mais recente.
     arquivoSnapshot: process.env.GITHUB_ARQUIVO_SNAPSHOT || "snapshot-ranking.json",
 
+    // Arquivo separado (mesma branch) com os IDs das partidas que o admin
+    // excluiu do histórico (ver ocultas.js).
+    arquivoOcultas: process.env.GITHUB_ARQUIVO_OCULTAS || "partidas-ocultas.json",
+
     // Arquivo separado (mesma branch) com as TEMPORADAS mensais fechadas
     // (ver temporadas.js) - permanente, nunca e apagado sozinho.
     arquivoTemporadas: process.env.GITHUB_ARQUIVO_TEMPORADAS || "temporadas.json",

@@ -7,6 +7,7 @@ const config = require("./config");
 const store = require("./store");
 const historico = require("./historico");
 const corte = require("./corte");
+const ocultas = require("./ocultas");
 const demos = require("./demos");
 const snapshot = require("./snapshot");
 const temporadas = require("./temporadas");
@@ -1286,11 +1287,18 @@ async function corteSql() {
   }
 }
 
+// IDs das partidas que o admin excluiu da lista (ver ocultas.js). Falha = não filtra.
+async function idsOcultos() {
+  try { return (await ocultas.ler()).ids; }
+  catch (err) { console.error("[Ocultas]", err.message); return []; }
+}
+
 // Todos os jogadores com partida depois do corte (a tela filtra na hora, sem
 // ir ao servidor a cada letra). "nomes" inclui apelidos antigos.
 app.get("/api/partidas/jogadores", async (req, res) => {
   try {
     const desde = await corteSql();
+    const ocultos = await idsOcultos();
     const [rows] = await pool.query(
       `SELECT CAST(steamid64 AS CHAR) AS steam,
               SUBSTRING_INDEX(GROUP_CONCAT(name ORDER BY matchid DESC SEPARATOR '\n'), '\n', 1) AS nome,
@@ -1299,8 +1307,9 @@ app.get("/api/partidas/jogadores", async (req, res) => {
          FROM matchzy_stats_players
         WHERE mapnumber = 0 AND team <> 'Spectator'
           ${desde ? "AND matchid IN (SELECT matchid FROM matchzy_stats_maps WHERE mapnumber = 0 AND COALESCE(end_time, start_time) >= ?)" : ""}
+          ${ocultos.length ? "AND matchid NOT IN (?)" : ""}
         GROUP BY steamid64 ORDER BY partidas DESC LIMIT 500`,
-      desde ? [desde] : []
+      [...(desde ? [desde] : []), ...(ocultos.length ? [ocultos] : [])]
     );
     const av = await buscarAvatares(rows.map((r) => r.steam));
     res.json(rows.map((r) => ({
@@ -1325,6 +1334,23 @@ app.post("/api/admin/partidas-corte", exigirAdmin, async (req, res) => {
 app.delete("/api/admin/partidas-corte", exigirAdmin, async (req, res) => {
   try { res.json(await corte.definir(null)); }
   catch (err) { console.error(err); res.status(500).json({ error: "Erro ao remover o corte." }); }
+});
+
+// Admin: excluir (ocultar) uma partida do histórico. Não apaga do banco do
+// MatchZy; só esconde. DELETE restaura. GET lista as ocultas.
+app.get("/api/admin/partidas-ocultas", exigirAdmin, async (req, res) => {
+  try { res.json(await ocultas.ler({ forcar: true })); }
+  catch (err) { console.error(err); res.status(500).json({ error: "Erro ao ler as partidas ocultas." }); }
+});
+app.post("/api/admin/partidas/:id/ocultar", exigirAdmin, async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: "Partida inválida." });
+  try { res.json(await ocultas.ocultar(req.params.id)); }
+  catch (err) { console.error(err); res.status(500).json({ error: "Erro ao excluir a partida." }); }
+});
+app.delete("/api/admin/partidas/:id/ocultar", exigirAdmin, async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: "Partida inválida." });
+  try { res.json(await ocultas.restaurar(req.params.id)); }
+  catch (err) { console.error(err); res.status(500).json({ error: "Erro ao restaurar a partida." }); }
 });
 
 // Baixar a demo de uma partida: pede ao painel um link temporário e redireciona.
@@ -1352,7 +1378,9 @@ app.get("/api/partidas", async (req, res) => {
     const steam = /^\d{17}$/.test(String(req.query.steam || "")) ? String(req.query.steam) : null;
     const limite = Math.min(Math.max(parseInt(req.query.limit, 10) || (steam ? 100 : 30), 1), 100);
     const desde = await corteSql();
+    const ocultos = await idsOcultos();
     const conds = [], pars = [];
+    if (ocultos.length) { conds.push("m.matchid NOT IN (?)"); pars.push(ocultos); }
     if (desde) { conds.push("COALESCE(mp.end_time, m.end_time, m.start_time) >= ?"); pars.push(desde); }
     if (steam) {
       conds.push(`m.matchid IN (SELECT matchid FROM matchzy_stats_players
