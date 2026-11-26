@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "2qb1a3k7mwwwa4gy",
+      "criado_em": "2026-11-26T01:49:42.332Z",
+      "vencedor": "A",
+      "placarA": 13,
+      "placarB": 8,
+      "mapa": "Cobblestone",
+      "mapa_origem": "sorteio",
+      "matchid": 2008,
+      "jogadoresA": [
+        {
+          "steam_id": "76561199652109305",
+          "name": "✪ KU$H 011"
+        },
+        {
+          "steam_id": "76561199056467023",
+          "name": "♕ Twitch.tv/Baiano_Nk ♕"
+        },
+        {
+          "steam_id": "76561199103146494",
+          "name": "GRIMM"
+        },
+        {
+          "steam_id": "76561199215655481",
+          "name": "GhostLCS"
+        },
+        {
+          "steam_id": "76561199236137088",
+          "name": "RONY. RUIM"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561199488437569",
+          "name": "PDznl"
+        },
+        {
+          "steam_id": "76561198297974111",
+          "name": "BOY MAGUINHO"
+        },
+        {
+          "steam_id": null,
+          "name": "Complete 4"
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        },
+        {
+          "steam_id": "76561199532829551",
+          "name": "Powerzin"
+        }
+      ],
+      "sorteio_em": "2026-11-26T01:06:35.103Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_GhostLCS",
+      "team2_nome": "team_Powerzin",
+      "_chaveDedup": "2008:"
+    },
+    {
       "id": "aciifcurmwwuoiic",
       "criado_em": "2026-11-26T01:04:54.379Z",
       "vencedor": "B",
@@ -245,5 +306,5 @@
       "_chaveDedup": "2000:"
     }
   ],
-  "atualizado_em": "2026-11-26T01:04:54.708Z"
+  "atualizado_em": "2026-11-26T01:49:42.562Z"
 }
