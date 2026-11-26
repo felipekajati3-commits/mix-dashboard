@@ -1,6 +1,67 @@
 {
   "partidas": [
     {
+      "id": "aciifcurmwwuoiic",
+      "criado_em": "2026-11-26T01:04:54.379Z",
+      "vencedor": "B",
+      "placarA": 9,
+      "placarB": 13,
+      "mapa": "Anubis",
+      "mapa_origem": "sorteio",
+      "matchid": 2007,
+      "jogadoresA": [
+        {
+          "steam_id": "76561199488437569",
+          "name": "PDznl"
+        },
+        {
+          "steam_id": "76561199532829551",
+          "name": "Powerzin"
+        },
+        {
+          "steam_id": "76561199215655481",
+          "name": "GhostLCS"
+        },
+        {
+          "steam_id": "76561198790152105",
+          "name": "panco"
+        },
+        {
+          "steam_id": "76561199236137088",
+          "name": "RONY. RUIM"
+        }
+      ],
+      "jogadoresB": [
+        {
+          "steam_id": "76561199652109305",
+          "name": "✪ KU$H 011"
+        },
+        {
+          "steam_id": "76561199056467023",
+          "name": "♕ Twitch.tv/Baiano_Nk ♕"
+        },
+        {
+          "steam_id": "76561199103146494",
+          "name": "GRIMM"
+        },
+        {
+          "steam_id": "76561198297974111",
+          "name": "BOY MAGUINHO"
+        },
+        {
+          "steam_id": null,
+          "name": "ILHNHAMA"
+        }
+      ],
+      "sorteio_em": "2026-11-26T00:20:41.144Z",
+      "jogadoresMatchZyA": null,
+      "jogadoresMatchZyB": null,
+      "mapeamento": "nome",
+      "team1_nome": "team_panco",
+      "team2_nome": "team_PATRICK_JANE",
+      "_chaveDedup": "2007:"
+    },
+    {
       "id": "0wq1cguhmwpx3iqe",
       "criado_em": "2026-11-21T04:38:10.388Z",
       "vencedor": "B",
@@ -184,5 +245,5 @@
       "_chaveDedup": "2000:"
     }
   ],
-  "atualizado_em": "2026-11-21T04:38:10.839Z"
+  "atualizado_em": "2026-11-26T01:04:54.708Z"
 }
